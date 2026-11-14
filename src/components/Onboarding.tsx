@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { calcularMetas, fechaCorta, hoyISO, pesoEnFecha, type DiaADia, type Habito, type Perfil, type Ritmo, type Sexo } from "../lib/calc";
+import { calcularMetas, categoriaImc, fechaCorta, hoyISO, imc, pesoEnFecha, pesoReferencia, rangoSaludable, type DiaADia, type Habito, type Perfil, type Ritmo, type Sexo } from "../lib/calc";
 import { CATALOGO_HABITOS, MAX_HABITOS, habitosDe } from "../lib/store";
 import { Numero, btnPrimario, ease, inputCls } from "./ui";
 import Logo from "./Logo";
@@ -81,6 +81,26 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
   };
   const propios = b.habitos.filter((h) => !CATALOGO_HABITOS.some((c) => c.id === h.id));
 
+  const guiaImc = (() => {
+    const cm = num(b.estatura), kg = num(b.peso), edad = num(b.edad);
+    if (!(cm >= 120 && kg >= 30 && edad >= 18) || !b.sexo) return null;
+    const valor = imc(kg, cm);
+    const rango = rangoSaludable(cm, edad);
+    const ref = pesoReferencia(b.sexo, cm, edad);
+    const opciones: { t: string; d: string; kg: number }[] = [];
+    if (kg > rango.max) {
+      if (valor >= 30) opciones.push({ t: "Primer paso", d: "Bajar 10 % ya mejora mucho tu salud", kg: Math.round(kg * 0.9) });
+      opciones.push({ t: "Límite saludable", d: "El máximo del rango para tu estatura", kg: Math.floor(rango.max) });
+    } else if (kg < rango.min) {
+      opciones.push({ t: "Mínimo saludable", d: "El inicio del rango para tu estatura", kg: Math.ceil(rango.min) });
+    }
+    opciones.push({ t: "Peso de referencia", d: `Según tu sexo y estatura (Robinson)`, kg: ref });
+    return { valor, cat: categoriaImc(valor, edad), rango, opciones: opciones.filter((o, i, arr) => arr.findIndex((x) => x.kg === o.kg) === i) };
+  })();
+  const metaFuera = guiaImc && num(b.meta) > 0
+    ? num(b.meta) < guiaImc.rango.min ? `Ojo: ${b.meta} kg queda por debajo del rango saludable.` : null
+    : null;
+
   const pasos: { id: string; titulo: string; sub?: string; valido: boolean; cuerpo: ReactNode }[] = [
     {
       id: "nombre",
@@ -110,12 +130,45 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
     {
       id: "peso",
       titulo: "Tu peso",
-      sub: "Si no tienes báscula hoy, pon el último que recuerdes. Luego lo actualizas.",
+      sub: "Si no tienes báscula hoy, pon el último que recuerdes. Te ayudamos a elegir tu meta.",
       valido: num(b.peso) >= 30 && num(b.peso) <= 300 && num(b.meta) >= 30 && num(b.meta) <= 300,
       cuerpo: (
-        <div className="grid grid-cols-2 gap-3">
-          <Campo label="Peso actual" sufijo="kg" inputMode="decimal" value={b.peso} onChange={(e) => set("peso", e.target.value)} placeholder="86.4" />
-          <Campo label="Peso meta" sufijo="kg" inputMode="decimal" value={b.meta} onChange={(e) => set("meta", e.target.value)} placeholder="65" />
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <Campo label="Peso actual" sufijo="kg" inputMode="decimal" value={b.peso} onChange={(e) => set("peso", e.target.value)} placeholder="80" />
+            <Campo label="Peso meta" sufijo="kg" inputMode="decimal" value={b.meta} onChange={(e) => set("meta", e.target.value)} placeholder="70" />
+          </div>
+          {guiaImc && (
+            <motion.div className="rounded-2xl border border-line bg-surface p-4" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ease }}>
+              <div className="flex items-baseline justify-between">
+                <p className="text-sm text-muted">Tu IMC</p>
+                <p className="font-display text-xl font-bold">
+                  {guiaImc.valor.toFixed(1)} <span className={`text-sm font-medium ${guiaImc.cat.tono === "lime" ? "text-lime" : "text-ember"}`}>{guiaImc.cat.t}</span>
+                </p>
+              </div>
+              <div className="relative mt-3 h-2 rounded-full" style={{ background: "linear-gradient(90deg,#38bdf8 0%,#38bdf8 14%,#c6f432 14%,#c6f432 41%,#fbbf24 41%,#fbbf24 60%,#ff8a3d 60%,#ff8a3d 100%)" }}>
+                <motion.span className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-bg bg-ink"
+                  animate={{ left: `${Math.min(100, Math.max(0, ((guiaImc.valor - 15) / 25) * 100))}%` }} transition={{ ease }} />
+              </div>
+              <div className="mt-1 flex justify-between text-[10px] text-muted"><span>15</span><span>18.5</span><span>25</span><span>30</span><span>40</span></div>
+              <p className="mt-3 text-sm leading-relaxed">
+                Para {b.estatura} cm, un peso saludable va de <b>{guiaImc.rango.min}</b> a <b>{guiaImc.rango.max} kg</b>
+                {num(b.edad) >= 65 ? " (rango ajustado a tu edad)" : ""}.
+              </p>
+              <p className="mt-3 text-xs text-muted">Toca una opción para usarla como meta:</p>
+              <div className="mt-2 grid gap-2">
+                {guiaImc.opciones.map((o) => (
+                  <button key={o.t} type="button" onClick={() => set("meta", String(o.kg))}
+                    className={`flex items-center justify-between rounded-xl border px-3 py-2.5 text-left text-sm transition ${num(b.meta) === o.kg ? "border-lime bg-lime/10" : "border-line bg-bg"}`}>
+                    <span>{o.t}<span className="block text-xs text-muted">{o.d}</span></span>
+                    <b className="font-display">{o.kg} kg</b>
+                  </button>
+                ))}
+              </div>
+              {metaFuera && <p className="mt-3 text-xs text-ember">{metaFuera}</p>}
+            </motion.div>
+          )}
+          <p className="text-xs text-muted">El IMC es una guía general: no distingue músculo de grasa. Si tienes alguna condición de salud, consulta a un profesional.</p>
         </div>
       ),
     },

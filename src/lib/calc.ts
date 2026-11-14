@@ -126,3 +126,31 @@ export function fechaCorta(iso: string, conAnio = true) {
   const [y, m, d] = iso.split("-").map(Number);
   return `${d} ${MESES[m - 1]}${conAnio ? ` ${y}` : ""}`;
 }
+
+/* ---------- IMC y peso recomendado ---------- */
+export const imc = (kg: number, cm: number) => kg / (cm / 100) ** 2;
+
+export function categoriaImc(v: number, edad: number) {
+  const [min, max] = edad >= 65 ? [22, 27] : [18.5, 25];
+  if (v < min) return { t: "Bajo peso", tono: "ember" as const };
+  if (v < max) return { t: "Saludable", tono: "lime" as const };
+  if (v < 30) return { t: "Sobrepeso", tono: "ember" as const };
+  if (v < 35) return { t: "Obesidad grado I", tono: "ember" as const };
+  if (v < 40) return { t: "Obesidad grado II", tono: "ember" as const };
+  return { t: "Obesidad grado III", tono: "ember" as const };
+}
+
+/** Rango de peso saludable por IMC (en mayores de 65 se usa 22–27). */
+export function rangoSaludable(cm: number, edad: number) {
+  const m2 = (cm / 100) ** 2;
+  const [a, b] = edad >= 65 ? [22, 27] : [18.5, 24.9];
+  return { min: Math.round(a * m2 * 10) / 10, max: Math.round(b * m2 * 10) / 10 };
+}
+
+/** Peso de referencia según sexo y estatura (fórmula de Robinson), dentro del rango saludable. */
+export function pesoReferencia(sexo: Sexo, cm: number, edad: number) {
+  const pulgadas = cm / 2.54 - 60;
+  const robinson = sexo === "h" ? 52 + 1.9 * pulgadas : 49 + 1.7 * pulgadas;
+  const r = rangoSaludable(cm, edad);
+  return Math.round(Math.min(r.max, Math.max(r.min, robinson)));
+}
