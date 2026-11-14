@@ -94,7 +94,7 @@ export default function Cuenta({ onOmitir, puedeOmitir = true }: { onOmitir: () 
         {puedeOmitir && (
           <button onClick={onOmitir} className="py-2 text-sm text-muted hover:text-ink">Ahora no, seguir sin cuenta</button>
         )}
-        <p className="mt-2 text-[11px] text-muted">Sin contraseñas. Tus datos son privados: solo tú puedes verlos.</p>
+        <p className="mt-2 text-[11px] text-muted">Sin contraseñas. Tus datos son privados: solo tú puedes verlos. <a href="/privacidad.html" className="underline">Privacidad</a> · <a href="/terminos.html" className="underline">Términos</a></p>
       </div>
     </motion.div>
   );
