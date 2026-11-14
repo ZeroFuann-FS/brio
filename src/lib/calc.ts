@@ -1,6 +1,7 @@
 export type Sexo = "h" | "m";
 export type DiaADia = "sentado" | "de-pie" | "fisico";
 export type Ritmo = 0.5 | 0.75 | 1;
+export interface Habito { id: string; e: string; t: string }
 
 export interface Perfil {
   nombre: string;
@@ -13,6 +14,7 @@ export interface Perfil {
   diasEntreno: number; // 0-7
   ritmo: Ritmo; // % del peso por semana
   motivo?: { titulo: string; fecha: string }; // yyyy-mm-dd
+  habitos?: Habito[];
   creado: string;
 }
 
@@ -64,7 +66,7 @@ export function calcularMetas(p: DatosCalculo, pesoActual: number): Metas {
   };
 }
 
-export type DatosCalculo = Omit<Perfil, "creado" | "nombre" | "motivo">;
+export type DatosCalculo = Omit<Perfil, "creado" | "nombre" | "motivo" | "habitos">;
 export interface PuntoProyeccion { fecha: string; kg: number }
 
 /**

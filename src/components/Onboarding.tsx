@@ -1,14 +1,17 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { calcularMetas, fechaCorta, hoyISO, pesoEnFecha, type DiaADia, type Perfil, type Ritmo, type Sexo } from "../lib/calc";
+import { calcularMetas, fechaCorta, hoyISO, pesoEnFecha, type DiaADia, type Habito, type Perfil, type Ritmo, type Sexo } from "../lib/calc";
+import { CATALOGO_HABITOS, MAX_HABITOS, habitosDe } from "../lib/store";
 import { Numero, btnPrimario, ease, inputCls } from "./ui";
 import Logo from "./Logo";
 import Proyeccion from "./Proyeccion";
 
 type Borrador = {
   nombre: string; sexo: Sexo | ""; edad: string; estatura: string; peso: string; meta: string;
-  diaADia: DiaADia | ""; diasEntreno: number; ritmo: Ritmo; motivoTitulo: string; motivoFecha: string;
+  diaADia: DiaADia | ""; diasEntreno: number; ritmo: Ritmo; habitos: Habito[]; nuevoHabito: string; motivoTitulo: string; motivoFecha: string;
 };
+
+const MOTIVOS = ["Graduación", "Viaje", "Boda", "Cumpleaños", "Vacaciones", "Una competencia"];
 
 const num = (s: string) => Number(s.replace(",", "."));
 
@@ -48,6 +51,8 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
     diaADia: inicial?.diaADia ?? "",
     diasEntreno: inicial?.diasEntreno ?? 3,
     ritmo: inicial?.ritmo ?? 0.75,
+    habitos: habitosDe(inicial ?? null),
+    nuevoHabito: "",
     motivoTitulo: inicial?.motivo?.titulo ?? "",
     motivoFecha: inicial?.motivo?.fecha ?? "",
   });
@@ -63,14 +68,29 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
   const metas = metasPor(b.ritmo);
   const perder = base ? base.pesoInicial > base.pesoMeta : true;
 
-  const pasos: { titulo: string; sub?: string; valido: boolean; cuerpo: ReactNode }[] = [
+  const toggleHabito = (h: Habito) =>
+    setB((x) => {
+      const tiene = x.habitos.some((y) => y.id === h.id);
+      if (!tiene && x.habitos.length >= MAX_HABITOS) return x;
+      return { ...x, habitos: tiene ? x.habitos.filter((y) => y.id !== h.id) : [...x.habitos, h] };
+    });
+  const agregarPropio = () => {
+    const t = b.nuevoHabito.trim();
+    if (!t || b.habitos.length >= MAX_HABITOS) return;
+    setB((x) => ({ ...x, habitos: [...x.habitos, { id: `p-${Date.now()}`, e: "✨", t }], nuevoHabito: "" }));
+  };
+  const propios = b.habitos.filter((h) => !CATALOGO_HABITOS.some((c) => c.id === h.id));
+
+  const pasos: { id: string; titulo: string; sub?: string; valido: boolean; cuerpo: ReactNode }[] = [
     {
+      id: "nombre",
       titulo: "¿Cómo te llamo?",
       sub: "Así te va a saludar Brío.",
       valido: b.nombre.trim().length > 0,
       cuerpo: <Campo label="Tu nombre o apodo" value={b.nombre} onChange={(e) => set("nombre", e.target.value)} placeholder="Ej. Alex" autoFocus maxLength={30} />,
     },
     {
+      id: "datos",
       titulo: "Tus datos base",
       sub: "Los usamos solo para calcular tu gasto de energía (fórmula Mifflin-St Jeor).",
       valido: !!b.sexo && num(b.edad) >= 14 && num(b.edad) <= 90 && num(b.estatura) >= 120 && num(b.estatura) <= 220,
@@ -88,6 +108,7 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
       ),
     },
     {
+      id: "peso",
       titulo: "Tu peso",
       sub: "Si no tienes báscula hoy, pon el último que recuerdes. Luego lo actualizas.",
       valido: num(b.peso) >= 30 && num(b.peso) <= 300 && num(b.meta) >= 30 && num(b.meta) <= 300,
@@ -99,6 +120,7 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
       ),
     },
     {
+      id: "dia",
       titulo: "Tu día a día",
       sub: "Con esto estimamos cuánta energía gastas al día.",
       valido: !!b.diaADia,
@@ -131,6 +153,7 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
       ),
     },
     {
+      id: "ritmo",
       titulo: perder ? "¿A qué ritmo quieres bajar?" : "Tu ritmo",
       sub: perder ? "Nunca más de 1 % de tu peso por semana: así cuidas tu músculo y no rebotas." : "Brío ajusta tus calorías a tu meta.",
       valido: true,
@@ -168,17 +191,59 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
       ),
     },
     {
-      titulo: "¿Qué te motiva?",
-      sub: "Opcional. Una fecha que te importe: Brío te la recuerda todos los días.",
-      valido: !b.motivoTitulo.trim() || !!b.motivoFecha,
+      id: "habitos",
+      titulo: "Tus hábitos",
+      sub: "Elige los que quieres construir. Cada día que cumplas la mayoría suma a tu racha 🔥",
+      valido: b.habitos.length > 0,
       cuerpo: (
-        <div className="space-y-4">
-          <Campo label="Tu motivo" value={b.motivoTitulo} onChange={(e) => set("motivoTitulo", e.target.value)} placeholder="Ej. Mi graduación 🎓, un viaje ✈️, mi boda 💍" maxLength={40} />
-          <Campo label="Fecha" type="date" min={hoyISO()} value={b.motivoFecha} onChange={(e) => set("motivoFecha", e.target.value)} />
+        <div className="space-y-2">
+          {[...CATALOGO_HABITOS, ...propios].map((h) => {
+            const activo = b.habitos.some((y) => y.id === h.id);
+            return (
+              <Opcion key={h.id} activa={activo} onClick={() => toggleHabito(h)}>
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">{h.e}</span>
+                  <span className="flex-1">{h.t}</span>
+                  <span className={`grid h-6 w-6 place-items-center rounded-full border text-sm font-bold ${activo ? "border-lime bg-lime text-bg" : "border-line"}`}>{activo ? "✓" : ""}</span>
+                </div>
+              </Opcion>
+            );
+          })}
+          <div className="flex gap-2 pt-2">
+            <input className={inputCls} placeholder="Agregar uno propio" value={b.nuevoHabito} maxLength={40}
+              onChange={(e) => set("nuevoHabito", e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); agregarPropio(); } }} />
+            <button type="button" onClick={agregarPropio} disabled={!b.nuevoHabito.trim() || b.habitos.length >= MAX_HABITOS} className={`${btnPrimario} shrink-0`}>+</button>
+          </div>
+          <p className="text-xs text-muted">{b.habitos.length}/{MAX_HABITOS} elegidos · el agua se cuenta sola con tu meta diaria.</p>
         </div>
       ),
     },
     {
+      id: "motivo",
+      titulo: "¿Qué te motiva?",
+      sub: "Opcional. Una fecha que te importe: Brío te la recuerda cada día.",
+      valido: !b.motivoTitulo.trim() || !!b.motivoFecha,
+      cuerpo: (
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            {MOTIVOS.map((m) => (
+              <button key={m} type="button" onClick={() => set("motivoTitulo", b.motivoTitulo === m ? "" : m)}
+                className={`rounded-full border px-3.5 py-2 text-sm transition ${b.motivoTitulo === m ? "border-lime bg-lime/10 text-ink" : "border-line bg-surface text-muted"}`}>
+                {m}
+              </button>
+            ))}
+          </div>
+          <Campo label="O escribe el tuyo" value={b.motivoTitulo} onChange={(e) => set("motivoTitulo", e.target.value)} placeholder="Ej. Mi graduación" maxLength={40} />
+          <label className="block">
+            <span className="mb-1.5 block text-sm text-muted">Fecha</span>
+            <input type="date" className={`${inputCls} campo-fecha`} min={hoyISO()} value={b.motivoFecha} onChange={(e) => set("motivoFecha", e.target.value)} />
+          </label>
+        </div>
+      ),
+    },
+    {
+      id: "resumen",
       titulo: `Listo, ${b.nombre.trim() || "crack"} ⚡`,
       sub: "Esto es lo que Brío calculó para ti:",
       valido: true,
@@ -255,6 +320,7 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
       diasEntreno: base.diasEntreno,
       ritmo: b.ritmo,
       motivo: b.motivoTitulo.trim() && b.motivoFecha ? { titulo: b.motivoTitulo.trim(), fecha: b.motivoFecha } : undefined,
+      habitos: b.habitos,
       creado: inicial?.creado ?? hoyISO(),
     });
   };
@@ -292,7 +358,7 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
             <button type="button" onClick={() => setPaso(paso - 1)} className="h-14 w-14 rounded-2xl border border-line text-xl text-muted" aria-label="Anterior">←</button>
           )}
           <button type="submit" disabled={!actual.valido} className={`${btnPrimario} h-14 flex-1 text-lg`}>
-            {ultimo ? "Empezar con brío ⚡" : paso === 5 && !b.motivoTitulo ? "Saltar" : "Continuar"}
+            {ultimo ? "Empezar con brío ⚡" : actual.id === "motivo" && !b.motivoTitulo.trim() ? "Saltar" : "Continuar"}
           </button>
         </div>
       </form>

@@ -23,3 +23,17 @@ body {
   overscroll-behavior: none;
 }
 ::selection { background: var(--color-lime); color: var(--color-bg); }
+
+/* iOS Safari: el input de fecha trae ancho propio y se sale de la pantalla */
+input.campo-fecha {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 3.125rem;
+  text-align: left;
+  color-scheme: dark;
+}
+input.campo-fecha::-webkit-date-and-time-value { text-align: left; margin: 0; }
+input.campo-fecha::-webkit-calendar-picker-indicator { filter: invert(0.8); }

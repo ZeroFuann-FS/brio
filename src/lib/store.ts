@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { hoyISO, sumarDias, type Perfil } from "./calc";
+import { hoyISO, sumarDias, type Habito, type Perfil } from "./calc";
 
 export type TipoComida = "desayuno" | "comida" | "cena" | "snack";
 
@@ -30,15 +30,27 @@ export interface ItemDespensa {
   unidad: string;
 }
 
-export const HABITOS = [
-  { id: "entreno", e: "🏋️", t: "Entrené o me moví" },
-  { id: "lectura", e: "📖", t: "Leí 15+ min" },
-  { id: "pasos", e: "🚶", t: "10,000 pasos" },
-  { id: "sueno", e: "😴", t: "Dormí 7–8 h" },
-] as const;
+/** Catálogo de hábitos para elegir en el onboarding. */
+export const CATALOGO_HABITOS: Habito[] = [
+  { id: "entreno", e: "🏋️", t: "Entrenar o moverme" },
+  { id: "pasos", e: "🚶", t: "Caminar 10,000 pasos" },
+  { id: "lectura", e: "📖", t: "Leer 15 minutos" },
+  { id: "sueno", e: "😴", t: "Dormir 7–8 horas" },
+  { id: "aprender", e: "🧠", t: "Estudiar o aprender algo" },
+  { id: "sinazucar", e: "🥤", t: "Sin refresco ni dulces" },
+  { id: "verdura", e: "🥦", t: "Comer verdura" },
+  { id: "ahorro", e: "💰", t: "Ahorrar o anotar mis gastos" },
+  { id: "meditar", e: "🧘", t: "Meditar 5 minutos" },
+  { id: "pantallas", e: "📵", t: "Sin celular antes de dormir" },
+];
+export const HABITOS_DEFAULT = ["entreno", "pasos", "lectura", "sueno"];
+export const MAX_HABITOS = 8;
 
-/** Un "día con brío": al menos 3 de 5 (los 4 hábitos + meta de agua). */
-export const MIN_BRIO = 3;
+export const habitosDe = (p: Perfil | null): Habito[] =>
+  p?.habitos?.length ? p.habitos : CATALOGO_HABITOS.filter((h) => HABITOS_DEFAULT.includes(h.id));
+
+/** Un "día con brío": cumplir al menos el 60 % (hábitos + meta de agua). */
+export const minBrio = (nHabitos: number) => Math.max(1, Math.ceil((nHabitos + 1) * 0.6));
 
 const diaVacio = (): Dia => ({ comidas: [], aguaMl: 0, habitos: {} });
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -115,17 +127,18 @@ export function pesoActual(pesos: Peso[], fallback: number) {
   return pesos.length ? pesos[pesos.length - 1].kg : fallback;
 }
 
-export function puntosDia(d: Dia | undefined, aguaMeta: number) {
+export function puntosDia(d: Dia | undefined, aguaMeta: number, habitos: Habito[]) {
   if (!d) return 0;
-  return HABITOS.filter((h) => d.habitos[h.id]).length + (d.aguaMl >= aguaMeta ? 1 : 0);
+  return habitos.filter((h) => d.habitos[h.id]).length + (d.aguaMl >= aguaMeta ? 1 : 0);
 }
 
 /** Días seguidos con brío. Si hoy aún no se completa, cuenta desde ayer. */
-export function racha(dias: Record<string, Dia>, aguaMeta: number) {
+export function racha(dias: Record<string, Dia>, aguaMeta: number, habitos: Habito[]) {
+  const min = minBrio(habitos.length);
   let fecha = hoyISO();
-  if (puntosDia(dias[fecha], aguaMeta) < MIN_BRIO) fecha = sumarDias(fecha, -1);
+  if (puntosDia(dias[fecha], aguaMeta, habitos) < min) fecha = sumarDias(fecha, -1);
   let n = 0;
-  while (puntosDia(dias[fecha], aguaMeta) >= MIN_BRIO) {
+  while (puntosDia(dias[fecha], aguaMeta, habitos) >= min) {
     n++;
     fecha = sumarDias(fecha, -1);
   }

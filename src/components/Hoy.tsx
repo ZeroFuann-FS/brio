@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { diasEntre, fechaCorta, hoyISO, sumarDias, type Metas, type Perfil } from "../lib/calc";
-import { HABITOS, MIN_BRIO, frecuentes, puntosDia, racha, useBrio, type TipoComida } from "../lib/store";
+import { frecuentes, habitosDe, minBrio, puntosDia, racha, useBrio, type TipoComida } from "../lib/store";
 import { Anillo, Barra, Hoja, Numero, Tarjeta, Toast, btnPrimario, btnSecundario, inputCls, useToast } from "./ui";
 
 const TIPOS: { id: TipoComida; e: string; t: string }[] = [
@@ -37,8 +37,11 @@ export default function Hoy({ perfil, metas }: { perfil: Perfil; metas: Metas })
   const kcal = d.comidas.reduce((a, c) => a + c.kcal, 0);
   const prot = d.comidas.reduce((a, c) => a + c.proteina, 0);
   const restantes = metas.kcal - kcal;
-  const puntos = puntosDia(d, metas.aguaMl);
-  const nRacha = racha(dias, metas.aguaMl);
+  const habitos = habitosDe(perfil);
+  const MIN_BRIO = minBrio(habitos.length);
+  const totalPuntos = habitos.length + 1;
+  const puntos = puntosDia(d, metas.aguaMl, habitos);
+  const nRacha = racha(dias, metas.aguaMl, habitos);
   const recientes = frecuentes(dias);
   const comidasAyer = dias[ayer]?.comidas.length ?? 0;
   const faltaMotivo = perfil.motivo ? diasEntre(hoy, perfil.motivo.fecha) : null;
@@ -53,14 +56,14 @@ export default function Hoy({ perfil, metas }: { perfil: Perfil; metas: Metas })
   };
 
   const marcarHabito = (id: string) => {
-    const antes = puntosDia(d, metas.aguaMl);
+    const antes = puntosDia(d, metas.aguaMl, habitos);
     toggleHabito(hoy, id);
     if (!d.habitos[id] && antes + 1 === MIN_BRIO) setToast("🔥 ¡Día con brío desbloqueado!");
   };
 
   const sumarAgua = (ml: number) => {
     addAgua(hoy, ml);
-    if (d.aguaMl < metas.aguaMl && d.aguaMl + ml >= metas.aguaMl) setToast("💧 ¡Meta de agua cumplida!");
+    if (d.aguaMl < metas.aguaMl && d.aguaMl + ml >= metas.aguaMl) setToast(puntosDia(d, metas.aguaMl, habitos) + 1 === MIN_BRIO ? "🔥 ¡Día con brío desbloqueado!" : "💧 ¡Meta de agua cumplida!");
   };
 
   return (
@@ -173,10 +176,10 @@ export default function Hoy({ perfil, metas }: { perfil: Perfil; metas: Metas })
       <Tarjeta delay={0.2}>
         <div className="flex items-center justify-between">
           <h2 className="font-display text-lg font-bold">Hábitos</h2>
-          <span className={`text-sm ${puntos >= MIN_BRIO ? "text-lime" : "text-muted"}`}>{puntos}/5 {puntos >= MIN_BRIO ? "· día con brío 🔥" : `· ${MIN_BRIO} para tu racha`}</span>
+          <span className={`text-sm ${puntos >= MIN_BRIO ? "text-lime" : "text-muted"}`}>{puntos}/{totalPuntos} {puntos >= MIN_BRIO ? "· día con brío 🔥" : `· ${MIN_BRIO} para tu racha`}</span>
         </div>
         <ul className="mt-3 space-y-2">
-          {HABITOS.map((h) => {
+          {habitos.map((h) => {
             const ok = !!d.habitos[h.id];
             return (
               <li key={h.id}>
