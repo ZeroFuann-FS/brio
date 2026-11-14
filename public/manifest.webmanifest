@@ -1,0 +1,11 @@
+{
+  "name": "Brío",
+  "short_name": "Brío",
+  "description": "Ponle brío a tu vida: comida, gym, hábitos y metas.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0E0F11",
+  "theme_color": "#0E0F11",
+  "lang": "es-MX",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
