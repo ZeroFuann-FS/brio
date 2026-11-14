@@ -119,7 +119,7 @@ export const useBrio = create<Estado>()(
         reset: () => set({ perfil: null, dias: {}, pesos: [], despensa: [] }),
       };
     },
-    { name: "brio:datos-v2", version: 1 },
+    { name: "brio:datos-v3", version: 1 },
   ),
 );
 

@@ -9,9 +9,9 @@ import Perfil from "./components/Perfil";
 import { calcularMetas } from "./lib/calc";
 import { pesoActual, useBrio } from "./lib/store";
 
-const KEY = "brio:intro-visto-v2";
+const KEY = "brio:intro-visto-v3";
 // limpia datos de versiones de prueba anteriores
-try { ["brio:datos", "brio:intro-visto"].forEach((k) => localStorage.removeItem(k)); } catch { /* sin storage */ }
+try { ["brio:datos", "brio:intro-visto", "brio:datos-v2", "brio:intro-visto-v2"].forEach((k) => localStorage.removeItem(k)); } catch { /* sin storage */ }
 
 const introVisto = () => { try { return localStorage.getItem(KEY) === "1"; } catch { return false; } };
 
