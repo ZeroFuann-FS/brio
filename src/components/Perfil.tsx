@@ -1,16 +1,17 @@
 import { useState } from "react";
 import { cerrarSesion, eliminarCuenta } from "../lib/sync";
 import { nubeDisponible } from "../lib/supabase";
+import { useTema, type Tema } from "../lib/tema";
 import type { Metas, Perfil as TPerfil } from "../lib/calc";
 import { useBrio } from "../lib/store";
 import { Tarjeta, btnSecundario } from "./ui";
 import Logo from "./Logo";
 
 const TEXTO_SYNC: Record<string, string> = {
-  ok: "✅ Todo guardado en la nube",
-  sincronizando: "🔄 Sincronizando…",
+  ok: "Todo guardado en la nube",
+  sincronizando: "Sincronizando…",
   pendiente: "⏳ Cambios por subir (se suben al tener internet)",
-  error: "⚠️ No se pudo sincronizar. Lo reintentamos solos.",
+  error: "No se pudo sincronizar. Lo reintentamos solos.",
   "sin-cuenta": "",
 };
 
@@ -21,22 +22,23 @@ type Props = {
 
 export default function Perfil({ perfil, metas, onEditar, onVerIntro, email, estadoSync, onCrearCuenta }: Props) {
   const [saliendo, setSaliendo] = useState(false);
+  const { tema, setTema } = useTema();
   const [eliminar, setEliminar] = useState<"no" | "confirmar" | "eliminando" | "error">("no");
   const reset = useBrio((s) => s.reset);
   const [confirmar, setConfirmar] = useState(false);
 
   return (
-    <div className="space-y-4">
-      <h1 className="font-display text-3xl font-bold">Perfil</h1>
+    <div className="space-y-4 md:max-w-3xl">
+      <h1 className="font-serif text-4xl font-medium tracking-tight">Perfil</h1>
 
       <Tarjeta>
-        <p className="font-display text-xl font-bold">{perfil.nombre}</p>
+        <p className="font-serif text-xl font-medium">{perfil.nombre}</p>
         <p className="text-sm text-muted">{perfil.edad} años · {perfil.estatura} cm · meta {perfil.pesoMeta} kg · entrenas {perfil.diasEntreno} días</p>
         <button onClick={onEditar} className={`${btnSecundario} mt-4 w-full`}>Editar mis datos</button>
       </Tarjeta>
 
       <Tarjeta delay={0.05}>
-        <h2 className="font-display text-lg font-bold">Cómo calculamos tus metas</h2>
+        <h2 className="font-serif text-xl font-medium">Cómo calculamos tus metas</h2>
         <dl className="mt-3 space-y-2 text-sm">
           {[
             ["Metabolismo en reposo", `${metas.bmr} kcal`, "Mifflin-St Jeor"],
@@ -60,9 +62,22 @@ export default function Perfil({ perfil, metas, onEditar, onVerIntro, email, est
         <button onClick={onVerIntro} className={`${btnSecundario} mt-4 w-full`}>¿Por qué Brío?</button>
       </Tarjeta>
 
+      <Tarjeta delay={0.12}>
+        <h2 className="font-serif text-xl font-medium">Apariencia</h2>
+        <div className="mt-3 grid grid-cols-3 gap-1.5 rounded-[14px] border border-line bg-bg p-1">
+          {([["claro", "Claro"], ["oscuro", "Oscuro"], ["sistema", "Automático"]] as [Tema, string][]).map(([id, t]) => (
+            <button key={id} onClick={() => setTema(id)} aria-pressed={tema === id}
+              className={`h-10 rounded-[10px] font-display text-sm font-semibold uppercase tracking-[0.08em] transition ${tema === id ? "bg-surface text-ink shadow-[0_0_0_1px_var(--line)]" : "text-muted"}`}>
+              {t}
+            </button>
+          ))}
+        </div>
+        <p className="mt-2 text-xs text-muted">Automático usa el modo de tu teléfono o compu.</p>
+      </Tarjeta>
+
       {nubeDisponible && (
         <Tarjeta delay={0.15}>
-          <h2 className="font-display text-lg font-bold">☁️ Cuenta</h2>
+          <h2 className="font-serif text-xl font-medium">Cuenta</h2>
           {email ? (
             <>
               <p className="mt-1 text-sm text-muted">{email}</p>
@@ -88,7 +103,7 @@ export default function Perfil({ perfil, metas, onEditar, onVerIntro, email, est
                       <button
                         disabled={eliminar === "eliminando"}
                         onClick={async () => { setEliminar("eliminando"); try { await eliminarCuenta(); } catch { setEliminar("error"); } }}
-                        className="h-11 flex-1 rounded-2xl bg-ember font-bold text-bg disabled:opacity-60"
+                        className="h-11 flex-1 rounded-2xl bg-ember font-bold text-on-lime disabled:opacity-60"
                       >
                         {eliminar === "eliminando" ? "Eliminando…" : "Sí, eliminar"}
                       </button>
@@ -101,7 +116,7 @@ export default function Perfil({ perfil, metas, onEditar, onVerIntro, email, est
           ) : (
             <>
               <p className="mt-1 text-sm text-muted">Tus datos solo están en este dispositivo. Si borras el navegador o cambias de cel, se pierden.</p>
-              <button onClick={onCrearCuenta} className="mt-3 h-12 w-full rounded-2xl bg-lime font-display font-bold text-bg">Crear cuenta gratis</button>
+              <button onClick={onCrearCuenta} className="mt-3 h-12 w-full rounded-2xl bg-lime font-display font-bold text-on-lime">Crear cuenta gratis</button>
             </>
           )}
         </Tarjeta>
@@ -114,7 +129,7 @@ export default function Perfil({ perfil, metas, onEditar, onVerIntro, email, est
           <>
             <p className="text-sm text-muted">{email ? "Se borrará todo, también de la nube. No se puede deshacer." : "Se borrará todo de este dispositivo."}</p>
             <div className="mt-3 flex gap-2">
-              <button onClick={reset} className="h-11 flex-1 rounded-2xl bg-ember font-bold text-bg">Sí, borrar todo</button>
+              <button onClick={reset} className="h-11 flex-1 rounded-2xl bg-ember font-bold text-on-lime">Sí, borrar todo</button>
               <button onClick={() => setConfirmar(false)} className={`${btnSecundario} h-11 flex-1`}>Cancelar</button>
             </div>
           </>

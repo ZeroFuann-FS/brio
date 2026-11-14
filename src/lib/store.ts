@@ -9,6 +9,8 @@ export interface Comida {
   nombre: string;
   kcal: number;
   proteina: number;
+  carbos?: number;
+  grasa?: number;
   tipo: TipoComida;
 }
 
@@ -174,7 +176,7 @@ export function frecuentes(dias: Record<string, Dia>, max = 8): Omit<Comida, "id
   for (const f of Object.keys(dias).sort().reverse()) {
     for (const c of [...dias[f].comidas].reverse()) {
       const k = c.nombre.trim().toLowerCase();
-      if (!vistas.has(k)) vistas.set(k, { nombre: c.nombre, kcal: c.kcal, proteina: c.proteina, tipo: c.tipo });
+      if (!vistas.has(k)) vistas.set(k, { nombre: c.nombre, kcal: c.kcal, proteina: c.proteina, carbos: c.carbos, grasa: c.grasa, tipo: c.tipo });
       if (vistas.size >= max) return [...vistas.values()];
     }
   }

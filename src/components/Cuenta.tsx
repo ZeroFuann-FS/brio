@@ -47,41 +47,40 @@ export default function Cuenta({ onOmitir, puedeOmitir = true }: { onOmitir: () 
   const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
   return (
-    <motion.div className="mx-auto flex h-full max-w-md flex-col px-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      <div className="pt-[max(env(safe-area-inset-top),1.25rem)]"><Logo className="text-2xl" /></div>
+    <motion.div className="mx-auto flex h-full max-w-[440px] flex-col px-5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      <div className="pt-[max(env(safe-area-inset-top),1.25rem)]"><Logo className="text-[30px]" /></div>
 
       <div className="flex flex-1 flex-col justify-center py-8">
-        <motion.h1 className="font-display text-3xl font-bold leading-tight" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ ease }}>
-          Guarda tu progreso ☁️
+        <motion.h1 className="font-serif text-[clamp(36px,10vw,48px)] font-medium leading-[1.02] tracking-tight" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ ease }}>
+          Guarda tu <em className="resalta font-normal">progreso.</em>
         </motion.h1>
-        <motion.p className="mt-2 text-muted" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}>
+        <motion.p className="mt-3 text-muted" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}>
           Crea tu cuenta gratis para no perder nada y usar Brío en el celular y en la compu.
         </motion.p>
 
         {estado === "enviado" ? (
-          <motion.div className="mt-8 rounded-3xl border border-line bg-surface p-5" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}>
-            <p className="text-3xl">📬</p>
-            <p className="mt-2 font-display text-lg font-bold">Revisa tu correo</p>
+          <motion.div className="mt-8 rounded-[20px] border border-line bg-surface p-5" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}>
+            <p className="font-serif text-2xl font-medium">Revisa tu correo</p>
             <p className="mt-1 text-sm leading-relaxed text-muted">
               Te mandamos un link a <b className="text-ink">{email.trim()}</b>. Ábrelo en este dispositivo y entrarás directo. Si no lo ves, revisa spam.
             </p>
-            <button onClick={() => setEstado("idle")} className="mt-4 text-sm text-lime hover:underline">Usar otro correo</button>
+            <button onClick={() => setEstado("idle")} className="mt-4 text-sm text-lime-ink hover:underline">Usar otro correo</button>
           </motion.div>
         ) : (
           <motion.div className="mt-8 space-y-4" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, ease }}>
             <button
               onClick={google}
               disabled={estado === "google"}
-              className="flex h-14 w-full items-center justify-center gap-3 rounded-2xl bg-white font-semibold text-[#1f1f1f] transition active:scale-[0.98] disabled:opacity-60"
+              className="flex h-[54px] w-full items-center justify-center gap-2.5 rounded-[14px] border border-line-strong bg-surface font-semibold text-ink transition active:scale-[0.98] disabled:opacity-60 dark:border-white dark:bg-white dark:text-[#1f1f1f]"
             >
               <IconoGoogle /> {estado === "google" ? "Abriendo Google…" : "Continuar con Google"}
             </button>
 
-            <div className="flex items-center gap-3 text-xs text-muted"><span className="h-px flex-1 bg-line" />o con tu correo<span className="h-px flex-1 bg-line" /></div>
+            <div className="lab flex items-center gap-3"><span className="h-px flex-1 bg-line" />o con tu correo<span className="h-px flex-1 bg-line" /></div>
 
             <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); if (emailValido) enviar(); }}>
               <input className={inputCls} type="email" inputMode="email" autoComplete="email" placeholder="tucorreo@ejemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-              <button type="submit" disabled={!emailValido || estado === "enviando"} className={`${btnPrimario} h-14 w-full`}>
+              <button type="submit" disabled={!emailValido || estado === "enviando"} className={`${btnPrimario} h-[54px] w-full`}>
                 {estado === "enviando" ? "Enviando…" : "Enviarme un link de acceso"}
               </button>
             </form>

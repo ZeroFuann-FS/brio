@@ -56,53 +56,52 @@ export default function Proyeccion({ datos, pesoActual, motivo, reales = [], alt
         aria-label={`Proyección: de ${pesoActual} kg a ${datos.pesoMeta} kg${fechaMeta ? ` el ${fechaCorta(fechaMeta)}` : ""}`}>
         <defs>
           <linearGradient id={`g${gid}`} x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="var(--color-lime)" stopOpacity="0.28" />
-            <stop offset="100%" stopColor="var(--color-lime)" stopOpacity="0" />
+            <stop offset="0%" stopColor="var(--lime)" stopOpacity="0.32" />
+            <stop offset="100%" stopColor="var(--lime)" stopOpacity="0.04" />
           </linearGradient>
         </defs>
 
         {marcasKg.map((k) => (
           <g key={k}>
-            <line x1={PL} x2={W - PR} y1={y(k)} y2={y(k)} stroke="var(--color-line)" />
-            <text x={PL - 6} y={y(k) + 3.5} textAnchor="end" fontSize="10" fill="var(--color-muted)">{k}</text>
+            <line x1={PL} x2={W - PR} y1={y(k)} y2={y(k)} stroke="var(--line)" />
+            <text x={PL - 6} y={y(k) + 3.5} textAnchor="end" fontSize="11" fontFamily="Barlow Condensed, sans-serif" fill="var(--muted)">{k}</text>
           </g>
         ))}
         {meses.map((m) => (
-          <text key={m.f} x={x(m.f)} y={H - 8} textAnchor="middle" fontSize="10" fill="var(--color-muted)">{m.t}</text>
+          <text key={m.f} x={x(m.f)} y={H - 8} textAnchor="middle" fontSize="11" fontFamily="Barlow Condensed, sans-serif" fill="var(--muted)">{m.t}</text>
         ))}
 
         <motion.path d={area} fill={`url(#g${gid})`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5, duration: 0.8 }} />
-        <motion.path d={linea} fill="none" stroke="var(--color-lime)" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round"
+        <motion.path d={linea} fill="none" stroke="var(--ink)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"
           initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.4, ease }} />
 
         {mostrarMotivo && (
           <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}>
-            <line x1={x(motivo.fecha)} x2={x(motivo.fecha)} y1={PT - 6} y2={H - PB} stroke="var(--color-ember)" strokeDasharray="3 3" />
-            <circle cx={x(motivo.fecha)} cy={y(kgMotivo)} r={5} fill="var(--color-ember)" stroke="var(--color-bg)" strokeWidth={2} />
-            <text x={x(motivo.fecha) + 6} y={y(kgMotivo) - 9} fontSize="11" fontWeight="600" fill="var(--color-ember)" stroke="var(--color-surface)" strokeWidth={4} paintOrder="stroke">~{kgMotivo.toFixed(1)} kg</text>
+            <line x1={x(motivo.fecha)} x2={x(motivo.fecha)} y1={PT - 6} y2={H - PB} stroke="var(--lime-ink)" strokeDasharray="3 3" />
+            <circle cx={x(motivo.fecha)} cy={y(kgMotivo)} r={5} fill="var(--lime)" stroke="var(--ink)" strokeWidth={1.5} />
+            <text x={x(motivo.fecha) > W * 0.6 ? x(motivo.fecha) - 8 : x(motivo.fecha) + 8} textAnchor={x(motivo.fecha) > W * 0.6 ? "end" : "start"} y={y(kgMotivo) - 14} fontSize="12" fontWeight="700" fontFamily="Barlow Condensed, sans-serif" fill="var(--ink)">~{kgMotivo.toFixed(1)} kg · {motivo.titulo.toLowerCase()}</text>
           </motion.g>
         )}
 
         {reales.map((r) => (
-          <circle key={r.fecha} cx={x(r.fecha)} cy={y(r.kg)} r={3.5} fill="var(--color-ink)" />
+          <circle key={r.fecha} cx={x(r.fecha)} cy={y(r.kg)} r={3.5} fill="var(--ink)" opacity={0.55} />
         ))}
 
         {/* inicio */}
-        <circle cx={x(puntos[0].fecha)} cy={y(pesoActual)} r={5} fill="var(--color-ink)" stroke="var(--color-bg)" strokeWidth={2} />
-        <text x={x(puntos[0].fecha) + 8} y={y(pesoActual) - 8} fontSize="11" fontWeight="700" fill="var(--color-ink)" stroke="var(--color-surface)" strokeWidth={4} paintOrder="stroke">{pesoActual.toFixed(1)} kg hoy</text>
+        <circle cx={x(puntos[0].fecha)} cy={y(pesoActual)} r={4.5} fill="var(--ink)" />
+        <text x={x(puntos[0].fecha) + 8} y={y(pesoActual) - 8} fontSize="12" fontWeight="700" fontFamily="Barlow Condensed, sans-serif" fill="var(--ink)">{pesoActual.toFixed(1)} kg hoy</text>
 
         {/* meta */}
-        <motion.g initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 1.3, type: "spring" }}
-          style={{ transformOrigin: `${x(fin)}px ${y(datos.pesoMeta)}px` }}>
-          <circle cx={x(fin)} cy={y(datos.pesoMeta)} r={6} fill="var(--color-lime)" stroke="var(--color-bg)" strokeWidth={2} />
-          <text x={x(fin) - 2} y={y(datos.pesoMeta) - 11} textAnchor="end" fontSize="11" fontWeight="700" fill="var(--color-lime)" stroke="var(--color-surface)" strokeWidth={4} paintOrder="stroke">
+        <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9, duration: 0.4 }}>
+          <circle cx={x(fin)} cy={y(datos.pesoMeta)} r={6} fill="var(--lime)" stroke="var(--ink)" strokeWidth={1.5} />
+          <text x={W - PR + 4} y={y(datos.pesoMeta) - 30} textAnchor="end" fontSize="12" fontWeight="700" fontFamily="Barlow Condensed, sans-serif" fill="var(--ink)">
             {datos.pesoMeta} kg{fechaMeta ? ` · ${fechaCorta(fechaMeta)}` : ""}
           </text>
         </motion.g>
       </svg>
-      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
-        <span><span className="mr-1 inline-block h-2 w-3 rounded-full bg-lime align-middle" />Proyección</span>
-        {mostrarMotivo && <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-ember align-middle" />{motivo.titulo} ({fechaCorta(motivo.fecha, false)})</span>}
+      <div className="lab mt-2 flex flex-wrap gap-x-4 gap-y-1 !tracking-[0.08em]">
+        <span><span className="mr-1 inline-block h-[3px] w-3 rounded-full bg-ink align-middle" />Proyección</span>
+        {mostrarMotivo && <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-lime-ink align-middle" />{motivo.titulo} ({fechaCorta(motivo.fecha, false)})</span>}
         {reales.length > 1 && <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-ink align-middle" />Tu peso real</span>}
       </div>
     </div>

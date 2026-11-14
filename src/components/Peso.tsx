@@ -24,12 +24,13 @@ export default function Peso({ perfil, metas, actual }: { perfil: Perfil; metas:
     addPeso(Math.round(kg * 10) / 10);
     setValor("");
     const dif = kg - anterior;
-    setToast(dif < -0.05 ? `¡Eso es brío! −${Math.abs(dif).toFixed(1)} kg 💪` : dif > 0.05 ? "Normal que suba un poco. Mira la tendencia, no el día 📈" : "Registrado ✅");
+    setToast(dif < -0.05 ? `¡Eso es brío! −${Math.abs(dif).toFixed(1)} kg` : dif > 0.05 ? "Normal que suba un poco. Mira la tendencia, no el día" : "Registrado ✅");
   };
 
   return (
-    <div className="space-y-4">
-      <h1 className="font-display text-3xl font-bold">Peso</h1>
+    <div className="space-y-4 md:max-w-3xl">
+      <h1 className="font-serif text-4xl font-medium tracking-tight">Progreso</h1>
+      <p className="-mt-2 text-muted">Tu peso, tus medidas y hacia dónde vas.</p>
 
       <Tarjeta>
         <div className="flex items-end justify-between">
@@ -39,13 +40,13 @@ export default function Peso({ perfil, metas, actual }: { perfil: Perfil; metas:
           </div>
           <div className="text-right">
             <p className="text-sm text-muted">{perdido >= 0 ? "Llevas" : "Subiste"}</p>
-            <p className={`font-display text-2xl font-bold ${perdido >= 0 ? "text-lime" : "text-ember"}`}>{Math.abs(perdido) < 0.05 ? "" : perdido > 0 ? "−" : "+"}{Math.abs(perdido).toFixed(1)} kg</p>
+            <p className={`font-display text-2xl font-bold ${perdido >= 0 ? "text-lime-ink" : "text-ember"}`}>{Math.abs(perdido) < 0.05 ? "" : perdido > 0 ? "−" : "+"}{Math.abs(perdido).toFixed(1)} kg</p>
           </div>
         </div>
         <div className="mt-4">
           <div className="mb-1 flex justify-between text-xs text-muted"><span>{perfil.pesoInicial} kg</span><span>{Math.round(progreso * 100)} %</span><span>{perfil.pesoMeta} kg</span></div>
           <div className="h-2.5 overflow-hidden rounded-full bg-line">
-            <motion.div className="h-full rounded-full bg-gradient-to-r from-lime to-emerald-400" initial={{ width: 0 }} animate={{ width: `${progreso * 100}%` }} transition={{ duration: 1, ease }} />
+            <motion.div className="h-full rounded-full bg-ink dark:bg-lime" initial={{ width: 0 }} animate={{ width: `${progreso * 100}%` }} transition={{ duration: 1, ease }} />
           </div>
         </div>
         {metas.fechaEstimada && (
@@ -65,17 +66,17 @@ export default function Peso({ perfil, metas, actual }: { perfil: Perfil; metas:
       </Tarjeta>
 
       <Tarjeta delay={0.1}>
-        <h2 className="mb-3 font-display text-lg font-bold">Tu camino a {perfil.pesoMeta} kg</h2>
+        <h2 className="mb-3 font-serif text-xl font-medium">Tu camino a {perfil.pesoMeta} kg</h2>
         {metas.fechaEstimada
           ? <Proyeccion datos={perfil} pesoActual={actual} motivo={perfil.motivo} reales={pesos} />
-          : <p className="py-6 text-center text-sm text-muted">🎉 ¡Estás en tu meta! Ahora toca mantener.</p>}
+          : <p className="py-6 text-center text-sm text-muted">¡Estás en tu meta! Ahora toca mantener.</p>}
       </Tarjeta>
 
       <Medidas perfil={perfil} pesos={pesos} />
 
       {pesos.length > 0 && (
         <Tarjeta delay={0.15}>
-          <h2 className="mb-2 font-display text-lg font-bold">Historial</h2>
+          <h2 className="mb-2 font-serif text-xl font-medium">Historial</h2>
           <ul className="divide-y divide-line">
             {[...pesos].reverse().map((p) => (
               <li key={p.fecha} className="flex items-center justify-between py-2.5">

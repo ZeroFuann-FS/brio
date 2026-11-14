@@ -41,9 +41,9 @@ export function Anillo({ progreso, size = 150, grosor = 12, color = "var(--color
   );
 }
 
-export function Barra({ progreso, color = "bg-lime" }: { progreso: number; color?: string }) {
+export function Barra({ progreso, color = "bg-ink dark:bg-lime", alto = "h-[3px]" }: { progreso: number; color?: string; alto?: string }) {
   return (
-    <div className="h-2 overflow-hidden rounded-full bg-line">
+    <div className={`${alto} overflow-hidden rounded-full bg-track`}>
       <motion.div
         className={`h-full rounded-full ${progreso > 1.05 ? "bg-ember" : color}`}
         initial={{ width: 0 }}
@@ -54,10 +54,12 @@ export function Barra({ progreso, color = "bg-lime" }: { progreso: number; color
   );
 }
 
-export function Tarjeta({ children, className = "", delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
+const TONOS = { base: "bg-surface", food: "bg-t-food", water: "bg-t-water", habit: "bg-t-habit" } as const;
+
+export function Tarjeta({ children, className = "", delay = 0, tono = "base" }: { children: ReactNode; className?: string; delay?: number; tono?: keyof typeof TONOS }) {
   return (
     <motion.section
-      className={`rounded-3xl border border-line bg-surface p-5 ${className}`}
+      className={`rounded-[20px] border border-line ${TONOS[tono]} p-5 ${className}`}
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.5, ease }}
@@ -71,20 +73,20 @@ export function Hoja({ abierta, onClose, titulo, children }: { abierta: boolean;
   return (
     <AnimatePresence>
       {abierta && (
-        <motion.div className="fixed inset-0 z-50 flex items-end justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+        <motion.div className="fixed inset-0 z-50 flex items-end justify-center md:items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
           <motion.div
             role="dialog"
             aria-label={titulo}
-            className="relative max-h-[88vh] w-full max-w-md overflow-y-auto rounded-t-3xl border border-line bg-surface p-5 pb-[max(env(safe-area-inset-bottom),1.25rem)]"
+            className="relative max-h-[88vh] w-full max-w-md overflow-y-auto rounded-t-[24px] border border-line bg-bg p-5 pb-[max(env(safe-area-inset-bottom),1.25rem)] md:mb-[6vh] md:rounded-[24px]"
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 320, damping: 32 }}
           >
-            <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-line" />
+            <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-line md:hidden" />
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-display text-xl font-bold">{titulo}</h2>
+              <h2 className="font-serif text-xl font-medium">{titulo}</h2>
               <button onClick={onClose} className="text-sm text-muted hover:text-ink">Cerrar</button>
             </div>
             {children}
@@ -96,13 +98,13 @@ export function Hoja({ abierta, onClose, titulo, children }: { abierta: boolean;
 }
 
 export const inputCls =
-  "w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none transition placeholder:text-muted/60 focus:border-lime";
+  "w-full rounded-[14px] border border-line bg-surface px-4 py-3 text-base text-ink outline-none transition placeholder:text-muted/70 focus:border-line-strong dark:focus:border-lime";
 
 export const btnPrimario =
-  "h-12 rounded-2xl bg-lime px-5 font-display font-bold text-bg transition active:scale-[0.98] disabled:opacity-40";
+  "h-12 rounded-[14px] bg-lime px-5 font-display text-[17px] font-bold uppercase tracking-[0.1em] text-on-lime transition active:scale-[0.98] disabled:opacity-40";
 
 export const btnSecundario =
-  "h-12 rounded-2xl border border-line px-5 font-medium text-ink transition hover:border-lime active:scale-[0.98]";
+  "h-12 rounded-[14px] border border-line bg-surface px-5 font-medium text-ink transition hover:border-line-strong active:scale-[0.98]";
 
 export function Toast({ texto }: { texto: string | null }) {
   return (
@@ -129,4 +131,23 @@ export function useToast() {
     return () => clearTimeout(t);
   }, [texto]);
   return [texto, setTexto] as const;
+}
+
+/** Barra segmentada estilo marcador deportivo. */
+export function Segmentos({ progreso, n = 24 }: { progreso: number; n?: number }) {
+  const llenos = Math.round(Math.min(1, Math.max(0, progreso)) * n);
+  const pasado = progreso > 1.05;
+  return (
+    <div className="grid gap-[3px]" style={{ gridTemplateColumns: `repeat(${n}, 1fr)` }}>
+      {Array.from({ length: n }, (_, i) => (
+        <motion.i
+          key={i}
+          className={`block h-3 rounded-[2px] ${i < llenos ? (pasado ? "bg-ember" : "bg-ink dark:bg-lime") : "bg-track"}`}
+          initial={{ scaleY: 0.3, opacity: 0 }}
+          animate={{ scaleY: 1, opacity: 1 }}
+          transition={{ delay: i * 0.015, duration: 0.3 }}
+        />
+      ))}
+    </div>
+  );
 }

@@ -21,7 +21,7 @@ function Opcion({ activa, onClick, children }: { activa: boolean; onClick: () =>
       type="button"
       onClick={onClick}
       whileTap={{ scale: 0.98 }}
-      className={`w-full rounded-2xl border px-4 py-3.5 text-left transition ${activa ? "border-lime bg-lime/10" : "border-line bg-surface hover:border-muted"}`}
+      className={`w-full rounded-[14px] border bg-surface px-4 py-3.5 text-left transition ${activa ? "border-line-strong shadow-[inset_0_0_0_1px_var(--line-strong)] dark:border-lime dark:shadow-[inset_0_0_0_1px_var(--lime)]" : "border-line hover:border-muted"}`}
     >
       {children}
     </motion.button>
@@ -31,9 +31,9 @@ function Opcion({ activa, onClick, children }: { activa: boolean; onClick: () =>
 function Campo({ label, sufijo, ...props }: { label: string; sufijo?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm text-muted">{label}</span>
+      <span className="lab mb-1.5 block">{label}</span>
       <div className="relative">
-        <input className={inputCls} {...props} />
+        <input className={`${inputCls} ${props.inputMode === "decimal" || props.inputMode === "numeric" ? "num h-[58px] text-2xl" : ""}`} {...props} />
         {sufijo && <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted">{sufijo}</span>}
       </div>
     </label>
@@ -117,8 +117,8 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
       cuerpo: (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <Opcion activa={b.sexo === "h"} onClick={() => set("sexo", "h")}>🙋‍♂️ Hombre</Opcion>
-            <Opcion activa={b.sexo === "m"} onClick={() => set("sexo", "m")}>🙋‍♀️ Mujer</Opcion>
+            <Opcion activa={b.sexo === "h"} onClick={() => set("sexo", "h")}>Hombre</Opcion>
+            <Opcion activa={b.sexo === "m"} onClick={() => set("sexo", "m")}>Mujer</Opcion>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Campo label="Edad" sufijo="años" inputMode="numeric" value={b.edad} onChange={(e) => set("edad", e.target.value)} placeholder="22" />
@@ -139,36 +139,37 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
             <Campo label="Peso meta" sufijo="kg" inputMode="decimal" value={b.meta} onChange={(e) => set("meta", e.target.value)} placeholder="70" />
           </div>
           {guiaImc && (
-            <motion.div className="rounded-2xl border border-line bg-surface p-4" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ease }}>
+            <motion.div className="rounded-[20px] border border-line bg-t-food p-4" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ease }}>
               <div className="flex items-baseline justify-between">
-                <p className="text-sm text-muted">Tu IMC</p>
-                <p className="font-display text-xl font-bold">
-                  {guiaImc.valor.toFixed(1)} <span className={`text-sm font-medium ${guiaImc.cat.tono === "lime" ? "text-lime" : "text-ember"}`}>{guiaImc.cat.t}</span>
+                <p className="lab">Tu IMC</p>
+                <p className="num text-[26px]">
+                  {guiaImc.valor.toFixed(1)} <span className="lab !text-ink">{guiaImc.cat.t}</span>
                 </p>
               </div>
-              <div className="relative mt-3 h-2 rounded-full" style={{ background: "linear-gradient(90deg,#38bdf8 0%,#38bdf8 14%,#c6f432 14%,#c6f432 41%,#fbbf24 41%,#fbbf24 60%,#ff8a3d 60%,#ff8a3d 100%)" }}>
-                <motion.span className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-bg bg-ink"
+              <div className="relative mt-3 grid h-2 grid-cols-[14fr_26fr_20fr_40fr] gap-[3px]">
+                <i className="rounded-[2px] bg-[#7cc3ff]" /><i className="rounded-[2px] bg-lime" /><i className="rounded-[2px] bg-[#f5c542]" /><i className="rounded-[2px] bg-[#f08a4b]" />
+                <motion.span className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-surface bg-ink"
                   animate={{ left: `${Math.min(100, Math.max(0, ((guiaImc.valor - 15) / 25) * 100))}%` }} transition={{ ease }} />
               </div>
-              <div className="mt-1 flex justify-between text-[10px] text-muted"><span>15</span><span>18.5</span><span>25</span><span>30</span><span>40</span></div>
+              <div className="num mt-1.5 flex justify-between text-[11px] font-medium text-muted"><span>15</span><span>18.5</span><span>25</span><span>30</span><span>40</span></div>
               <p className="mt-3 text-sm leading-relaxed">
                 Para {b.estatura} cm, un peso saludable va de <b>{guiaImc.rango.min}</b> a <b>{guiaImc.rango.max} kg</b>
                 {num(b.edad) >= 65 ? " (rango ajustado a tu edad)" : ""}.
               </p>
-              <p className="mt-3 text-xs text-muted">Toca una opción para usarla como meta:</p>
+              <p className="lab mt-3">Toca una opción para usarla como meta</p>
               <div className="mt-2 grid gap-2">
                 {guiaImc.opciones.map((o) => (
                   <button key={o.t} type="button" onClick={() => set("meta", String(o.kg))}
-                    className={`flex items-center justify-between rounded-xl border px-3 py-2.5 text-left text-sm transition ${num(b.meta) === o.kg ? "border-lime bg-lime/10" : "border-line bg-bg"}`}>
-                    <span>{o.t}<span className="block text-xs text-muted">{o.d}</span></span>
-                    <b className="font-display">{o.kg} kg</b>
+                    className={`flex items-center justify-between rounded-[14px] border bg-surface px-3.5 py-3 text-left transition ${num(b.meta) === o.kg ? "border-line-strong shadow-[inset_0_0_0_1px_var(--line-strong)] dark:border-lime dark:shadow-[inset_0_0_0_1px_var(--lime)]" : "border-line"}`}>
+                    <span>{o.t}<span className="lab mt-0.5 block">{o.d}</span></span>
+                    <b className="num text-[22px]">{o.kg} kg</b>
                   </button>
                 ))}
               </div>
               {metaFuera && <p className="mt-3 text-xs text-ember">{metaFuera}</p>}
             </motion.div>
           )}
-          <p className="rounded-2xl bg-lime/10 px-4 py-3 text-sm leading-relaxed">📏 El IMC no distingue músculo de grasa. Cuando tengas una cinta métrica, agrega tu <b>cintura</b> y otras medidas en <b>Peso → Medidas</b>: dicen más que la báscula.</p>
+          <p className="lab leading-relaxed">Tip: el IMC no distingue músculo de grasa. Después podrás agregar tu cintura y otras medidas en Progreso.</p>
           <p className="text-xs text-muted">Si tienes alguna condición de salud, consulta a un profesional.</p>
         </div>
       ),
@@ -181,23 +182,23 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
       cuerpo: (
         <div className="space-y-3">
           {([
-            ["sentado", "🪑 Casi todo el día sentado", "Escuela, oficina, compu"],
-            ["de-pie", "🚶 De pie o caminando seguido", "Tienda, maestro, mesero"],
-            ["fisico", "💪 Trabajo físico", "Carga, obra, campo"],
+            ["sentado", "Casi todo el día sentado", "Escuela, oficina, compu"],
+            ["de-pie", "De pie o caminando seguido", "Tienda, maestro, mesero"],
+            ["fisico", "Trabajo físico", "Carga, obra, campo"],
           ] as const).map(([id, t, d]) => (
             <Opcion key={id} activa={b.diaADia === id} onClick={() => set("diaADia", id)}>
               <p className="font-medium">{t}</p>
               <p className="text-sm text-muted">{d}</p>
             </Opcion>
           ))}
-          <p className="pt-2 text-sm text-muted">¿Cuántos días entrenas por semana?</p>
+          <p className="lab pt-3">¿Cuántos días entrenas por semana?</p>
           <div className="grid grid-cols-8 gap-1.5">
             {[0, 1, 2, 3, 4, 5, 6, 7].map((n) => (
               <button
                 key={n}
                 type="button"
                 onClick={() => set("diasEntreno", n)}
-                className={`h-11 rounded-xl border font-display font-bold transition ${b.diasEntreno === n ? "border-lime bg-lime text-bg" : "border-line bg-surface"}`}
+                className={`num h-11 rounded-[12px] border text-lg transition ${b.diasEntreno === n ? "border-lime bg-lime text-on-lime" : "border-line bg-surface"}`}
               >
                 {n}
               </button>
@@ -214,9 +215,9 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
       cuerpo: (
         <div className="space-y-3">
           {([
-            [0.5, "🌱 Tranquilo", "Fácil de sostener"],
-            [0.75, "⚡ Recomendado", "Buen balance entre avance y energía"],
-            [1, "🔥 Intenso", "Más rápido, pide más disciplina"],
+            [0.5, "Tranquilo", "Fácil de sostener"],
+            [0.75, "Recomendado", "Buen balance"],
+            [1, "Intenso", "Pide más disciplina"],
           ] as const).map(([r, t, d]) => {
             const m = metasPor(r);
             return (
@@ -228,8 +229,8 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
                   </div>
                   {m && perder && (
                     <div className="text-right">
-                      <p className="whitespace-nowrap font-display font-bold">{m.kcal} kcal</p>
-                      <p className="whitespace-nowrap text-xs text-muted">−{m.kgSemana.toFixed(2)} kg/sem</p>
+                      <p className="num whitespace-nowrap text-[22px]">{m.kcal.toLocaleString("es-MX")}</p>
+                      <p className="lab whitespace-nowrap">−{m.kgSemana.toFixed(2)} kg/sem</p>
                     </div>
                   )}
                 </div>
@@ -237,7 +238,7 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
             );
           })}
           {base && perder && (
-            <div key={b.ritmo} className="rounded-2xl border border-line bg-surface p-3">
+            <div key={b.ritmo} className="rounded-[20px] border border-line bg-surface p-3.5">
               <Proyeccion datos={{ ...base, ritmo: b.ritmo }} pesoActual={base.pesoInicial} alto={150} />
             </div>
           )}
@@ -247,7 +248,7 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
     {
       id: "habitos",
       titulo: "Tus hábitos",
-      sub: "Elige los que quieres construir. Cada día que cumplas la mayoría suma a tu racha 🔥",
+      sub: "Elige los que quieres construir. Cada día que cumplas la mayoría suma a tu racha.",
       valido: b.habitos.length > 0,
       cuerpo: (
         <div className="space-y-2">
@@ -256,9 +257,8 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
             return (
               <Opcion key={h.id} activa={activo} onClick={() => toggleHabito(h)}>
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">{h.e}</span>
+                  <span className={`grid h-[22px] w-[22px] shrink-0 place-items-center rounded-[7px] border-[1.5px] text-[13px] font-extrabold ${activo ? "border-lime bg-lime text-on-lime" : "border-line-strong"}`}>{activo ? "✓" : ""}</span>
                   <span className="flex-1">{h.t}</span>
-                  <span className={`grid h-6 w-6 place-items-center rounded-full border text-sm font-bold ${activo ? "border-lime bg-lime text-bg" : "border-line"}`}>{activo ? "✓" : ""}</span>
                 </div>
               </Opcion>
             );
@@ -269,7 +269,7 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); agregarPropio(); } }} />
             <button type="button" onClick={agregarPropio} disabled={!b.nuevoHabito.trim() || b.habitos.length >= MAX_HABITOS} className={`${btnPrimario} shrink-0`}>+</button>
           </div>
-          <p className="text-xs text-muted">{b.habitos.length}/{MAX_HABITOS} elegidos · el agua se cuenta sola con tu meta diaria.</p>
+          <p className="lab">{b.habitos.length}/{MAX_HABITOS} elegidos · el agua se cuenta sola</p>
         </div>
       ),
     },
@@ -283,14 +283,14 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
           <div className="flex flex-wrap gap-2">
             {MOTIVOS.map((m) => (
               <button key={m} type="button" onClick={() => set("motivoTitulo", b.motivoTitulo === m ? "" : m)}
-                className={`rounded-full border px-3.5 py-2 text-sm transition ${b.motivoTitulo === m ? "border-lime bg-lime/10 text-ink" : "border-line bg-surface text-muted"}`}>
+                className={`rounded-full border px-3.5 py-2 text-sm transition ${b.motivoTitulo === m ? "border-lime bg-lime text-on-lime" : "border-line bg-surface text-muted"}`}>
                 {m}
               </button>
             ))}
           </div>
           <Campo label="O escribe el tuyo" value={b.motivoTitulo} onChange={(e) => set("motivoTitulo", e.target.value)} placeholder="Ej. Mi graduación" maxLength={40} />
           <label className="block">
-            <span className="mb-1.5 block text-sm text-muted">Fecha</span>
+            <span className="lab mb-1.5 block">Fecha</span>
             <input type="date" className={`${inputCls} campo-fecha`} min={hoyISO()} value={b.motivoFecha} onChange={(e) => set("motivoFecha", e.target.value)} />
           </label>
         </div>
@@ -298,63 +298,87 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
     },
     {
       id: "resumen",
-      titulo: `Listo, ${b.nombre.trim() || "crack"} ⚡`,
-      sub: "Esto es lo que Brío calculó para ti:",
+      titulo: `Listo, ${b.nombre.trim() || "crack"}.`,
+      sub: "Este es tu plan. Brío lo ajusta solo cada vez que registres tu peso.",
       valido: true,
-      cuerpo: metas && base ? (
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              ["🔥", "Calorías", metas.kcal, "kcal"],
-              ["🥩", "Proteína", metas.proteina, "g"],
-              ["💧", "Agua", metas.aguaMl / 1000, "L"],
-              ["⚖️", perder ? "Bajarás al inicio" : "Ritmo", Math.abs(metas.kgSemana), "kg/sem"],
-            ].map(([e, t, v, u], i) => (
-              <motion.div
-                key={t as string}
-                className="rounded-2xl border border-line bg-surface p-4"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.15 + i * 0.1, ease }}
-              >
-                <p className="text-sm text-muted">{e} {t}</p>
-                <p className="mt-1 font-display text-2xl font-bold">
-                  <Numero valor={v as number} decimales={u === "L" ? 1 : u === "kg/sem" ? 2 : 0} /> <span className="text-sm font-medium text-muted">{u}</span>
-                </p>
-              </motion.div>
-            ))}
-          </div>
-          <motion.div className="rounded-2xl border border-line bg-surface p-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55, ease }}>
-            <p className="text-sm text-muted">⚡ Tu gasto de energía</p>
-            <div className="mt-2 flex items-center justify-between gap-2 text-center">
-              <div><p className="font-display text-lg font-bold"><Numero valor={metas.tdee} /></p><p className="text-[11px] text-muted">gastas al día</p></div>
-              <span className="text-muted">−</span>
-              <div><p className="font-display text-lg font-bold"><Numero valor={metas.kcal} /></p><p className="text-[11px] text-muted">comerás</p></div>
-              <span className="text-muted">=</span>
-              <div><p className={`font-display text-lg font-bold ${perder ? "text-lime" : "text-ember"}`}><Numero valor={Math.abs(metas.tdee - metas.kcal)} /></p><p className="text-[11px] text-muted">{perder ? "de déficit" : "de superávit"}</p></div>
+      cuerpo: metas && base ? (() => {
+        const kp = metas.proteina * 4, kc = metas.carbos * 4, kg = metas.grasa * 9;
+        const motivoOk = b.motivoTitulo.trim() && b.motivoFecha && metas.fechaEstimada && b.motivoFecha < metas.fechaEstimada;
+        return (
+          <div>
+            <div className="border-b border-line pb-5">
+              <p className="lab">Tu meta diaria</p>
+              <p className="num mt-1.5 text-[clamp(72px,20vw,104px)] leading-[0.9]">
+                <Numero valor={metas.kcal} /><span className="ml-1.5 font-serif text-xl font-normal italic tracking-normal text-muted">kcal</span>
+              </p>
+              <div className="mt-4 flex h-3.5 gap-[3px]">
+                {[["bg-ink dark:bg-[#f2f3f0]", kp], ["bg-lime", kc], ["bg-fat", kg]].map(([c, v], i) => (
+                  <motion.i key={i} className={`rounded-[3px] ${c}`} style={{ flex: v as number }} initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 0.2 + i * 0.12, ease }} />
+                ))}
+              </div>
+              <div className="mt-3 grid grid-cols-3">
+                {([["Proteína", metas.proteina, "bg-ink dark:bg-[#f2f3f0]"], ["Carbos", metas.carbos, "bg-lime"], ["Grasa", metas.grasa, "bg-fat"]] as const).map(([t, v, c]) => (
+                  <div key={t}>
+                    <p className="lab"><i className={`mr-1.5 inline-block h-2 w-2 rounded-[2px] align-[1px] ${c}`} />{t}</p>
+                    <p className="num text-[26px] leading-none">{v}<small className="text-sm font-medium text-muted"> g</small></p>
+                  </div>
+                ))}
+              </div>
             </div>
-          </motion.div>
-          {metas.fechaEstimada && (
-            <motion.div className="rounded-2xl border border-line bg-surface p-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7, ease }}>
-              <p className="mb-2 text-sm text-muted">📉 Así cambiaría tu peso</p>
-              <Proyeccion datos={{ ...base, ritmo: b.ritmo }} pesoActual={base.pesoInicial}
-                motivo={b.motivoTitulo.trim() && b.motivoFecha ? { titulo: b.motivoTitulo.trim(), fecha: b.motivoFecha } : undefined} />
-            </motion.div>
-          )}
-          {metas.fechaEstimada && (
-            <motion.p className="rounded-2xl bg-lime/10 p-4 text-sm leading-relaxed" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }}>
-              A este ritmo llegas a <b>{base.pesoMeta} kg</b> alrededor del <b className="text-lime">{fechaCorta(metas.fechaEstimada)}</b>.
-              {b.motivoTitulo && b.motivoFecha && (
-                <> Para tu <b>{b.motivoTitulo.trim()}</b> ({fechaCorta(b.motivoFecha)}) estarías en ~<b>{pesoEnFecha({ ...base, ritmo: b.ritmo }, base.pesoInicial, b.motivoFecha).toFixed(1)} kg</b>.</>
-              )}
-            </motion.p>
-          )}
-          {metas.limitadoPorMinimo && (
-            <p className="text-xs text-ember">Ajustamos tus calorías al mínimo seguro. No bajamos de ahí.</p>
-          )}
-          <p className="text-xs text-muted">Son estimaciones: al bajar de peso tu cuerpo gasta menos, por eso la curva se va suavizando. Brío las ajusta con tu peso real. No sustituye a un profesional de la salud.</p>
-        </div>
-      ) : null,
+
+            <div className="border-b border-line py-5">
+              <p className="lab">De dónde sale</p>
+              <div className="mt-3 flex h-10 overflow-hidden rounded-[10px] border border-line-strong">
+                <motion.span className="num flex items-center whitespace-nowrap bg-ink pl-3 text-[15px] uppercase tracking-[0.06em] text-bg dark:bg-[#f2f3f0] dark:text-[#17191c]"
+                  initial={{ width: 0 }} animate={{ width: `${(metas.kcal / metas.tdee) * 100}%` }} transition={{ delay: 0.3, duration: 0.8, ease }}>
+                  Comerás {metas.kcal.toLocaleString("es-MX")}
+                </motion.span>
+                <span className="num flex flex-1 items-center justify-center text-[15px] text-on-lime" style={{ background: "repeating-linear-gradient(135deg,var(--lime) 0 8px,color-mix(in srgb,var(--lime) 70%,transparent) 8px 14px)" }}>
+                  {perder ? "−" : "+"}{Math.abs(metas.tdee - metas.kcal)}
+                </span>
+              </div>
+              <div className="mt-2 flex justify-between"><span className="lab">0</span><span className="lab">Tu cuerpo gasta {metas.tdee.toLocaleString("es-MX")} kcal al día</span></div>
+            </div>
+
+            {metas.fechaEstimada && (
+              <div className="border-b border-line py-5">
+                <p className="lab">Tu camino</p>
+                <div className="relative mt-4 grid grid-cols-3 before:absolute before:left-2 before:right-2 before:top-[7px] before:h-0.5 before:bg-line-strong">
+                  <div className="relative pt-6">
+                    <span className="absolute left-0 top-0 h-4 w-4 rounded-full border-2 border-ink bg-bg" />
+                    <p className="num text-[28px] leading-none">{base.pesoInicial}</p><p className="lab">Hoy</p>
+                  </div>
+                  <div className="relative pt-6 text-center">
+                    {motivoOk && <>
+                      <span className="absolute left-1/2 top-0 h-4 w-4 -translate-x-1/2 rounded-full border-2 border-lime-ink bg-bg" />
+                      <p className="num text-[28px] leading-none">~{Math.round(pesoEnFecha({ ...base, ritmo: b.ritmo }, base.pesoInicial, b.motivoFecha))}</p>
+                      <p className="lab">{fechaCorta(b.motivoFecha, false)} · {b.motivoTitulo.trim()}</p>
+                    </>}
+                  </div>
+                  <div className="relative pt-6 text-right">
+                    <span className="absolute right-0 top-0 h-4 w-4 rounded-full border-2 border-ink bg-lime" />
+                    <p className="num text-[28px] leading-none">{base.pesoMeta}</p><p className="lab">{fechaCorta(metas.fechaEstimada)}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <ul className="pt-2">
+              {[
+                ["Agua al día", `${(metas.aguaMl / 1000).toFixed(1)} L`],
+                [perder ? "Ritmo al inicio" : "Ritmo", `${perder ? "−" : "+"}${Math.abs(metas.kgSemana).toFixed(2)} kg/sem`],
+                ["Hábitos elegidos", String(b.habitos.length)],
+              ].map(([t, v]) => (
+                <li key={t} className="flex items-baseline justify-between border-b border-line py-2.5 last:border-b-0">
+                  <span>{t}</span><b className="num text-xl">{v}</b>
+                </li>
+              ))}
+            </ul>
+            {metas.limitadoPorMinimo && <p className="mt-2 text-xs text-ember">Ajustamos tus calorías al mínimo seguro. No bajamos de ahí.</p>}
+            <p className="mt-3 text-xs text-muted">Son estimaciones y no sustituyen a un profesional de la salud.</p>
+          </div>
+        );
+      })() : null,
     },
   ];
 
@@ -380,13 +404,13 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
   };
 
   return (
-    <motion.div className="mx-auto flex h-full max-w-md flex-col px-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+    <motion.div className="mx-auto flex h-full max-w-[560px] flex-col px-5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <div className="flex items-center justify-between pt-[max(env(safe-area-inset-top),1.25rem)]">
         <Logo className="text-2xl" />
-        <span className="text-sm tabular-nums text-muted">{paso + 1}/{pasos.length}</span>
+        <span className="lab">{paso + 1} de {pasos.length}</span>
       </div>
-      <div className="mt-3 h-1 overflow-hidden rounded-full bg-line">
-        <motion.div className="h-full bg-lime" animate={{ width: `${((paso + 1) / pasos.length) * 100}%` }} transition={{ ease }} />
+      <div className="mt-3.5 grid gap-1" style={{ gridTemplateColumns: `repeat(${pasos.length}, 1fr)` }}>
+        {pasos.map((p, i) => <i key={p.id} className={`h-[5px] rounded-[2px] transition-colors ${i <= paso ? "bg-ink dark:bg-lime" : "bg-track"}`} />)}
       </div>
 
       <form
@@ -401,7 +425,7 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
         <div className="flex-1 overflow-y-auto py-8">
           <AnimatePresence mode="wait">
             <motion.div key={paso} initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.3, ease }}>
-              <h1 className="font-display text-3xl font-bold leading-tight">{actual.titulo}</h1>
+              <h1 className="font-serif text-[clamp(32px,8.5vw,42px)] font-medium leading-[1.05] tracking-tight">{actual.titulo}</h1>
               {actual.sub && <p className="mt-2 text-muted">{actual.sub}</p>}
               <div className="mt-7">{actual.cuerpo}</div>
             </motion.div>
@@ -409,10 +433,10 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
         </div>
         <div className="flex gap-3 pb-[max(env(safe-area-inset-bottom),1.5rem)]">
           {paso > 0 && (
-            <button type="button" onClick={() => setPaso(paso - 1)} className="h-14 w-14 rounded-2xl border border-line text-xl text-muted" aria-label="Anterior">←</button>
+            <button type="button" onClick={() => setPaso(paso - 1)} className="h-[54px] w-[54px] rounded-[14px] border border-line text-xl text-muted" aria-label="Anterior">←</button>
           )}
-          <button type="submit" disabled={!actual.valido} className={`${btnPrimario} h-14 flex-1 text-lg`}>
-            {ultimo ? "Empezar con brío ⚡" : actual.id === "motivo" && !b.motivoTitulo.trim() ? "Saltar" : "Continuar"}
+          <button type="submit" disabled={!actual.valido} className={`${btnPrimario} h-[54px] flex-1`}>
+            {ultimo ? "Empezar con brío" : actual.id === "motivo" && !b.motivoTitulo.trim() ? "Saltar" : "Continuar"}
           </button>
         </div>
       </form>

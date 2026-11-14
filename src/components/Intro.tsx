@@ -31,11 +31,11 @@ const SIGNIFICADOS = ["pujanza", "espíritu", "valor", "resolución"];
 function Definicion() {
   return (
     <div className="w-full">
-      <motion.p className="text-sm font-medium uppercase tracking-[0.2em] text-lime" {...fadeUp(0)}>
+      <motion.p className="text-sm font-medium uppercase tracking-[0.2em] text-lime-ink" {...fadeUp(0)}>
         ¿Por qué Brío?
       </motion.p>
       <motion.div
-        className="mt-5 rounded-3xl border border-line bg-surface p-6"
+        className="mt-5 rounded-[20px] border border-line bg-surface p-6"
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.15, duration: 0.6, ease }}
@@ -69,7 +69,7 @@ function Definicion() {
         </motion.p>
       </motion.div>
       <motion.p className="mt-6 text-lg leading-relaxed text-ink/90" {...fadeUp(2.3)}>
-        Es la <span className="font-semibold text-lime">fuerza con la que haces las cosas</span>: con ganas, con decisión y sin rendirte.
+        Es la <span className="font-semibold text-lime-ink">fuerza con la que haces las cosas</span>: con ganas, con decisión y sin rendirte.
       </motion.p>
     </div>
   );
@@ -100,11 +100,11 @@ function Constancia() {
         </span>
       </motion.p>
       <motion.p className="mt-3 font-display text-5xl font-extrabold text-ink" {...fadeUp(1.2)}>
-        Es <span className="text-lime">constancia</span>.
+        Es <span className="text-lime-ink">constancia</span>.
       </motion.p>
 
       <motion.div
-        className="mt-10 flex items-center gap-4 rounded-3xl border border-line bg-surface p-5"
+        className="mt-10 flex items-center gap-4 rounded-[20px] border border-line bg-surface p-5"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1.5, duration: 0.6, ease }}
@@ -114,7 +114,7 @@ function Constancia() {
           animate={reduce ? undefined : { scale: [1, 1.15, 1], rotate: [0, -4, 4, 0] }}
           transition={{ delay: 1.8, duration: 1.2, repeat: Infinity, repeatDelay: 0.8 }}
         >
-          🔥
+          <svg viewBox="0 0 20 28" className="h-12 w-9"><path d="M4 26 C1 22 3 17 7 12 L15 2 C17 0 19.5 2 18.5 4 L12.5 20 C10.5 25 7 28 4 26 Z" fill="var(--lime)" className="stroke-ink dark:stroke-transparent" strokeWidth={1.2} /></svg>
         </motion.span>
         <div>
           <p className="font-display text-4xl font-extrabold tabular-nums">{dias}</p>
@@ -123,7 +123,7 @@ function Constancia() {
       </motion.div>
 
       <motion.p className="mt-6 text-lg leading-relaxed text-ink/90" {...fadeUp(3.2)}>
-        Cada comida registrada, cada serie, cada página leída y cada peso ahorrado <span className="font-semibold text-lime">le suma a tu brío</span>.
+        Cada comida registrada, cada serie, cada página leída y cada peso ahorrado <span className="font-semibold text-lime-ink">le suma a tu brío</span>.
       </motion.p>
     </div>
   );
@@ -131,20 +131,20 @@ function Constancia() {
 
 /* ---------- Paso 4: las formas de brío ---------- */
 const PILARES = [
-  { e: "🍳", t: "Brío para cuidarte", d: "Comer bien sin dejar de disfrutar" },
-  { e: "🏋️", t: "Brío físico", d: "La fuerza que construyes serie tras serie" },
-  { e: "✅", t: "Brío diario", d: "Lo pequeño que repites hasta que eres tú" },
-  { e: "🎯", t: "Brío para crecer", d: "Carrera, aprendizaje y dinero" },
-  { e: "🔥", t: "Tu nivel de brío", d: "Cuántos días seguidos lo has mantenido" },
+  { e: "01", t: "Brío para cuidarte", d: "Comer bien sin dejar de disfrutar" },
+  { e: "02", t: "Brío físico", d: "La fuerza que construyes serie tras serie" },
+  { e: "03", t: "Brío diario", d: "Lo pequeño que repites hasta que eres tú" },
+  { e: "04", t: "Brío para crecer", d: "Carrera, aprendizaje y dinero" },
+  { e: "05", t: "Tu nivel de brío", d: "Cuántos días seguidos lo has mantenido" },
 ];
 
 function Pilares() {
   return (
     <div className="w-full">
-      <motion.p className="text-sm font-medium uppercase tracking-[0.2em] text-lime" {...fadeUp(0)}>
+      <motion.p className="text-sm font-medium uppercase tracking-[0.2em] text-lime-ink" {...fadeUp(0)}>
         Todo lo que harás aquí
       </motion.p>
-      <motion.h2 className="mt-3 font-display text-3xl font-bold leading-tight" {...fadeUp(0.1)}>
+      <motion.h2 className="mt-3 font-serif text-4xl font-medium tracking-tight leading-tight" {...fadeUp(0.1)}>
         Cada sección es una forma de brío
       </motion.h2>
       <ul className="mt-6 space-y-2.5">
@@ -156,7 +156,7 @@ function Pilares() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.35 + i * 0.12, type: "spring", stiffness: 200, damping: 22 }}
           >
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-bg text-2xl">{p.e}</span>
+            <span className="num grid h-11 w-11 shrink-0 place-items-center rounded-[12px] bg-t-food text-lg">{p.e}</span>
             <div>
               <p className="font-semibold">{p.t}</p>
               <p className="text-sm text-muted">{p.d}</p>
@@ -174,7 +174,7 @@ function Manifiesto() {
     <div className="flex flex-col items-center text-center">
       <Logo className="text-7xl" animate />
       <motion.p className="mt-10 font-display text-2xl font-semibold leading-snug" {...fadeUp(1.1)}>
-        Brío es la energía que pones <span className="text-lime">todos los días</span> para convertirte en tu mejor versión.
+        Brío es la energía que pones <span className="text-lime-ink">todos los días</span> para convertirte en tu mejor versión.
       </motion.p>
       <motion.p className="mt-4 text-muted" {...fadeUp(1.5)}>
         Sin complicaciones ni muros de pago. Solo tú y tu constancia.
@@ -290,12 +290,12 @@ export default function Intro({ onDone }: { onDone: () => void }) {
         )}
         <motion.button
           onClick={() => ir(paso + 1)}
-          className="h-14 flex-1 rounded-2xl bg-lime font-display text-lg font-bold text-bg"
+          className="h-14 flex-1 rounded-2xl bg-lime font-serif text-xl font-medium text-on-lime"
           whileTap={{ scale: 0.97 }}
           animate={ultimo ? { boxShadow: ["0 0 0 0 rgba(198,244,50,0.5)", "0 0 0 14px rgba(198,244,50,0)"] } : { boxShadow: "0 0 0 0 rgba(198,244,50,0)" }}
           transition={ultimo ? { duration: 1.6, repeat: Infinity } : undefined}
         >
-          {ultimo ? "Empezar con brío ⚡" : "Continuar"}
+          {ultimo ? "Empezar con brío" : "Continuar"}
         </motion.button>
       </div>
     </motion.div>

@@ -5,14 +5,17 @@ import Intro from "./components/Intro";
 import Onboarding from "./components/Onboarding";
 import Hoy from "./components/Hoy";
 import Peso from "./components/Peso";
-import Despensa from "./components/Despensa";
+import Comida from "./components/Comida";
+import Entreno from "./components/Entreno";
+import { IcComida, IcEntreno, IcHoy, IcLuna, IcPerfil, IcProgreso, IcSol } from "./components/Iconos";
+import { useTema } from "./lib/tema";
 import Perfil from "./components/Perfil";
 import Cuenta from "./components/Cuenta";
 import Logo from "./components/Logo";
 import { nubeDisponible, supabase } from "./lib/supabase";
 import { iniciarSync, useSync } from "./lib/sync";
 import { calcularMetas } from "./lib/calc";
-import { pesoActual, useBrio } from "./lib/store";
+import { habitosDe, pesoActual, racha, useBrio } from "./lib/store";
 
 const KEY = "brio:intro-visto-v3";
 // limpia datos de versiones de prueba anteriores
@@ -23,10 +26,11 @@ const K_SIN_CUENTA = "brio:sin-cuenta";
 const sinCuenta = () => { try { return localStorage.getItem(K_SIN_CUENTA) === "1"; } catch { return false; } };
 
 const TABS = [
-  { id: "hoy", e: "☀️", t: "Hoy" },
-  { id: "peso", e: "⚖️", t: "Peso" },
-  { id: "despensa", e: "🧺", t: "Despensa" },
-  { id: "perfil", e: "👤", t: "Perfil" },
+  { id: "hoy", I: IcHoy, t: "Hoy" },
+  { id: "comida", I: IcComida, t: "Comida" },
+  { id: "entreno", I: IcEntreno, t: "Entreno" },
+  { id: "progreso", I: IcProgreso, t: "Progreso" },
+  { id: "perfil", I: IcPerfil, t: "Perfil" },
 ] as const;
 type Tab = (typeof TABS)[number]["id"];
 
@@ -44,6 +48,8 @@ export default function App() {
   const [omitio, setOmitio] = useState(sinCuenta());
   const [verCuenta, setVerCuenta] = useState(false);
   const estadoSync = useSync((s) => s.estado);
+  const dias = useBrio((s) => s.dias);
+  const { oscuro, alternar } = useTema();
 
   useEffect(() => {
     if (!nubeDisponible) return;
@@ -99,7 +105,7 @@ export default function App() {
             animate={{ scale: [0.9, 1.05, 1] }} transition={{ duration: 2.4 }} />
           <div className="flex flex-col items-center">
             <Logo className="text-[clamp(5rem,22vw,9rem)]" animate delay={0.15} />
-            <motion.p className="mt-6 font-display text-lg font-semibold text-ink/80" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.3 }}>
+            <motion.p className="mt-6 font-serif text-[clamp(20px,5vw,26px)] italic text-muted" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.3 }}>
               Ponle brío a tu vida.
             </motion.p>
           </div>
@@ -116,28 +122,55 @@ export default function App() {
         <Onboarding key="onb" inicial={perfil} onDone={(p) => { setPerfil(p); setEditando(false); setTab("hoy"); }} />
       )}
       {vista === "app" && perfil && metas && (
-        <motion.div key="app" className="min-h-full" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-          <main className="mx-auto max-w-md px-4 pb-28 pt-[max(env(safe-area-inset-top),1.25rem)]">
-            <AnimatePresence mode="wait">
-              <motion.div key={tab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.22 }}>
-                {tab === "hoy" && <Hoy perfil={perfil} metas={metas} />}
-                {tab === "peso" && <Peso perfil={perfil} metas={metas} actual={actual} />}
-                {tab === "despensa" && <Despensa />}
-                {tab === "perfil" && (
-                  <Perfil perfil={perfil} metas={metas} onEditar={() => setEditando(true)} onVerIntro={() => setIntro(true)}
-                    email={session?.user.email ?? null} estadoSync={estadoSync} onCrearCuenta={() => setVerCuenta(true)} />
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </main>
-          <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-bg/85 backdrop-blur-lg">
-            <ul className="mx-auto grid max-w-md grid-cols-4 px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2">
+        <motion.div key="app" className="min-h-full md:grid md:grid-cols-[232px_1fr]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          {/* Barra lateral (laptop) */}
+          <aside className="sticky top-0 hidden h-screen flex-col gap-1 border-r border-line px-4 py-6 md:flex">
+            <div className="px-3 pb-6"><Logo className="text-[30px]" /></div>
+            {TABS.map((t) => (
+              <button key={t.id} onClick={() => setTab(t.id)} aria-current={tab === t.id}
+                className={`flex items-center gap-3 rounded-[12px] border px-3 py-2.5 font-display text-[15px] font-semibold uppercase tracking-[0.1em] transition ${tab === t.id ? "border-line bg-surface text-ink [&_svg]:text-lime-ink" : "border-transparent text-muted hover:text-ink"}`}>
+                <t.I />{t.t}
+              </button>
+            ))}
+            <p className="mt-auto px-3 font-serif text-sm italic text-muted">Ponle brío a tu vida.</p>
+          </aside>
+
+          <div className="min-w-0">
+            <main className="mx-auto max-w-[1100px] px-4 pb-28 pt-[max(env(safe-area-inset-top),1rem)] md:px-10 md:pb-12 md:pt-7">
+              {/* Barra superior */}
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <span className="md:hidden"><Logo className="text-[30px]" /></span>
+                <span className="rounded-full bg-t-streak px-3 py-1.5 font-display text-sm font-semibold uppercase tracking-[0.08em] text-ink md:order-first">
+                  Racha · {racha(dias, metas.aguaMl, habitosDe(perfil))} días
+                </span>
+                <button onClick={alternar} aria-label={oscuro ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+                  className="grid h-10 w-10 place-items-center rounded-full border border-line bg-surface text-ink">
+                  {oscuro ? <IcSol /> : <IcLuna />}
+                </button>
+              </div>
+              <AnimatePresence mode="wait">
+                <motion.div key={tab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.22 }}>
+                  {tab === "hoy" && <Hoy perfil={perfil} metas={metas} />}
+                  {tab === "comida" && <Comida />}
+                  {tab === "entreno" && <Entreno />}
+                  {tab === "progreso" && <Peso perfil={perfil} metas={metas} actual={actual} />}
+                  {tab === "perfil" && (
+                    <Perfil perfil={perfil} metas={metas} onEditar={() => setEditando(true)} onVerIntro={() => setIntro(true)}
+                      email={session?.user.email ?? null} estadoSync={estadoSync} onCrearCuenta={() => setVerCuenta(true)} />
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </main>
+          </div>
+
+          {/* Barra inferior (celular) */}
+          <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-bg/90 backdrop-blur-lg md:hidden">
+            <ul className="mx-auto grid max-w-md grid-cols-5 px-1 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2">
               {TABS.map((t) => (
                 <li key={t.id}>
-                  <button onClick={() => setTab(t.id)} className="relative flex w-full flex-col items-center gap-0.5 py-1.5" aria-current={tab === t.id}>
-                    {tab === t.id && <motion.span layoutId="tab" className="absolute inset-x-3 inset-y-0 rounded-2xl bg-lime/10" />}
-                    <span className="relative text-xl">{t.e}</span>
-                    <span className={`relative text-[11px] font-medium ${tab === t.id ? "text-lime" : "text-muted"}`}>{t.t}</span>
+                  <button onClick={() => setTab(t.id)} aria-current={tab === t.id}
+                    className={`flex w-full flex-col items-center gap-1 py-1 font-display text-[11px] font-semibold uppercase tracking-[0.12em] ${tab === t.id ? "text-ink [&_svg]:text-lime-ink" : "text-muted"}`}>
+                    <t.I />{t.t}
                   </button>
                 </li>
               ))}

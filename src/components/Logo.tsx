@@ -21,7 +21,7 @@ export default function Logo({ className = "text-7xl", animate = false, delay = 
 
   return (
     <span
-      className={`relative inline-flex items-baseline font-display font-extrabold leading-none tracking-tight select-none ${className}`}
+      className={`relative inline-flex items-baseline font-logo font-extrabold leading-none tracking-tight select-none ${className}`}
       aria-label="brío"
       role="img"
     >
@@ -46,14 +46,17 @@ export default function Logo({ className = "text-7xl", animate = false, delay = 
               {/* chispa = tilde */}
               <motion.svg
                 viewBox="0 0 20 28"
-                className="relative h-full w-full drop-shadow-[0_0_10px_rgba(198,244,50,0.7)]"
+                className="relative h-full w-full dark:drop-shadow-[0_0_10px_rgba(198,244,50,0.7)]"
                 initial={anim ? { y: "-1.2em", x: "0.6em", opacity: 0, rotate: -25, scale: 0.4 } : false}
                 animate={{ y: 0, x: 0, opacity: 1, rotate: 0, scale: 1 }}
                 transition={{ delay: chispaDelay, type: "spring", stiffness: 380, damping: 14 }}
               >
                 <path
                   d="M4 26 C1 22 3 17 7 12 L15 2 C17 0 19.5 2 18.5 4 L12.5 20 C10.5 25 7 28 4 26 Z"
-                  fill="var(--color-lime)"
+                  fill="var(--lime)"
+                  className="stroke-ink dark:stroke-transparent"
+                  strokeWidth={1.4}
+                  paintOrder="stroke"
                 />
               </motion.svg>
               {/* estallido */}

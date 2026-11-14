@@ -3,20 +3,20 @@ import { AnimatePresence, motion } from "motion/react";
 import { useBrio } from "../lib/store";
 import { Tarjeta, btnPrimario, inputCls } from "./ui";
 
-const SUGERENCIAS: { n: string; u: string; e: string }[] = [
-  { n: "Huevo", u: "pzas", e: "🥚" },
-  { n: "Atún en lata", u: "latas", e: "🐟" },
-  { n: "Pan integral", u: "rebanadas", e: "🍞" },
-  { n: "Tostadas", u: "pzas", e: "🫓" },
-  { n: "Pechuga de pollo", u: "g", e: "🍗" },
-  { n: "Aguacate", u: "pzas", e: "🥑" },
-  { n: "Jitomate", u: "pzas", e: "🍅" },
-  { n: "Papa", u: "pzas", e: "🥔" },
-  { n: "Avena", u: "g", e: "🥣" },
-  { n: "Café", u: "frasco", e: "☕" },
+const SUGERENCIAS: { n: string; u: string }[] = [
+  { n: "Huevo", u: "pzas" },
+  { n: "Atún en lata", u: "latas" },
+  { n: "Pan integral", u: "rebanadas" },
+  { n: "Tostadas", u: "pzas" },
+  { n: "Pechuga de pollo", u: "g" },
+  { n: "Aguacate", u: "pzas" },
+  { n: "Jitomate", u: "pzas" },
+  { n: "Papa", u: "pzas" },
+  { n: "Avena", u: "g" },
+  { n: "Café", u: "frasco" },
 ];
 
-const emojiDe = (nombre: string) => SUGERENCIAS.find((s) => nombre.toLowerCase().includes(s.n.toLowerCase().split(" ")[0]))?.e ?? "🛒";
+const inicial = (nombre: string) => nombre.trim().charAt(0).toUpperCase();
 const paso = (u: string) => (u === "g" ? 50 : 1);
 
 export default function Despensa() {
@@ -35,7 +35,7 @@ export default function Despensa() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="font-display text-3xl font-bold">Despensa</h1>
+        <h2 className="font-serif text-2xl font-medium">Despensa</h2>
         <p className="mt-1 text-muted">Lo que tienes en casa. Brío lo usa primero al armar tu menú y tu lista del súper.</p>
       </div>
 
@@ -56,20 +56,20 @@ export default function Despensa() {
         <div className="mt-4 flex flex-wrap gap-2">
           {SUGERENCIAS.filter((s) => !despensa.some((i) => i.nombre.toLowerCase() === s.n.toLowerCase())).map((s) => (
             <button key={s.n} onClick={() => setF({ nombre: s.n, cantidad: "", unidad: s.u })} className="rounded-full border border-line bg-bg px-3 py-1.5 text-sm hover:border-lime">
-              {s.e} {s.n}
+              {s.n}
             </button>
           ))}
         </div>
       </Tarjeta>
 
       <Tarjeta delay={0.05}>
-        <h2 className="font-display text-lg font-bold">En casa <span className="text-sm font-normal text-muted">· {conStock.length}</span></h2>
+        <h2 className="font-serif text-xl font-medium">En casa <span className="text-sm font-normal text-muted">· {conStock.length}</span></h2>
         <ul className="mt-3 space-y-2">
           <AnimatePresence initial={false}>
             {conStock.map((i) => (
               <motion.li key={i.id} layout initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
                 className="flex items-center gap-3 rounded-2xl bg-bg px-3 py-2.5">
-                <span className="text-xl">{emojiDe(i.nombre)}</span>
+                <span className="num grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-t-food text-lg">{inicial(i.nombre)}</span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">{i.nombre}</p>
                   <p className="text-xs text-muted">{i.cantidad} {i.unidad}</p>
@@ -87,13 +87,13 @@ export default function Despensa() {
 
       {agotados.length > 0 && (
         <Tarjeta delay={0.1}>
-          <h2 className="font-display text-lg font-bold">🛒 Se acabó · para tu lista</h2>
+          <h2 className="font-serif text-xl font-medium">Se acabó · para tu lista</h2>
           <ul className="mt-3 space-y-2">
             {agotados.map((i) => (
               <li key={i.id} className="flex items-center justify-between rounded-2xl bg-bg px-3 py-2.5">
                 <span className="text-muted line-through">{i.nombre}</span>
                 <span className="flex gap-3 text-sm">
-                  <button onClick={() => cambiarCantidad(i.id, paso(i.unidad))} className="text-lime">Lo compré</button>
+                  <button onClick={() => cambiarCantidad(i.id, paso(i.unidad))} className="text-lime-ink">Lo compré</button>
                   <button onClick={() => removeItem(i.id)} className="text-muted hover:text-ember">Quitar</button>
                 </span>
               </li>

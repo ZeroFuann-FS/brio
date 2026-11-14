@@ -34,10 +34,10 @@ function mensaje(medidas: RegistroMedidas[], pesos: Peso[]) {
   const dC = b.cintura! - a.cintura!;
   const pa = pesoCerca(pesos, a.fecha), pb = pesoCerca(pesos, b.fecha);
   const dP = pa != null && pb != null ? pb - pa : 0;
-  if (dC <= -0.5 && Math.abs(dP) < 0.5) return { ok: true, t: `Tu peso casi no se movió, pero tu cintura bajó ${Math.abs(dC).toFixed(1)} cm. Eso es grasa que se fue y músculo que se queda 💪` };
-  if (dC <= -0.5) return { ok: true, t: `Bajaste ${Math.abs(dP).toFixed(1)} kg y ${Math.abs(dC).toFixed(1)} cm de cintura. ¡Vas perdiendo grasa! 🔥` };
+  if (dC <= -0.5 && Math.abs(dP) < 0.5) return { ok: true, t: `Tu peso casi no se movió, pero tu cintura bajó ${Math.abs(dC).toFixed(1)} cm. Eso es grasa que se fue y músculo que se queda ` };
+  if (dC <= -0.5) return { ok: true, t: `Bajaste ${Math.abs(dP).toFixed(1)} kg y ${Math.abs(dC).toFixed(1)} cm de cintura. ¡Vas perdiendo grasa!` };
   if (dC >= 0.5) return { ok: false, t: `Tu cintura subió ${dC.toFixed(1)} cm desde el ${fechaCorta(a.fecha, false)}. Revisa tus comidas de estas semanas: se puede ajustar.` };
-  return { ok: true, t: "Tu cintura se mantiene estable. La constancia hace el resto ⚡" };
+  return { ok: true, t: "Tu cintura se mantiene estable. La constancia hace el resto." };
 }
 
 export default function Medidas({ perfil, pesos }: { perfil: Perfil; pesos: Peso[] }) {
@@ -70,8 +70,8 @@ export default function Medidas({ perfil, pesos }: { perfil: Perfil; pesos: Peso
     <>
       <Tarjeta delay={0.12}>
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-lg font-bold">📏 Medidas</h2>
-          {medidas.length > 0 && <button onClick={abrir} className="text-sm text-lime hover:underline">+ Medirme</button>}
+          <h2 className="font-serif text-xl font-medium">Medidas</h2>
+          {medidas.length > 0 && <button onClick={abrir} className="text-sm text-lime-ink hover:underline">+ Medirme</button>}
         </div>
 
         {!medidas.length ? (
@@ -81,15 +81,15 @@ export default function Medidas({ perfil, pesos }: { perfil: Perfil; pesos: Peso
               Con una cinta métrica y 2 minutos cada 2 semanas basta.
             </p>
             <div className="mt-4 grid grid-cols-2 gap-2">
-              <button onClick={() => setGuia(true)} className={btnSecundario}>¿Cómo medirme?</button>
-              <button onClick={abrir} className={btnPrimario}>Agregar medidas</button>
+              <button onClick={() => setGuia(true)} className={`${btnSecundario} whitespace-nowrap`}>¿Cómo medirme?</button>
+              <button onClick={abrir} className={`${btnPrimario} !text-[15px] !tracking-[0.06em]`}>Agregar</button>
             </div>
           </div>
         ) : (
           <div className="mt-3 space-y-3">
             {toca && (
               <button onClick={abrir} className="w-full rounded-2xl bg-lime/10 px-4 py-2.5 text-left text-sm">
-                ⏰ Ya pasaron {diasEntre(ultimaFecha!, hoyISO())} días desde tu última medición. <b className="text-lime">Toca medirte</b>
+                Ya pasaron {diasEntre(ultimaFecha!, hoyISO())} días desde tu última medición. <b className="text-lime-ink">Toca medirte</b>
               </button>
             )}
 
@@ -97,7 +97,7 @@ export default function Medidas({ perfil, pesos }: { perfil: Perfil; pesos: Peso
               <div className="rounded-2xl bg-bg p-4">
                 <div className="flex items-baseline justify-between">
                   <p className="text-sm text-muted">Cintura ÷ estatura</p>
-                  <p className="font-display text-xl font-bold">{ratio.r.toFixed(2)} <span className={`text-sm font-medium ${ratio.ok ? "text-lime" : "text-ember"}`}>{ratio.t}</span></p>
+                  <p className="font-serif text-xl font-medium">{ratio.r.toFixed(2)} <span className={`text-sm font-medium ${ratio.ok ? "text-lime-ink" : "text-ember"}`}>{ratio.t}</span></p>
                 </div>
                 <div className="relative mt-3 h-2 rounded-full" style={{ background: "linear-gradient(90deg,#38bdf8 0%,#38bdf8 25%,#c6f432 25%,#c6f432 50%,#fbbf24 50%,#fbbf24 75%,#ff8a3d 75%)" }}>
                   <motion.span className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-bg bg-ink"
@@ -131,7 +131,7 @@ export default function Medidas({ perfil, pesos }: { perfil: Perfil; pesos: Peso
                     <span className="ml-auto text-right">
                       <b className="tabular-nums">{serie[serie.length - 1]} cm</b>
                       {serie.length > 1 && Math.abs(dif) >= 0.1 && (
-                        <span className={`block text-xs ${dif < 0 ? "text-lime" : "text-muted"}`}>{dif > 0 ? "+" : "−"}{Math.abs(dif).toFixed(1)} desde el inicio</span>
+                        <span className={`block text-xs ${dif < 0 ? "text-lime-ink" : "text-muted"}`}>{dif > 0 ? "+" : "−"}{Math.abs(dif).toFixed(1)} desde el inicio</span>
                       )}
                     </span>
                   </li>
@@ -163,7 +163,7 @@ export default function Medidas({ perfil, pesos }: { perfil: Perfil; pesos: Peso
           {MEDIDAS.map((x) => (
             <label key={x.id} className="block">
               <span className="flex items-baseline justify-between text-sm">
-                <span>{x.t}{x.id === "cintura" && <span className="ml-1 text-lime">· la más importante</span>}</span>
+                <span>{x.t}{x.id === "cintura" && <span className="ml-1 text-lime-ink">· la más importante</span>}</span>
                 {ultimoValor(medidas, x.id) != null && <span className="text-xs text-muted">antes: {ultimoValor(medidas, x.id)} cm</span>}
               </span>
               <span className="mb-1.5 block text-xs text-muted">{x.como}</span>
@@ -179,11 +179,11 @@ export default function Medidas({ perfil, pesos }: { perfil: Perfil; pesos: Peso
 
       <Hoja abierta={guia} onClose={() => setGuia(false)} titulo="Cómo medirte">
         <ul className="space-y-3 text-sm">
-          <li>🧵 Usa una <b>cinta métrica de costura</b> (las venden en papelerías y mercerías).</li>
-          <li>🌅 Mídete <b>en la mañana</b>, en ayunas y sin ropa ajustada.</li>
-          <li>😮‍💨 Para la cintura: <b>respira normal y mide al final de exhalar</b>, sin meter la panza.</li>
-          <li>📐 La cinta debe ir <b>recta y pegada</b> a la piel, sin apretar.</li>
-          <li>📅 Repite <b>cada 2 semanas</b>, siempre igual: mismo lugar, misma hora.</li>
+          <li>Usa una <b>cinta métrica de costura</b> (las venden en papelerías y mercerías).</li>
+          <li>Mídete <b>en la mañana</b>, en ayunas y sin ropa ajustada.</li>
+          <li>Para la cintura: <b>respira normal y mide al final de exhalar</b>, sin meter la panza.</li>
+          <li>La cinta debe ir <b>recta y pegada</b> a la piel, sin apretar.</li>
+          <li>Repite <b>cada 2 semanas</b>, siempre igual: mismo lugar, misma hora.</li>
         </ul>
         <div className="mt-4 space-y-2">
           {MEDIDAS.map((x) => (

@@ -1,23 +1,11 @@
-import { useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
-import { diasEntre, fechaCorta, hoyISO, sumarDias, type Metas, type Perfil } from "../lib/calc";
-import { frecuentes, habitosDe, minBrio, puntosDia, racha, useBrio, type TipoComida } from "../lib/store";
-import { Anillo, Barra, Hoja, Numero, Tarjeta, Toast, btnPrimario, btnSecundario, inputCls, useToast } from "./ui";
+import { motion } from "motion/react";
+import { diasEntre, hoyISO, type Metas, type Perfil } from "../lib/calc";
+import { habitosDe, minBrio, puntosDia, useBrio } from "../lib/store";
+import { Barra, Numero, Segmentos, Tarjeta, Toast, ease, useToast } from "./ui";
+import ComidasDia from "./ComidasDia";
 
-const TIPOS: { id: TipoComida; e: string; t: string }[] = [
-  { id: "desayuno", e: "🍳", t: "Desayuno" },
-  { id: "comida", e: "🍽️", t: "Comida" },
-  { id: "cena", e: "🌙", t: "Cena" },
-  { id: "snack", e: "🍎", t: "Snack" },
-];
-
-function tipoPorHora(): TipoComida {
-  const h = new Date().getHours();
-  if (h < 11) return "desayuno";
-  if (h < 17) return "comida";
-  if (h < 22) return "cena";
-  return "snack";
-}
+const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
 
 function saludo() {
   const h = new Date().getHours();
@@ -26,223 +14,127 @@ function saludo() {
 
 export default function Hoy({ perfil, metas }: { perfil: Perfil; metas: Metas }) {
   const hoy = hoyISO();
-  const ayer = sumarDias(hoy, -1);
   const dias = useBrio((s) => s.dias);
-  const { addComida, removeComida, copiarDia, addAgua, toggleHabito } = useBrio();
+  const { addAgua, toggleHabito } = useBrio();
   const d = dias[hoy] ?? { comidas: [], aguaMl: 0, habitos: {} };
   const [toast, setToast] = useToast();
-  const [hoja, setHoja] = useState(false);
-  const [form, setForm] = useState({ nombre: "", kcal: "", proteina: "", tipo: tipoPorHora() });
 
-  const kcal = d.comidas.reduce((a, c) => a + c.kcal, 0);
-  const prot = d.comidas.reduce((a, c) => a + c.proteina, 0);
+  const suma = (k: "kcal" | "proteina" | "carbos" | "grasa") => d.comidas.reduce((a, c) => a + (c[k] ?? 0), 0);
+  const kcal = suma("kcal");
   const restantes = metas.kcal - kcal;
   const habitos = habitosDe(perfil);
-  const MIN_BRIO = minBrio(habitos.length);
-  const totalPuntos = habitos.length + 1;
+  const MIN = minBrio(habitos.length);
   const puntos = puntosDia(d, metas.aguaMl, habitos);
-  const nRacha = racha(dias, metas.aguaMl, habitos);
-  const recientes = frecuentes(dias);
-  const comidasAyer = dias[ayer]?.comidas.length ?? 0;
+  const vasos = Math.round(metas.aguaMl / 250);
+  const llenos = Math.floor(d.aguaMl / 250);
   const faltaMotivo = perfil.motivo ? diasEntre(hoy, perfil.motivo.fecha) : null;
-
-  const guardar = () => {
-    const k = Number(form.kcal), p = Number(form.proteina || 0);
-    if (!form.nombre.trim() || !(k > 0)) return;
-    addComida(hoy, { nombre: form.nombre.trim(), kcal: Math.round(k), proteina: Math.round(p), tipo: form.tipo });
-    setForm({ nombre: "", kcal: "", proteina: "", tipo: tipoPorHora() });
-    setHoja(false);
-    setToast("Registrado ✅");
-  };
+  const fecha = new Date();
 
   const marcarHabito = (id: string) => {
-    const antes = puntosDia(d, metas.aguaMl, habitos);
     toggleHabito(hoy, id);
-    if (!d.habitos[id] && antes + 1 === MIN_BRIO) setToast("🔥 ¡Día con brío desbloqueado!");
+    if (!d.habitos[id] && puntos + 1 === MIN) setToast("¡Día con brío! Tu racha sigue");
   };
 
-  const sumarAgua = (ml: number) => {
+  /** Tocar el vaso i deja el agua en (i+1) vasos; tocar el último lleno lo vacía. */
+  const tocarVaso = (i: number) => {
+    const objetivo = i + 1 === llenos ? i : i + 1;
+    const ml = objetivo * 250 - d.aguaMl;
+    if (!ml) return;
     addAgua(hoy, ml);
-    if (d.aguaMl < metas.aguaMl && d.aguaMl + ml >= metas.aguaMl) setToast(puntosDia(d, metas.aguaMl, habitos) + 1 === MIN_BRIO ? "🔥 ¡Día con brío desbloqueado!" : "💧 ¡Meta de agua cumplida!");
+    if (d.aguaMl < metas.aguaMl && d.aguaMl + ml >= metas.aguaMl) setToast(puntos + 1 === MIN ? "¡Día con brío! Tu racha sigue" : "Meta de agua cumplida");
   };
+
+  const macros = [
+    { t: "Proteína", v: suma("proteina"), m: metas.proteina },
+    { t: "Carbos", v: suma("carbos"), m: metas.carbos },
+    { t: "Grasa", v: suma("grasa"), m: metas.grasa },
+  ];
 
   return (
-    <div className="space-y-4">
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm text-muted">{saludo()}, {fechaCorta(hoy, false)}</p>
-          <h1 className="font-display text-3xl font-bold">{perfil.nombre} 👋</h1>
-        </div>
-        <motion.div
-          className="flex items-center gap-1.5 rounded-full bg-ember/15 px-3 py-1.5 font-display font-bold text-ember"
-          key={nRacha}
-          initial={{ scale: 0.8 }}
-          animate={{ scale: 1 }}
-          title="Días seguidos con brío"
-        >
-          🔥 {nRacha}
-        </motion.div>
-      </header>
+    <div>
+      <motion.div className="mt-1" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ease }}>
+        <h1 className="font-serif text-[clamp(30px,8vw,44px)] font-medium leading-[1.05] tracking-tight">
+          {saludo()}, <em className="font-normal">{perfil.nombre}.</em>
+        </h1>
+        <p className="mt-1.5 text-muted first-letter:uppercase">{DIAS[fecha.getDay()]} {fecha.getDate()} de {MESES[fecha.getMonth()]}</p>
+      </motion.div>
 
-      {perfil.motivo && faltaMotivo !== null && faltaMotivo >= 0 && (
-        <Tarjeta className="flex items-center justify-between !py-3.5">
-          <p className="text-sm"><span className="text-muted">Faltan</span> <b className="font-display text-lg text-lime">{faltaMotivo}</b> <span className="text-muted">días para tu</span> <b>{perfil.motivo.titulo}</b></p>
+      <div className="mt-5 grid gap-3 md:grid-cols-12 md:gap-4">
+        {/* Comida: número editorial + barra deportiva */}
+        <Tarjeta tono="food" className="md:col-span-7">
+          <div className="flex justify-between"><span className="lab">{restantes >= 0 ? "Te quedan hoy" : "Te pasaste por"}</span><span className="lab">Meta {metas.kcal.toLocaleString("es-MX")}</span></div>
+          <p className="num mt-2 text-[clamp(76px,22vw,120px)] leading-[0.85]">
+            <span className={restantes >= 0 ? "resalta" : "text-ember"}><Numero valor={Math.abs(restantes)} /></span>
+            <span className="ml-1.5 font-serif text-xl font-normal italic text-muted">kcal</span>
+          </p>
+          <div className="mt-4"><Segmentos progreso={kcal / metas.kcal} /></div>
+          <div className="mt-2 flex justify-between"><span className="lab">{kcal.toLocaleString("es-MX")} comido</span><span className="lab">{Math.round((kcal / metas.kcal) * 100)} %</span></div>
+          <div className="mt-4 grid grid-cols-3 border-t border-line">
+            {macros.map((m, i) => (
+              <div key={m.t} className={`pt-3 ${i ? "border-l border-line pl-3" : ""} ${i < 2 ? "pr-3" : ""}`}>
+                <p className="lab">{m.t}</p>
+                <p className="num text-[28px] leading-tight">{m.v}<small className="text-[15px] font-medium text-muted"> /{m.m} g</small></p>
+                <div className="mt-2"><Barra progreso={m.v / m.m} /></div>
+              </div>
+            ))}
+          </div>
         </Tarjeta>
-      )}
 
-      <Tarjeta delay={0.05}>
-        <div className="flex items-center gap-5">
-          <Anillo progreso={kcal / metas.kcal} size={140}>
-            <div>
-              <p className="font-display text-3xl font-extrabold leading-none"><Numero valor={Math.abs(restantes)} /></p>
-              <p className="mt-1 text-xs text-muted">{restantes >= 0 ? "kcal restantes" : "kcal de más"}</p>
-            </div>
-          </Anillo>
-          <div className="flex-1 space-y-3">
-            <div>
-              <div className="mb-1 flex justify-between text-sm"><span>🔥 Comido</span><span className="tabular-nums text-muted">{kcal}/{metas.kcal}</span></div>
-              <Barra progreso={kcal / metas.kcal} />
-            </div>
-            <div>
-              <div className="mb-1 flex justify-between text-sm"><span>🥩 Proteína</span><span className="tabular-nums text-muted">{prot}/{metas.proteina} g</span></div>
-              <Barra progreso={prot / metas.proteina} color="bg-sky-400" />
-            </div>
+        {/* Agua */}
+        <Tarjeta tono="water" delay={0.05} className="md:col-span-5">
+          <div className="flex items-baseline justify-between">
+            <h2 className="font-serif text-xl font-medium">Agua</h2>
+            <span className="num text-[34px]">{(d.aguaMl / 1000).toFixed(1)}<small className="text-base font-medium text-muted"> / {(metas.aguaMl / 1000).toFixed(1)} L</small></span>
           </div>
-        </div>
-        {prot < metas.proteina * 0.5 && new Date().getHours() >= 15 && (
-          <p className="mt-4 rounded-2xl bg-sky-400/10 px-4 py-2.5 text-sm">💡 Vas bajo en proteína. Una lata de atún te da ~25 g.</p>
-        )}
-      </Tarjeta>
-
-      <Tarjeta delay={0.1}>
-        <div className="flex items-center justify-between">
-          <h2 className="font-display text-lg font-bold">Comidas</h2>
-          {comidasAyer > 0 && (
-            <button
-              onClick={() => { const n = copiarDia(ayer, hoy); setToast(`Copiadas ${n} comidas de ayer 📋`); }}
-              className="text-sm text-lime hover:underline"
-            >
-              📋 Copiar ayer
-            </button>
-          )}
-        </div>
-        <ul className="mt-3 space-y-2">
-          <AnimatePresence initial={false}>
-            {d.comidas.map((c) => (
-              <motion.li
-                key={c.id}
-                layout
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="flex items-center gap-3 overflow-hidden rounded-2xl bg-bg px-3 py-2.5"
-              >
-                <span className="text-xl">{TIPOS.find((t) => t.id === c.tipo)?.e}</span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{c.nombre}</p>
-                  <p className="text-xs text-muted">{c.kcal} kcal · {c.proteina} g proteína</p>
-                </div>
-                <button onClick={() => removeComida(hoy, c.id)} className="px-2 text-muted hover:text-ember" aria-label={`Borrar ${c.nombre}`}>✕</button>
-              </motion.li>
-            ))}
-          </AnimatePresence>
-          {!d.comidas.length && <p className="py-2 text-sm text-muted">Aún no registras nada hoy.</p>}
-        </ul>
-        <button onClick={() => setHoja(true)} className={`${btnPrimario} mt-3 w-full`}>+ Registrar comida</button>
-      </Tarjeta>
-
-      <Tarjeta delay={0.15}>
-        <div className="flex items-center justify-between">
-          <h2 className="font-display text-lg font-bold">💧 Agua</h2>
-          <span className="text-sm tabular-nums text-muted">{(d.aguaMl / 1000).toFixed(2)} / {(metas.aguaMl / 1000).toFixed(1)} L</span>
-        </div>
-        <div className="mt-3 flex gap-1">
-          {Array.from({ length: Math.round(metas.aguaMl / 250) }, (_, i) => (
-            <motion.div
-              key={i}
-              className="h-8 flex-1 rounded-md"
-              animate={{ backgroundColor: (i + 1) * 250 <= d.aguaMl ? "#38bdf8" : "#26292e" }}
-              transition={{ delay: i * 0.02 }}
-            />
-          ))}
-        </div>
-        <div className="mt-3 grid grid-cols-3 gap-2">
-          <button onClick={() => sumarAgua(250)} className={btnSecundario}>+ Vaso</button>
-          <button onClick={() => sumarAgua(500)} className={btnSecundario}>+ ½ L</button>
-          <button onClick={() => sumarAgua(-250)} className={`${btnSecundario} text-muted`}>− Vaso</button>
-        </div>
-      </Tarjeta>
-
-      <Tarjeta delay={0.2}>
-        <div className="flex items-center justify-between">
-          <h2 className="font-display text-lg font-bold">Hábitos</h2>
-          <span className={`text-sm ${puntos >= MIN_BRIO ? "text-lime" : "text-muted"}`}>{puntos}/{totalPuntos} {puntos >= MIN_BRIO ? "· día con brío 🔥" : `· ${MIN_BRIO} para tu racha`}</span>
-        </div>
-        <ul className="mt-3 space-y-2">
-          {habitos.map((h) => {
-            const ok = !!d.habitos[h.id];
-            return (
-              <li key={h.id}>
-                <motion.button
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => marcarHabito(h.id)}
-                  className={`flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition ${ok ? "border-lime/50 bg-lime/10" : "border-line bg-bg"}`}
-                >
-                  <span className="text-xl">{h.e}</span>
-                  <span className={`flex-1 ${ok ? "" : "text-ink/90"}`}>{h.t}</span>
-                  <motion.span
-                    className={`grid h-6 w-6 place-items-center rounded-full border text-sm font-bold ${ok ? "border-lime bg-lime text-bg" : "border-line"}`}
-                    animate={ok ? { scale: [1, 1.3, 1] } : { scale: 1 }}
-                  >
-                    {ok ? "✓" : ""}
-                  </motion.span>
-                </motion.button>
-              </li>
-            );
-          })}
-        </ul>
-      </Tarjeta>
-
-      <Hoja abierta={hoja} onClose={() => setHoja(false)} titulo="Registrar comida">
-        {recientes.length > 0 && (
-          <div className="mb-4">
-            <p className="mb-2 text-sm text-muted">Recientes · un toque y listo</p>
-            <div className="flex flex-wrap gap-2">
-              {recientes.map((r) => (
-                <button
-                  key={r.nombre}
-                  onClick={() => { addComida(hoy, { ...r, tipo: tipoPorHora() }); setHoja(false); setToast(`${r.nombre} ✅`); }}
-                  className="rounded-full border border-line bg-bg px-3 py-1.5 text-sm hover:border-lime"
-                >
-                  {r.nombre} <span className="text-muted">· {r.kcal}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-        <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); guardar(); }}>
-          <div className="grid grid-cols-4 gap-2">
-            {TIPOS.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setForm((f) => ({ ...f, tipo: t.id }))}
-                className={`rounded-xl border py-2 text-xs transition ${form.tipo === t.id ? "border-lime bg-lime/10" : "border-line"}`}
-              >
-                <span className="block text-lg">{t.e}</span>{t.t}
-              </button>
+          <div className="mt-3.5 grid grid-cols-6 gap-1.5">
+            {Array.from({ length: vasos }, (_, i) => (
+              <motion.button
+                key={i}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => tocarVaso(i)}
+                aria-label={`${i + 1} vasos`}
+                className={`h-[30px] rounded-[5px_5px_9px_9px] border transition-colors ${i < llenos ? "border-water bg-water" : "border-line-strong/60"}`}
+              />
             ))}
           </div>
-          <input className={inputCls} placeholder="¿Qué comiste? Ej. 3 huevos a la mexicana" value={form.nombre} onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))} maxLength={60} />
-          <div className="grid grid-cols-2 gap-2">
-            <input className={inputCls} inputMode="numeric" placeholder="kcal" value={form.kcal} onChange={(e) => setForm((f) => ({ ...f, kcal: e.target.value.replace(/\D/g, "") }))} />
-            <input className={inputCls} inputMode="numeric" placeholder="Proteína (g)" value={form.proteina} onChange={(e) => setForm((f) => ({ ...f, proteina: e.target.value.replace(/\D/g, "") }))} />
-          </div>
-          <p className="text-xs text-muted">Pronto: escribe "2 tacos de bistec" y Brío calcula solo las kcal.</p>
-          <button type="submit" disabled={!form.nombre.trim() || !form.kcal} className={`${btnPrimario} w-full`}>Guardar</button>
-        </form>
-      </Hoja>
+          <p className="lab mt-3">Toca un vaso para sumar 250 ml</p>
+        </Tarjeta>
 
+        <ComidasDia delay={0.1} className="md:col-span-7" />
+
+        {/* Hábitos */}
+        <Tarjeta tono="habit" delay={0.15} className="md:col-span-5">
+          <div className="flex items-baseline justify-between">
+            <h2 className="font-serif text-xl font-medium">Hábitos</h2>
+            <span className="lab">{puntos} de {habitos.length + 1}</span>
+          </div>
+          <ul className="mt-2">
+            {habitos.map((h) => {
+              const ok = !!d.habitos[h.id];
+              return (
+                <li key={h.id} className="border-b border-line last:border-b-0">
+                  <button onClick={() => marcarHabito(h.id)} className="flex w-full items-center gap-3 py-2.5 text-left">
+                    <motion.span
+                      className={`grid h-[22px] w-[22px] shrink-0 place-items-center rounded-[7px] border-[1.5px] text-[13px] font-extrabold ${ok ? "border-lime bg-lime text-on-lime" : "border-line-strong"}`}
+                      animate={ok ? { scale: [1, 1.25, 1] } : { scale: 1 }}
+                    >
+                      {ok ? "✓" : ""}
+                    </motion.span>
+                    <span className={ok ? "" : "text-ink/90"}>{h.t}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="lab mt-2.5">{puntos >= MIN ? "Día con brío · tu racha sigue" : `Cumple ${MIN - puntos} más para sumar a tu racha`}</p>
+        </Tarjeta>
+
+        {perfil.motivo && faltaMotivo !== null && faltaMotivo >= 0 && (
+          <p className="border-t border-line-strong px-1 pt-4 font-serif text-[22px] italic leading-snug md:col-span-12">
+            Faltan <b className="rounded-[4px] bg-lime px-1.5 font-medium not-italic text-on-lime">{faltaMotivo} días</b> para tu {perfil.motivo.titulo.toLowerCase()}. Cada día cuenta.
+          </p>
+        )}
+      </div>
       <Toast texto={toast} />
     </div>
   );
