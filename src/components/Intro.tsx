@@ -177,7 +177,7 @@ function Manifiesto() {
         Brío es la energía que pones <span className="text-lime">todos los días</span> para convertirte en tu mejor versión.
       </motion.p>
       <motion.p className="mt-4 text-muted" {...fadeUp(1.5)}>
-        Sin iPhone, sin reloj, sin muros de pago. Solo tú y tu constancia.
+        Sin complicaciones ni muros de pago. Solo tú y tu constancia.
       </motion.p>
     </div>
   );

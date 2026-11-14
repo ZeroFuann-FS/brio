@@ -1,33 +1,9 @@
 import { useState } from "react";
 import { motion } from "motion/react";
 import { fechaCorta, hoyISO, pesoEnFecha, type Metas, type Perfil } from "../lib/calc";
+import Proyeccion from "./Proyeccion";
 import { useBrio } from "../lib/store";
 import { Numero, Tarjeta, Toast, btnPrimario, ease, inputCls, useToast } from "./ui";
-
-function Grafica({ pesos, meta }: { pesos: { fecha: string; kg: number }[]; meta: number }) {
-  if (pesos.length < 2) {
-    return <p className="py-8 text-center text-sm text-muted">Registra tu peso un par de días más para ver tu gráfica 📈</p>;
-  }
-  const W = 320, H = 150, P = 12;
-  const kgs = pesos.map((p) => p.kg);
-  const min = Math.min(...kgs, meta) - 1, max = Math.max(...kgs) + 1;
-  const t0 = new Date(pesos[0].fecha).getTime(), t1 = new Date(pesos[pesos.length - 1].fecha).getTime() || t0 + 1;
-  const x = (f: string) => P + ((new Date(f).getTime() - t0) / Math.max(1, t1 - t0)) * (W - 2 * P);
-  const y = (kg: number) => P + ((max - kg) / (max - min)) * (H - 2 * P);
-  const linea = pesos.map((p, i) => `${i ? "L" : "M"}${x(p.fecha).toFixed(1)},${y(p.kg).toFixed(1)}`).join(" ");
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Gráfica de peso">
-      <line x1={P} x2={W - P} y1={y(meta)} y2={y(meta)} stroke="var(--color-lime)" strokeDasharray="4 4" strokeOpacity={0.5} />
-      <text x={W - P} y={y(meta) - 5} textAnchor="end" fontSize="10" fill="var(--color-lime)">meta {meta} kg</text>
-      <motion.path d={linea} fill="none" stroke="var(--color-ink)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"
-        initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.2, ease }} />
-      {pesos.map((p, i) => (
-        <motion.circle key={p.fecha} cx={x(p.fecha)} cy={y(p.kg)} r={3.5} fill="var(--color-lime)"
-          initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3 + i * 0.05 }} />
-      ))}
-    </svg>
-  );
-}
 
 export default function Peso({ perfil, metas, actual }: { perfil: Perfil; metas: Metas; actual: number }) {
   const pesos = useBrio((s) => s.pesos);
@@ -73,8 +49,8 @@ export default function Peso({ perfil, metas, actual }: { perfil: Perfil; metas:
         </div>
         {metas.fechaEstimada && (
           <p className="mt-4 text-sm text-muted">
-            A tu ritmo (−{metas.kgSemana.toFixed(2)} kg/sem) llegas a tu meta el <b className="text-ink">{fechaCorta(metas.fechaEstimada)}</b>
-            {perfil.motivo && <>; para tu {perfil.motivo.titulo} estarías en ~<b className="text-ink">{pesoEnFecha(actual, metas, perfil.pesoMeta, perfil.motivo.fecha).toFixed(1)} kg</b></>}.
+            A tu ritmo (hoy −{metas.kgSemana.toFixed(2)} kg/sem) llegas a tu meta el <b className="text-ink">{fechaCorta(metas.fechaEstimada)}</b>
+            {perfil.motivo && <>; para tu {perfil.motivo.titulo} estarías en ~<b className="text-ink">{pesoEnFecha(perfil, actual, perfil.motivo.fecha).toFixed(1)} kg</b></>}.
           </p>
         )}
       </Tarjeta>
@@ -88,8 +64,10 @@ export default function Peso({ perfil, metas, actual }: { perfil: Perfil; metas:
       </Tarjeta>
 
       <Tarjeta delay={0.1}>
-        <h2 className="mb-2 font-display text-lg font-bold">Tendencia</h2>
-        <Grafica pesos={pesos} meta={perfil.pesoMeta} />
+        <h2 className="mb-3 font-display text-lg font-bold">Tu camino a {perfil.pesoMeta} kg</h2>
+        {metas.fechaEstimada
+          ? <Proyeccion datos={perfil} pesoActual={actual} motivo={perfil.motivo} reales={pesos} />
+          : <p className="py-6 text-center text-sm text-muted">🎉 ¡Estás en tu meta! Ahora toca mantener.</p>}
       </Tarjeta>
 
       {pesos.length > 0 && (

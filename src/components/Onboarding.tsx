@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { calcularMetas, fechaCorta, hoyISO, pesoEnFecha, type DiaADia, type Perfil, type Ritmo, type Sexo } from "../lib/calc";
 import { Numero, btnPrimario, ease, inputCls } from "./ui";
 import Logo from "./Logo";
+import Proyeccion from "./Proyeccion";
 
 type Borrador = {
   nombre: string; sexo: Sexo | ""; edad: string; estatura: string; peso: string; meta: string;
@@ -67,7 +68,7 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
       titulo: "¿Cómo te llamo?",
       sub: "Así te va a saludar Brío.",
       valido: b.nombre.trim().length > 0,
-      cuerpo: <Campo label="Tu nombre o apodo" value={b.nombre} onChange={(e) => set("nombre", e.target.value)} placeholder="Ej. ZeroFuann" autoFocus maxLength={30} />,
+      cuerpo: <Campo label="Tu nombre o apodo" value={b.nombre} onChange={(e) => set("nombre", e.target.value)} placeholder="Ej. Alex" autoFocus maxLength={30} />,
     },
     {
       titulo: "Tus datos base",
@@ -99,7 +100,7 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
     },
     {
       titulo: "Tu día a día",
-      sub: "Sin reloj ni iPhone: con esto basta para estimar tu gasto.",
+      sub: "Con esto estimamos cuánta energía gastas al día.",
       valido: !!b.diaADia,
       cuerpo: (
         <div className="space-y-3">
@@ -158,6 +159,11 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
               </Opcion>
             );
           })}
+          {base && perder && (
+            <div key={b.ritmo} className="rounded-2xl border border-line bg-surface p-3">
+              <Proyeccion datos={{ ...base, ritmo: b.ritmo }} pesoActual={base.pesoInicial} alto={150} />
+            </div>
+          )}
         </div>
       ),
     },
@@ -167,7 +173,7 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
       valido: !b.motivoTitulo.trim() || !!b.motivoFecha,
       cuerpo: (
         <div className="space-y-4">
-          <Campo label="Tu motivo" value={b.motivoTitulo} onChange={(e) => set("motivoTitulo", e.target.value)} placeholder="Ej. Foto de titulación 🎓" maxLength={40} />
+          <Campo label="Tu motivo" value={b.motivoTitulo} onChange={(e) => set("motivoTitulo", e.target.value)} placeholder="Ej. Mi graduación 🎓, un viaje ✈️, mi boda 💍" maxLength={40} />
           <Campo label="Fecha" type="date" min={hoyISO()} value={b.motivoFecha} onChange={(e) => set("motivoFecha", e.target.value)} />
         </div>
       ),
@@ -183,7 +189,7 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
               ["🔥", "Calorías", metas.kcal, "kcal"],
               ["🥩", "Proteína", metas.proteina, "g"],
               ["💧", "Agua", metas.aguaMl / 1000, "L"],
-              ["⚖️", perder ? "Bajarás" : "Ritmo", Math.abs(metas.kgSemana), "kg/sem"],
+              ["⚖️", perder ? "Bajarás al inicio" : "Ritmo", Math.abs(metas.kgSemana), "kg/sem"],
             ].map(([e, t, v, u], i) => (
               <motion.div
                 key={t as string}
@@ -199,18 +205,35 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
               </motion.div>
             ))}
           </div>
+          <motion.div className="rounded-2xl border border-line bg-surface p-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55, ease }}>
+            <p className="text-sm text-muted">⚡ Tu gasto de energía</p>
+            <div className="mt-2 flex items-center justify-between gap-2 text-center">
+              <div><p className="font-display text-lg font-bold"><Numero valor={metas.tdee} /></p><p className="text-[11px] text-muted">gastas al día</p></div>
+              <span className="text-muted">−</span>
+              <div><p className="font-display text-lg font-bold"><Numero valor={metas.kcal} /></p><p className="text-[11px] text-muted">comerás</p></div>
+              <span className="text-muted">=</span>
+              <div><p className={`font-display text-lg font-bold ${perder ? "text-lime" : "text-ember"}`}><Numero valor={Math.abs(metas.tdee - metas.kcal)} /></p><p className="text-[11px] text-muted">{perder ? "de déficit" : "de superávit"}</p></div>
+            </div>
+          </motion.div>
           {metas.fechaEstimada && (
-            <motion.p className="rounded-2xl bg-lime/10 p-4 text-sm leading-relaxed" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}>
+            <motion.div className="rounded-2xl border border-line bg-surface p-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7, ease }}>
+              <p className="mb-2 text-sm text-muted">📉 Así cambiaría tu peso</p>
+              <Proyeccion datos={{ ...base, ritmo: b.ritmo }} pesoActual={base.pesoInicial}
+                motivo={b.motivoTitulo.trim() && b.motivoFecha ? { titulo: b.motivoTitulo.trim(), fecha: b.motivoFecha } : undefined} />
+            </motion.div>
+          )}
+          {metas.fechaEstimada && (
+            <motion.p className="rounded-2xl bg-lime/10 p-4 text-sm leading-relaxed" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }}>
               A este ritmo llegas a <b>{base.pesoMeta} kg</b> alrededor del <b className="text-lime">{fechaCorta(metas.fechaEstimada)}</b>.
               {b.motivoTitulo && b.motivoFecha && (
-                <> Para tu <b>{b.motivoTitulo.trim()}</b> ({fechaCorta(b.motivoFecha)}) estarías en ~<b>{pesoEnFecha(base.pesoInicial, metas, base.pesoMeta, b.motivoFecha).toFixed(1)} kg</b>.</>
+                <> Para tu <b>{b.motivoTitulo.trim()}</b> ({fechaCorta(b.motivoFecha)}) estarías en ~<b>{pesoEnFecha({ ...base, ritmo: b.ritmo }, base.pesoInicial, b.motivoFecha).toFixed(1)} kg</b>.</>
               )}
             </motion.p>
           )}
           {metas.limitadoPorMinimo && (
             <p className="text-xs text-ember">Ajustamos tus calorías al mínimo seguro. No bajamos de ahí.</p>
           )}
-          <p className="text-xs text-muted">Son estimaciones. Brío las ajusta con tu peso real cada semana. No sustituye a un profesional de la salud.</p>
+          <p className="text-xs text-muted">Son estimaciones: al bajar de peso tu cuerpo gasta menos, por eso la curva se va suavizando. Brío las ajusta con tu peso real. No sustituye a un profesional de la salud.</p>
         </div>
       ) : null,
     },

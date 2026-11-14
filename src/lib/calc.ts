@@ -48,48 +48,75 @@ export function diasEntre(a: string, b: string) {
   return Math.round((new Date(b + "T12:00:00").getTime() - new Date(a + "T12:00:00").getTime()) / 86400000);
 }
 
-export function calcularMetas(p: Omit<Perfil, "creado" | "nombre" | "motivo">, pesoActual: number): Metas {
+export function calcularMetas(p: DatosCalculo, pesoActual: number): Metas {
   const w = pesoActual;
-  const bmr = 10 * w + 6.25 * p.estatura - 5 * p.edad + (p.sexo === "h" ? 5 : -161);
-  const factor = BASE[p.diaADia] + 0.035 * p.diasEntreno;
-  const tdee = bmr * factor;
-
-  const perder = w > p.pesoMeta + 0.3;
-  const ganar = w < p.pesoMeta - 0.3;
-  const minimo = p.sexo === "h" ? 1500 : 1200;
-
-  let objetivo = tdee;
-  if (perder) {
-    const deficitRitmo = (w * (p.ritmo / 100) * KCAL_POR_KG) / 7;
-    objetivo = tdee - Math.min(deficitRitmo, tdee * 0.3);
-  } else if (ganar) {
-    objetivo = tdee + 250;
-  }
-  const limitadoPorMinimo = objetivo < minimo;
-  const kcal = redondear(Math.max(minimo, objetivo));
-
+  const e = energia(p, w);
   // Proteína: ~2 g por kg de tu peso meta (protege músculo en déficit), mínimo 1.4 g/kg actual
   const proteina = redondear(Math.max(2 * p.pesoMeta, 1.4 * w), 5);
-  const grasa = redondear((kcal * 0.27) / 9, 5);
-  const carbos = Math.max(0, redondear((kcal - proteina * 4 - grasa * 9) / 4, 5));
+  const grasa = redondear((e.kcal * 0.27) / 9, 5);
+  const carbos = Math.max(0, redondear((e.kcal - proteina * 4 - grasa * 9) / 4, 5));
   const aguaMl = Math.min(4000, Math.max(2000, redondear(w * 35, 250)));
-
-  const kgSemana = ((tdee - kcal) * 7) / KCAL_POR_KG;
-  let fechaEstimada: string | null = null;
-  if (perder && kgSemana > 0.05) {
-    fechaEstimada = sumarDias(hoyISO(), Math.ceil(((w - p.pesoMeta) / kgSemana) * 7));
-  } else if (ganar && kgSemana < -0.05) {
-    fechaEstimada = sumarDias(hoyISO(), Math.ceil(((p.pesoMeta - w) / -kgSemana) * 7));
-  }
-
-  return { bmr: Math.round(bmr), tdee: Math.round(tdee), kcal, proteina, carbos, grasa, aguaMl, kgSemana, fechaEstimada, limitadoPorMinimo };
+  const cambia = Math.abs(w - p.pesoMeta) > 0.3;
+  return {
+    bmr: Math.round(e.bmr), tdee: Math.round(e.tdee), kcal: e.kcal, proteina, carbos, grasa, aguaMl,
+    kgSemana: e.kgSemana, limitadoPorMinimo: e.limitadoPorMinimo,
+    fechaEstimada: cambia ? proyeccion(p, w).fechaMeta : null,
+  };
 }
 
-/** Peso proyectado en una fecha, sin pasar la meta. */
-export function pesoEnFecha(pesoActual: number, metas: Metas, pesoMeta: number, fecha: string) {
-  const semanas = Math.max(0, diasEntre(hoyISO(), fecha)) / 7;
-  const proyectado = pesoActual - metas.kgSemana * semanas;
-  return metas.kgSemana >= 0 ? Math.max(pesoMeta, proyectado) : Math.min(pesoMeta, proyectado);
+export type DatosCalculo = Omit<Perfil, "creado" | "nombre" | "motivo">;
+export interface PuntoProyeccion { fecha: string; kg: number }
+
+/**
+ * Simula semana a semana: al bajar de peso, tu gasto baja y Brío recalcula
+ * tus calorías, así que el ritmo se va haciendo más lento (curva realista).
+ */
+export function proyeccion(p: DatosCalculo, pesoInicio: number, maxSemanas = 156): { puntos: PuntoProyeccion[]; fechaMeta: string | null } {
+  const hoy = hoyISO();
+  const puntos: PuntoProyeccion[] = [{ fecha: hoy, kg: pesoInicio }];
+  const bajando = pesoInicio > p.pesoMeta;
+  let w = pesoInicio;
+  for (let s = 1; s <= maxSemanas; s++) {
+    const m = energia(p, w);
+    if (Math.abs(m.kgSemana) < 0.02) break;
+    const siguiente = w - m.kgSemana;
+    const llego = bajando ? siguiente <= p.pesoMeta : siguiente >= p.pesoMeta;
+    if (llego) {
+      const fraccion = (w - p.pesoMeta) / (w - siguiente);
+      const fecha = sumarDias(hoy, Math.ceil((s - 1 + fraccion) * 7));
+      puntos.push({ fecha, kg: p.pesoMeta });
+      return { puntos, fechaMeta: fecha };
+    }
+    w = siguiente;
+    puntos.push({ fecha: sumarDias(hoy, s * 7), kg: Math.round(w * 10) / 10 });
+  }
+  return { puntos, fechaMeta: null };
+}
+
+/** Gasto (Mifflin-St Jeor × actividad) y calorías objetivo para un peso dado. */
+function energia(p: DatosCalculo, w: number) {
+  const bmr = 10 * w + 6.25 * p.estatura - 5 * p.edad + (p.sexo === "h" ? 5 : -161);
+  const tdee = bmr * (BASE[p.diaADia] + 0.035 * p.diasEntreno);
+  const minimo = p.sexo === "h" ? 1500 : 1200;
+  let objetivo = tdee;
+  if (w > p.pesoMeta + 0.3) objetivo = tdee - Math.min((w * (p.ritmo / 100) * KCAL_POR_KG) / 7, tdee * 0.3);
+  else if (w < p.pesoMeta - 0.3) objetivo = tdee + 250;
+  const kcal = redondear(Math.max(minimo, objetivo));
+  return { bmr, tdee, kcal, limitadoPorMinimo: objetivo < minimo, kgSemana: ((tdee - kcal) * 7) / KCAL_POR_KG };
+}
+
+/** Peso proyectado en una fecha, según la curva simulada. */
+export function pesoEnFecha(p: DatosCalculo, pesoActual: number, fecha: string) {
+  const { puntos } = proyeccion(p, pesoActual);
+  if (fecha <= puntos[0].fecha) return pesoActual;
+  for (let i = 1; i < puntos.length; i++) {
+    if (fecha <= puntos[i].fecha) {
+      const a = puntos[i - 1], b = puntos[i];
+      const t = diasEntre(a.fecha, fecha) / Math.max(1, diasEntre(a.fecha, b.fecha));
+      return a.kg + (b.kg - a.kg) * t;
+    }
+  }
+  return puntos[puntos.length - 1].kg;
 }
 
 const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
