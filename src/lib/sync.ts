@@ -204,11 +204,7 @@ export function detenerSync() {
   if (timer) clearTimeout(timer);
 }
 
-/** Sube lo pendiente, cierra sesión y limpia este dispositivo (los datos quedan en la nube). */
-export async function cerrarSesion() {
-  try { await flush(); } catch { /* lo intentamos */ }
-  detenerSync();
-  await supabase.auth.signOut();
+function limpiarDispositivo() {
   pendientes = new Set();
   guardarPendientes();
   escribir(K_USUARIO, null);
@@ -216,4 +212,21 @@ export async function cerrarSesion() {
   useBrio.getState().reset();
   aplicandoRemoto = false;
   useSync.setState({ estado: "sin-cuenta", ultima: null });
+}
+
+/** Elimina la cuenta y todos sus datos de la nube, y limpia este dispositivo. */
+export async function eliminarCuenta() {
+  detenerSync();
+  const { error } = await supabase.rpc("eliminar_mi_cuenta");
+  if (error) throw error;
+  await supabase.auth.signOut({ scope: "local" }).catch(() => {});
+  limpiarDispositivo();
+}
+
+/** Sube lo pendiente, cierra sesión y limpia este dispositivo (los datos quedan en la nube). */
+export async function cerrarSesion() {
+  try { await flush(); } catch { /* lo intentamos */ }
+  detenerSync();
+  await supabase.auth.signOut();
+  limpiarDispositivo();
 }

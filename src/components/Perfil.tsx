@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { cerrarSesion } from "../lib/sync";
+import { cerrarSesion, eliminarCuenta } from "../lib/sync";
 import { nubeDisponible } from "../lib/supabase";
 import type { Metas, Perfil as TPerfil } from "../lib/calc";
 import { useBrio } from "../lib/store";
@@ -21,6 +21,7 @@ type Props = {
 
 export default function Perfil({ perfil, metas, onEditar, onVerIntro, email, estadoSync, onCrearCuenta }: Props) {
   const [saliendo, setSaliendo] = useState(false);
+  const [eliminar, setEliminar] = useState<"no" | "confirmar" | "eliminando" | "error">("no");
   const reset = useBrio((s) => s.reset);
   const [confirmar, setConfirmar] = useState(false);
 
@@ -74,6 +75,28 @@ export default function Perfil({ perfil, metas, onEditar, onVerIntro, email, est
                 {saliendo ? "Cerrando…" : "Cerrar sesión"}
               </button>
               <p className="mt-2 text-xs text-muted">Al cerrar sesión se limpia este dispositivo; tus datos siguen seguros en tu cuenta.</p>
+              <div className="mt-5 border-t border-line pt-4">
+                {eliminar === "no" && (
+                  <button onClick={() => setEliminar("confirmar")} className="text-sm text-ember hover:underline">Eliminar mi cuenta</button>
+                )}
+                {eliminar !== "no" && (
+                  <>
+                    <p className="text-sm">¿Eliminar tu cuenta <b>{email}</b>?</p>
+                    <p className="mt-1 text-xs text-muted">Se borran tu cuenta y todos tus datos de la nube y de este dispositivo. No se puede deshacer. Podrás crear una cuenta nueva con el mismo correo cuando quieras.</p>
+                    {eliminar === "error" && <p className="mt-2 text-xs text-ember">No se pudo eliminar. Revisa tu internet e intenta de nuevo.</p>}
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        disabled={eliminar === "eliminando"}
+                        onClick={async () => { setEliminar("eliminando"); try { await eliminarCuenta(); } catch { setEliminar("error"); } }}
+                        className="h-11 flex-1 rounded-2xl bg-ember font-bold text-bg disabled:opacity-60"
+                      >
+                        {eliminar === "eliminando" ? "Eliminando…" : "Sí, eliminar"}
+                      </button>
+                      <button onClick={() => setEliminar("no")} className={`${btnSecundario} h-11 flex-1`}>Cancelar</button>
+                    </div>
+                  </>
+                )}
+              </div>
             </>
           ) : (
             <>

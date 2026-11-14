@@ -35,6 +35,7 @@ export default function App() {
   const pesos = useBrio((s) => s.pesos);
   const setPerfil = useBrio((s) => s.setPerfil);
   const [intro, setIntro] = useState(!introVisto());
+  const [splash, setSplash] = useState(introVisto()); // la animación del logo sale siempre al entrar
   const [editando, setEditando] = useState(false);
   const [tab, setTab] = useState<Tab>("hoy");
   const [session, setSession] = useState<Session | null>(null);
@@ -73,8 +74,15 @@ export default function App() {
     setIntro(false);
   };
 
+  useEffect(() => {
+    if (!splash) return;
+    const t = setTimeout(() => setSplash(false), 2600);
+    return () => clearTimeout(t);
+  }, [splash]);
+
   const vista =
-    intro ? "intro"
+    splash ? "splash"
+    : intro ? "intro"
     : !authListo || !syncListo ? "cargando"
     : verCuenta || (nubeDisponible && !session && !omitio) ? "cuenta"
     : !perfil || editando ? "onboarding"
@@ -82,6 +90,21 @@ export default function App() {
 
   return (
     <AnimatePresence mode="wait">
+      {vista === "splash" && (
+        <motion.button key="splash" onClick={() => setSplash(false)} aria-label="Entrar"
+          className="relative grid h-full w-full place-items-center overflow-hidden"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 1.04 }} transition={{ duration: 0.4 }}>
+          <motion.div className="pointer-events-none absolute left-1/2 top-1/2 h-[80vmax] w-[80vmax] -translate-x-1/2 -translate-y-1/2 rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(198,244,50,0.10) 0%, transparent 60%)" }}
+            animate={{ scale: [0.9, 1.05, 1] }} transition={{ duration: 2.4 }} />
+          <div className="flex flex-col items-center">
+            <Logo className="text-[clamp(5rem,22vw,9rem)]" animate delay={0.15} />
+            <motion.p className="mt-6 font-display text-lg font-semibold text-ink/80" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.3 }}>
+              Ponle brío a tu vida.
+            </motion.p>
+          </div>
+        </motion.button>
+      )}
       {vista === "intro" && <Intro key="intro" onDone={terminarIntro} />}
       {vista === "cargando" && (
         <motion.div key="cargando" className="grid h-full place-items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
