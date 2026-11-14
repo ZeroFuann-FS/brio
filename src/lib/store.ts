@@ -23,6 +23,18 @@ export interface Peso {
   kg: number;
 }
 
+export const MEDIDAS = [
+  { id: "cintura", t: "Cintura", como: "A la altura del ombligo, sin apretar, al final de exhalar." },
+  { id: "cuello", t: "Cuello", como: "Justo debajo de la manzana de Adán, cinta horizontal." },
+  { id: "cadera", t: "Cadera", como: "En la parte más ancha de los glúteos, pies juntos." },
+  { id: "pecho", t: "Pecho", como: "A la altura de los pezones, brazos relajados." },
+  { id: "brazo", t: "Brazo", como: "En la parte más ancha del bíceps, brazo relajado." },
+  { id: "muslo", t: "Muslo", como: "En la parte más ancha, de pie y con peso en ambas piernas." },
+] as const;
+export type IdMedida = (typeof MEDIDAS)[number]["id"];
+export type RegistroMedidas = { fecha: string } & Partial<Record<IdMedida, number>>;
+export const DIAS_ENTRE_MEDIDAS = 14;
+
 export interface ItemDespensa {
   id: string;
   nombre: string;
@@ -60,6 +72,7 @@ interface Estado {
   dias: Record<string, Dia>;
   pesos: Peso[];
   despensa: ItemDespensa[];
+  medidas: RegistroMedidas[];
   setPerfil: (p: Perfil) => void;
   dia: (fecha: string) => Dia;
   addComida: (fecha: string, c: Omit<Comida, "id">) => void;
@@ -69,6 +82,8 @@ interface Estado {
   toggleHabito: (fecha: string, id: string) => void;
   addPeso: (kg: number, fecha?: string) => void;
   removePeso: (fecha: string) => void;
+  addMedidas: (m: RegistroMedidas) => void;
+  removeMedidas: (fecha: string) => void;
   addItem: (i: Omit<ItemDespensa, "id">) => void;
   cambiarCantidad: (id: string, delta: number) => void;
   removeItem: (id: string) => void;
@@ -86,6 +101,7 @@ export const useBrio = create<Estado>()(
         dias: {},
         pesos: [],
         despensa: [],
+        medidas: [],
         setPerfil: (p) =>
           set((s) => ({
             perfil: p,
@@ -106,6 +122,13 @@ export const useBrio = create<Estado>()(
           set((s) => ({
             pesos: [...s.pesos.filter((p) => p.fecha !== fecha), { fecha, kg }].sort((a, b) => a.fecha.localeCompare(b.fecha)),
           })),
+        addMedidas: (m) =>
+          set((s) => {
+            const previo = s.medidas.find((x) => x.fecha === m.fecha);
+            const nuevo = { ...previo, ...m };
+            return { medidas: [...s.medidas.filter((x) => x.fecha !== m.fecha), nuevo].sort((a, b) => a.fecha.localeCompare(b.fecha)) };
+          }),
+        removeMedidas: (fecha) => set((s) => ({ medidas: s.medidas.filter((x) => x.fecha !== fecha) })),
         removePeso: (fecha) => set((s) => ({ pesos: s.pesos.filter((p) => p.fecha !== fecha) })),
         addItem: (i) =>
           set((s) => {
@@ -116,10 +139,10 @@ export const useBrio = create<Estado>()(
         cambiarCantidad: (id, delta) =>
           set((s) => ({ despensa: s.despensa.map((x) => (x.id === id ? { ...x, cantidad: Math.max(0, x.cantidad + delta) } : x)) })),
         removeItem: (id) => set((s) => ({ despensa: s.despensa.filter((x) => x.id !== id) })),
-        reset: () => set({ perfil: null, dias: {}, pesos: [], despensa: [] }),
+        reset: () => set({ perfil: null, dias: {}, pesos: [], despensa: [], medidas: [] }),
       };
     },
-    { name: "brio:datos-v3", version: 1 },
+    { name: "brio:datos-v3", version: 2, migrate: (e) => ({ medidas: [], ...(e as object) }) as unknown as Estado },
   ),
 );
 

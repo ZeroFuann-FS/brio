@@ -154,3 +154,29 @@ export function pesoReferencia(sexo: Sexo, cm: number, edad: number) {
   const r = rangoSaludable(cm, edad);
   return Math.round(Math.min(r.max, Math.max(r.min, robinson)));
 }
+
+/* ---------- Medidas corporales ---------- */
+/** Cintura ÷ estatura: < 0.5 es saludable para casi cualquier adulto. */
+export function ratioCintura(cintura: number, cm: number) {
+  const r = cintura / cm;
+  const t = r < 0.4 ? "Muy bajo" : r < 0.5 ? "Saludable" : r < 0.6 ? "Riesgo aumentado" : "Riesgo alto";
+  return { r, t, ok: r >= 0.4 && r < 0.5, limite: Math.round(cm * 0.5 * 10) / 10 };
+}
+
+/** % de grasa estimado (fórmula de la Marina de EE. UU.). Medidas en cm. */
+export function grasaNavy(sexo: Sexo, cm: number, cintura?: number, cuello?: number, cadera?: number) {
+  if (!cintura || !cuello) return null;
+  let v: number;
+  if (sexo === "h") {
+    if (cintura - cuello <= 0) return null;
+    v = 495 / (1.0324 - 0.19077 * Math.log10(cintura - cuello) + 0.15456 * Math.log10(cm)) - 450;
+  } else {
+    if (!cadera || cintura + cadera - cuello <= 0) return null;
+    v = 495 / (1.29579 - 0.35004 * Math.log10(cintura + cadera - cuello) + 0.221 * Math.log10(cm)) - 450;
+  }
+  if (!isFinite(v) || v < 2 || v > 70) return null;
+  const cortes = sexo === "h" ? [6, 14, 18, 25] : [14, 21, 25, 32];
+  const nombres = ["Esencial", "Atlético", "Fitness", "Promedio", "Alto"];
+  const i = cortes.findIndex((c) => v < c);
+  return { v: Math.round(v * 10) / 10, t: nombres[i === -1 ? 4 : i] };
+}

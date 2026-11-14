@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { fechaCorta, hoyISO, pesoEnFecha, type Metas, type Perfil } from "../lib/calc";
 import Proyeccion from "./Proyeccion";
+import Medidas from "./Medidas";
 import { useBrio } from "../lib/store";
 import { Numero, Tarjeta, Toast, btnPrimario, ease, inputCls, useToast } from "./ui";
 
@@ -69,6 +70,8 @@ export default function Peso({ perfil, metas, actual }: { perfil: Perfil; metas:
           ? <Proyeccion datos={perfil} pesoActual={actual} motivo={perfil.motivo} reales={pesos} />
           : <p className="py-6 text-center text-sm text-muted">🎉 ¡Estás en tu meta! Ahora toca mantener.</p>}
       </Tarjeta>
+
+      <Medidas perfil={perfil} pesos={pesos} />
 
       {pesos.length > 0 && (
         <Tarjeta delay={0.15}>

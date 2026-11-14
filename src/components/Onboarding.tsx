@@ -168,7 +168,8 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
               {metaFuera && <p className="mt-3 text-xs text-ember">{metaFuera}</p>}
             </motion.div>
           )}
-          <p className="text-xs text-muted">El IMC es una guía general: no distingue músculo de grasa. Si tienes alguna condición de salud, consulta a un profesional.</p>
+          <p className="rounded-2xl bg-lime/10 px-4 py-3 text-sm leading-relaxed">📏 El IMC no distingue músculo de grasa. Cuando tengas una cinta métrica, agrega tu <b>cintura</b> y otras medidas en <b>Peso → Medidas</b>: dicen más que la báscula.</p>
+          <p className="text-xs text-muted">Si tienes alguna condición de salud, consulta a un profesional.</p>
         </div>
       ),
     },
