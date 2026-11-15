@@ -3,6 +3,7 @@ import { diasEntre, hoyISO, type Metas, type Perfil } from "../lib/calc";
 import { habitosDe, minBrio, puntosDia, seAcaban, useBrio } from "../lib/store";
 import { Barra, Numero, Segmentos, Tarjeta, Toast, ease, useToast } from "./ui";
 import ComidasDia from "./ComidasDia";
+import { TarjetaPlan } from "./PlanNutriologo";
 
 const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
@@ -109,6 +110,7 @@ export default function Hoy({ perfil, metas, onIrComida }: { perfil: Perfil; met
           <p className="lab mt-3">Toca un vaso para sumar 250 ml</p>
         </Tarjeta>
 
+        <TarjetaPlan perfil={perfil} metas={metas} delay={0.08} className="md:col-span-12" />
         <ComidasDia delay={0.1} className="md:col-span-7" />
 
         {/* Hábitos */}

@@ -65,7 +65,7 @@ function aplicar(m: Snap) {
 async function bajar(): Promise<Snap> {
   const [pf, ds, ps, ms, de, mn] = await Promise.all([
     supabase.from("perfiles").select("datos"),
-    supabase.from("dias").select("fecha, comidas, agua_ml, habitos"),
+    supabase.from("dias").select("fecha, comidas, agua_ml, habitos, extra"),
     supabase.from("pesos").select("fecha, kg"),
     supabase.from("medidas").select("fecha, valores"),
     supabase.from("despensa").select("id, nombre, cantidad, unidad, minimo"),
@@ -76,7 +76,7 @@ async function bajar(): Promise<Snap> {
   const m: Snap = new Map();
   if (pf.data?.[0]) m.set("perfil", pf.data[0].datos);
   if (mn.data?.[0]) m.set("menu", mn.data[0].datos);
-  for (const d of ds.data ?? []) m.set(`dia:${d.fecha}`, { comidas: d.comidas, aguaMl: d.agua_ml, habitos: d.habitos });
+  for (const d of ds.data ?? []) m.set(`dia:${d.fecha}`, { comidas: d.comidas, aguaMl: d.agua_ml, habitos: d.habitos, extra: d.extra ?? {} });
   for (const p of ps.data ?? []) m.set(`peso:${p.fecha}`, Number(p.kg));
   for (const r of ms.data ?? []) m.set(`medida:${r.fecha}`, { fecha: r.fecha, ...(r.valores as object) });
   for (const i of de.data ?? []) m.set(`despensa:${i.id}`, { id: i.id, nombre: i.nombre, cantidad: Number(i.cantidad), unidad: i.unidad, ...(i.minimo != null ? { minimo: Number(i.minimo) } : {}) });
@@ -99,7 +99,7 @@ async function subir(uid: string) {
     else if (tipo === "menu") v ? up.menus.push({ user_id: uid, datos: v, actualizado: ahora }) : del.menus.push(uid);
     else if (tipo === "dia") {
       const d = v as Dia | undefined;
-      d ? up.dias.push({ user_id: uid, fecha: id, comidas: d.comidas, agua_ml: d.aguaMl, habitos: d.habitos, actualizado: ahora }) : del.dias.push(id);
+      d ? up.dias.push({ user_id: uid, fecha: id, comidas: d.comidas, agua_ml: d.aguaMl, habitos: d.habitos, extra: d.extra ?? {}, actualizado: ahora }) : del.dias.push(id);
     } else if (tipo === "peso") v != null ? up.pesos.push({ user_id: uid, fecha: id, kg: v, actualizado: ahora }) : del.pesos.push(id);
     else if (tipo === "medida") {
       if (v) { const { fecha: _f, ...valores } = v as RegistroMedidas; up.medidas.push({ user_id: uid, fecha: id, valores, actualizado: ahora }); }

@@ -14,6 +14,22 @@ export interface PrefsComida {
 }
 export type QuienCocina = "yo" | "casa" | "no";
 
+/** Tiempos de comida de un plan de nutriólogo. */
+export type TiempoPlan = "desayuno" | "colacion1" | "comida" | "colacion2" | "cena";
+export const TIEMPOS_PLAN: { id: TiempoPlan; t: string; hora: number }[] = [
+  { id: "desayuno", t: "Desayuno", hora: 7 }, { id: "colacion1", t: "Colación de la mañana", hora: 11 },
+  { id: "comida", t: "Comida", hora: 14 }, { id: "colacion2", t: "Colación de la tarde", hora: 17.5 }, { id: "cena", t: "Cena", hora: 20 },
+];
+/** Plan que le dio su nutriólogo: metas propias, equivalentes por día y/o menú fijo. */
+export interface PlanNutriologo {
+  activo: boolean;
+  usarMetas: boolean;
+  metas?: { kcal: number; proteina: number; carbos: number; grasa: number };
+  equivalentes?: Partial<Record<string, number>>;            // por día (grupo SMAE → número)
+  mismoMenu?: boolean;                                        // el mismo menú todos los días
+  menu?: Record<string, Partial<Record<TiempoPlan, string>>>; // "Lunes"… o "todos" → tiempo → texto
+}
+
 export interface Perfil {
   nombre: string;
   sexo: Sexo;
@@ -27,6 +43,7 @@ export interface Perfil {
   motivo?: { titulo: string; fecha: string }; // yyyy-mm-dd
   habitos?: Habito[];
   prefsComida?: PrefsComida;
+  plan?: PlanNutriologo;
   creado: string;
 }
 
@@ -192,3 +209,20 @@ export function grasaNavy(sexo: Sexo, cm: number, cintura?: number, cuello?: num
   const i = cortes.findIndex((c) => v < c);
   return { v: Math.round(v * 10) / 10, t: nombres[i === -1 ? 4 : i] };
 }
+
+/** Si el usuario sigue un plan de nutriólogo con metas propias, esas mandan. */
+export function aplicarPlan(m: Metas, p: Perfil): Metas {
+  const pl = p.plan;
+  if (!pl?.activo || !pl.usarMetas || !pl.metas?.kcal) return m;
+  return { ...m, kcal: pl.metas.kcal, proteina: pl.metas.proteina || m.proteina, carbos: pl.metas.carbos || m.carbos, grasa: pl.metas.grasa || m.grasa };
+}
+
+const DIAS_SEMANA = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+/** Lo que dice el menú del nutriólogo para una fecha y tiempo. */
+export function menuPlan(pl: PlanNutriologo | undefined, fecha: Date, t: TiempoPlan): string | undefined {
+  if (!pl?.activo || !pl.menu) return undefined;
+  const clave = pl.mismoMenu ? "todos" : DIAS_SEMANA[fecha.getDay()];
+  return pl.menu[clave]?.[t]?.trim() || undefined;
+}
+export const tienePlanMenu = (pl?: PlanNutriologo) => !!pl?.activo && !!pl.menu && Object.values(pl.menu).some((d) => Object.values(d ?? {}).some((x) => x?.trim()));
+export const tieneEquivalentes = (pl?: PlanNutriologo) => !!pl?.activo && !!pl.equivalentes && Object.values(pl.equivalentes).some((n) => (n ?? 0) > 0);

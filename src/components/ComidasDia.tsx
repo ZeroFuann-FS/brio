@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { equivalentesDe } from "../data/equivalentes";
 import { AnimatePresence, motion } from "motion/react";
 import { hoyISO, sumarDias } from "../lib/calc";
 import { coincidenciaDespensa, frecuentes, useBrio, type TipoComida } from "../lib/store";
@@ -65,7 +66,8 @@ export default function ComidasDia({ delay = 0, className = "" }: { delay?: numb
   const registrarPlato = () => {
     if (!plato.length) return;
     const nombre = plato.map((it) => it.a.n.split(" · ")[0]).join(", ");
-    addComida(hoy, { nombre: nombre.length > 60 ? `${nombre.slice(0, 57)}…` : nombre, kcal: Math.round(totPlato.kcal), proteina: Math.round(totPlato.proteina), carbos: Math.round(totPlato.carbos), grasa: Math.round(totPlato.grasa), tipo });
+    const eq = equivalentesDe(plato.filter((it) => !it.a.fuente || it.a.fuente === "base").map((it) => [it.a.id, calcularSel(it).gramos]));
+    addComida(hoy, { nombre: nombre.length > 60 ? `${nombre.slice(0, 57)}…` : nombre, kcal: Math.round(totPlato.kcal), proteina: Math.round(totPlato.proteina), carbos: Math.round(totPlato.carbos), grasa: Math.round(totPlato.grasa), tipo, eq });
     if (usarDespensa) for (const d of descuentos) descontar(d.item.id, d.cuanto);
     cerrar(usarDespensa && descuentos.length ? "Registrado y descontado de tu despensa" : "Registrado");
   };

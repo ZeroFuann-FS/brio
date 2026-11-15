@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ALIMENTOS } from "../data/alimentos";
 import { fotoDe, fotoReceta } from "../data/fotos";
+import { equivalentesDe } from "../data/equivalentes";
 import { costo, etiquetas, necesitaRefri, nutricion, type Receta, type TipoReceta } from "../data/recetas";
 import { hoyISO } from "../lib/calc";
 import { coincidenciaDespensa, useBrio, type TipoComida } from "../lib/store";
@@ -42,7 +43,7 @@ export function useRegistrarReceta() {
   return (r: Receta, factor: number, tipo?: TipoComida) => {
     const n = nutricion(r, factor);
     const t: TipoComida = tipo ?? (r.tipos.includes(tipoPorHora() as TipoReceta) ? tipoPorHora() : (r.tipos[0] === "colacion" ? "snack" : r.tipos[0] as TipoComida));
-    addComida(hoyISO(), { nombre: r.nombre, kcal: n.kcal, proteina: n.proteina, carbos: n.carbos, grasa: n.grasa, tipo: t });
+    addComida(hoyISO(), { nombre: r.nombre, kcal: n.kcal, proteina: n.proteina, carbos: n.carbos, grasa: n.grasa, tipo: t, eq: equivalentesDe(r.ing.map(([id, g]) => [id, g * factor])) });
     const despensa = useBrio.getState().despensa;
     let descontados = 0;
     for (const [id, g] of r.ing) {

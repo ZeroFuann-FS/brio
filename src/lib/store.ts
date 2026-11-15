@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { hoyISO, sumarDias, type Habito, type Perfil, type PrefsComida } from "./calc";
+import { hoyISO, sumarDias, type Habito, type Perfil, type PlanNutriologo, type PrefsComida } from "./calc";
+import type { Equivalentes, GrupoEq } from "../data/equivalentes";
 import type { TipoReceta } from "../data/recetas";
 
 /** receta vacía + casa = comida que se hace en casa o fuera (sin receta ni compras). */
@@ -17,12 +18,15 @@ export interface Comida {
   carbos?: number;
   grasa?: number;
   tipo: TipoComida;
+  eq?: Equivalentes;      // equivalentes SMAE (si se pudo calcular)
+  plan?: string;          // tiempo del plan del nutriólogo que cubre
 }
 
 export interface Dia {
   comidas: Comida[];
   aguaMl: number;
   habitos: Record<string, boolean>;
+  extra?: { eq?: Equivalentes };   // ajustes manuales de equivalentes
 }
 
 export interface Peso {
@@ -86,6 +90,8 @@ interface Estado {
   marcarComprado: (producto: string) => void;
   setPrefsComida: (p: PrefsComida) => void;
   setPerfil: (p: Perfil) => void;
+  setPlan: (p: PlanNutriologo) => void;
+  ajustarEq: (fecha: string, g: GrupoEq, delta: number) => void;
   dia: (fecha: string) => Dia;
   addComida: (fecha: string, c: Omit<Comida, "id">) => void;
   removeComida: (fecha: string, id: string) => void;
@@ -126,6 +132,13 @@ export const useBrio = create<Estado>()(
             perfil: p,
             pesos: s.pesos.length ? s.pesos : [{ fecha: hoyISO(), kg: p.pesoInicial }],
           })),
+        setPlan: (plan) => set((s) => (s.perfil ? { perfil: { ...s.perfil, plan } } : {})),
+        ajustarEq: (fecha, g, delta) => editarDia(fecha, (d) => {
+          const eq = { ...(d.extra?.eq ?? {}) };
+          eq[g] = Math.round(((eq[g] ?? 0) + delta) * 2) / 2;
+          if (!eq[g]) delete eq[g];
+          return { ...d, extra: { ...d.extra, eq } };
+        }),
         dia: (fecha) => get().dias[fecha] ?? diaVacio(),
         addComida: (fecha, c) => editarDia(fecha, (d) => ({ ...d, comidas: [...d.comidas, { ...c, id: uid() }] })),
         removeComida: (fecha, id) => editarDia(fecha, (d) => ({ ...d, comidas: d.comidas.filter((c) => c.id !== id) })),

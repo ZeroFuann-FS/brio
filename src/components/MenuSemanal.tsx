@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import type { Metas, Perfil, PrefsComida, QuienCocina } from "../lib/calc";
+import { tienePlanMenu, type Metas, type Perfil, type PrefsComida, type QuienCocina } from "../lib/calc";
 import { nutricion, recetaPorId, type Receta, type TipoReceta } from "../data/recetas";
 import { cambiarComida, generarMenuReglas, kcalCasa, listaSuper, quienCocina, totalesDia, unidadDespensa, type OpcionesMenu } from "../lib/menu";
 import { useBrio } from "../lib/store";
@@ -72,6 +72,7 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
         <Tarjeta tono="food">
           <p className="lab">Menú semanal</p>
           <h2 className="mt-1 font-serif text-xl font-medium">Arma tu menú</h2>
+          {tienePlanMenu(perfil.plan) && <p className="mt-1 rounded-[10px] bg-surface px-3 py-2 text-xs text-muted">Ya sigues el menú de tu nutriólogo. Usa este solo si quieres ideas para días libres.</p>}
           <p className="mt-1 text-sm text-muted">Con tu meta de {metas.kcal.toLocaleString("es-MX")} kcal y {metas.proteina} g de proteína. Brío elige recetas que te gustan, usa primero tu despensa y ajusta las porciones.</p>
 
           <div className="mt-4 space-y-4">

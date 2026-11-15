@@ -8,7 +8,7 @@ import Proyeccion from "./Proyeccion";
 
 type Borrador = {
   nombre: string; sexo: Sexo | ""; edad: string; estatura: string; peso: string; meta: string;
-  diaADia: DiaADia | ""; diasEntreno: number; ritmo: Ritmo; habitos: Habito[]; nuevoHabito: string; motivoTitulo: string; motivoFecha: string;
+  diaADia: DiaADia | ""; diasEntreno: number; ritmo: Ritmo; habitos: Habito[]; nuevoHabito: string; motivoTitulo: string; motivoFecha: string; nutri: boolean;
 };
 
 const MOTIVOS = ["Graduación", "Viaje", "Boda", "Cumpleaños", "Vacaciones", "Una competencia"];
@@ -55,6 +55,7 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
     nuevoHabito: "",
     motivoTitulo: inicial?.motivo?.titulo ?? "",
     motivoFecha: inicial?.motivo?.fecha ?? "",
+    nutri: !!inicial?.plan?.activo,
   });
   const [paso, setPaso] = useState(0);
   const set = <K extends keyof Borrador>(k: K, v: Borrador[K]) => setB((x) => ({ ...x, [k]: v }));
@@ -297,6 +298,22 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
       ),
     },
     {
+      id: "nutri",
+      titulo: "¿Tienes plan de un nutriólogo?",
+      sub: "Si ya te dieron un menú o equivalentes, Brío lo sigue en lugar de inventarte uno.",
+      valido: true,
+      cuerpo: (
+        <div className="space-y-2.5">
+          {([[true, "Sí, tengo plan", "Lo capturas después en Hoy o en Comida: metas, equivalentes o el menú de cada día."], [false, "No, que Brío me ayude", "Brío calcula tus metas, te da recetas y arma tu menú."]] as const).map(([v, t, d]) => (
+            <button key={t} type="button" onClick={() => set("nutri", v)} aria-pressed={b.nutri === v}
+              className={`w-full rounded-[16px] border p-4 text-left transition ${b.nutri === v ? "border-lime bg-lime/15" : "border-line bg-surface"}`}>
+              <b className="block font-medium">{t}</b><span className="mt-0.5 block text-sm text-muted">{d}</span>
+            </button>
+          ))}
+        </div>
+      ),
+    },
+    {
       id: "resumen",
       titulo: `Listo, ${b.nombre.trim() || "crack"}.`,
       sub: "Este es tu plan. Brío lo ajusta solo cada vez que registres tu peso.",
@@ -399,6 +416,8 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
       ritmo: b.ritmo,
       motivo: b.motivoTitulo.trim() && b.motivoFecha ? { titulo: b.motivoTitulo.trim(), fecha: b.motivoFecha } : undefined,
       habitos: b.habitos,
+      prefsComida: inicial?.prefsComida,
+      plan: b.nutri ? { usarMetas: false, ...inicial?.plan, activo: true } : inicial?.plan ? { ...inicial.plan, activo: false } : undefined,
       creado: inicial?.creado ?? hoyISO(),
     });
   };

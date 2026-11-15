@@ -14,7 +14,7 @@ import Cuenta from "./components/Cuenta";
 import Logo from "./components/Logo";
 import { nubeDisponible, supabase } from "./lib/supabase";
 import { iniciarSync, useSync } from "./lib/sync";
-import { calcularMetas } from "./lib/calc";
+import { aplicarPlan, calcularMetas } from "./lib/calc";
 import { habitosDe, pesoActual, racha, useBrio } from "./lib/store";
 
 const KEY = "brio:intro-visto-v3";
@@ -73,7 +73,7 @@ export default function App() {
   };
 
   const actual = perfil ? pesoActual(pesos, perfil.pesoInicial) : 0;
-  const metas = useMemo(() => (perfil ? calcularMetas(perfil, actual) : null), [perfil, actual]);
+  const metas = useMemo(() => (perfil ? aplicarPlan(calcularMetas(perfil, actual), perfil) : null), [perfil, actual]);
 
   const terminarIntro = () => {
     try { localStorage.setItem(KEY, "1"); } catch { /* sin storage */ }
