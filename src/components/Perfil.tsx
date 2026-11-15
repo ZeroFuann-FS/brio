@@ -4,7 +4,8 @@ import { nubeDisponible } from "../lib/supabase";
 import { useTema, type Tema } from "../lib/tema";
 import type { Metas, Perfil as TPerfil } from "../lib/calc";
 import { useBrio } from "../lib/store";
-import { Tarjeta, btnSecundario } from "./ui";
+import { Hoja, Tarjeta, btnSecundario } from "./ui";
+import { CREDITOS } from "../data/creditos";
 import Logo from "./Logo";
 import MiIA from "./MiIA";
 
@@ -22,6 +23,7 @@ type Props = {
 };
 
 export default function Perfil({ perfil, metas, onEditar, onVerIntro, email, estadoSync, onCrearCuenta }: Props) {
+  const [creditos, setCreditos] = useState(false);
   const [saliendo, setSaliendo] = useState(false);
   const { tema, setTema } = useTema();
   const [eliminar, setEliminar] = useState<"no" | "confirmar" | "eliminando" | "error">("no");
@@ -138,7 +140,20 @@ export default function Perfil({ perfil, metas, onEditar, onVerIntro, email, est
           </>
         )}
       </Tarjeta>
-      <p className="text-center text-xs text-muted">Brío v0.3 · Ponle brío a tu vida.</p>
+      <p className="text-center text-xs text-muted">
+        Brío v0.4 · Ponle brío a tu vida. · <a href="/privacidad.html" className="underline">Privacidad</a> · <a href="/terminos.html" className="underline">Términos</a> · <button onClick={() => setCreditos(true)} className="underline">Créditos de fotos</button>
+      </p>
+      <Hoja abierta={creditos} onClose={() => setCreditos(false)} titulo="Créditos de fotos">
+        <p className="text-sm text-muted">Las fotos de platillos e ingredientes vienen de Wikimedia Commons con licencias libres, y algunas de TheMealDB. Datos de productos de Open Food Facts (ODbL). Gracias a sus autores.</p>
+        <ul className="mt-3 text-xs">
+          {CREDITOS.map((c) => (
+            <li key={c.tipo + c.id} className="border-b border-line py-1.5 last:border-b-0">
+              <a href={c.pagina} target="_blank" rel="noreferrer" className="hover:underline">{c.titulo}</a>
+              <span className="block text-muted">{c.autor} · {c.licencia}</span>
+            </li>
+          ))}
+        </ul>
+      </Hoja>
     </div>
   );
 }

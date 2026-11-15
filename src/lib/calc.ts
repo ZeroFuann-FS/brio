@@ -9,7 +9,10 @@ export interface PrefsComida {
   gustos?: string[];        // ids de alimentos que le gustan
   evitar?: string[];        // ids de alimentos que no come
   favoritas?: string[];     // ids de recetas favoritas
+  /** Quién cocina cada comida: por día y tipo ("yo" por defecto, "casa" = se come lo que hay en casa o fuera, "no" = no se hace). */
+  horario?: Record<string, Partial<Record<string, QuienCocina>>>;
 }
+export type QuienCocina = "yo" | "casa" | "no";
 
 export interface Perfil {
   nombre: string;

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import type { Metas, Perfil, PrefsComida } from "../lib/calc";
+import type { Metas, Perfil, PrefsComida, QuienCocina } from "../lib/calc";
 import { nutricion, recetaPorId, type Receta, type TipoReceta } from "../data/recetas";
-import { cambiarComida, generarMenuReglas, listaSuper, totalesDia, unidadDespensa, type OpcionesMenu } from "../lib/menu";
+import { cambiarComida, generarMenuReglas, kcalCasa, listaSuper, quienCocina, totalesDia, unidadDespensa, type OpcionesMenu } from "../lib/menu";
 import { useBrio } from "../lib/store";
 import Gustos from "./Gustos";
 import RecetaDetalle, { MiniReceta, useRegistrarReceta } from "./RecetaDetalle";
@@ -14,6 +14,12 @@ const COMIDAS: { id: TipoReceta; t: string }[] = [{ id: "desayuno", t: "Desayuno
 const EQUIPO = ["Estufa", "Microondas", "Air fryer", "Horno", "Licuadora", "Refrigerador"];
 const NOMBRE_TIPO: Record<TipoReceta, string> = { desayuno: "Desayuno", comida: "Comida", cena: "Cena", colacion: "Colación" };
 const BASE: PrefsComida = { presupuesto: 500, comidas: ["desayuno", "comida", "cena"], equipo: ["Estufa", "Microondas"], preferencias: "", colaciones: 1, dias: DIAS.slice(0, 7), gustos: [], evitar: [] };
+const SIGUIENTE: Record<QuienCocina, QuienCocina> = { yo: "casa", casa: "no", no: "yo" };
+const CELDA: Record<QuienCocina, { t: string; cls: string }> = {
+  yo: { t: "Yo", cls: "border-lime bg-lime text-on-lime" },
+  casa: { t: "Casa", cls: "border-water/60 bg-t-water text-ink" },
+  no: { t: "—", cls: "border-line bg-surface text-muted" },
+};
 const dinero = (n: number) => `$${Math.round(n).toLocaleString("es-MX")}`;
 
 function Chip({ on, children, onClick }: { on: boolean; children: string; onClick: () => void }) {
@@ -40,7 +46,11 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
 
   const opciones = (): OpcionesMenu => ({
     dias: p.dias ?? DIAS, comidas: p.comidas as TipoReceta[], colaciones: p.colaciones ?? 0, kcal: metas.kcal, proteina: metas.proteina,
-    presupuesto: p.presupuesto, equipo: p.equipo, gustos: p.gustos ?? [], evitar: p.evitar ?? [], favoritas: perfil.prefsComida?.favoritas ?? [], despensa,
+    presupuesto: p.presupuesto, equipo: p.equipo, gustos: p.gustos ?? [], evitar: p.evitar ?? [], favoritas: perfil.prefsComida?.favoritas ?? [], despensa, horario: p.horario,
+  });
+  const cambiarCelda = (dia: string, tipo: TipoReceta) => setP((x) => {
+    const actual = quienCocina(x, dia, tipo);
+    return { ...x, horario: { ...(x.horario ?? {}), [dia]: { ...(x.horario?.[dia] ?? {}), [tipo]: SIGUIENTE[actual] } } };
   });
   const toggle = (k: "comidas" | "equipo" | "dias", v: string) => setP((x) => {
     const lista = (x[k] ?? []) as string[];
@@ -83,6 +93,31 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
               <p className="lab mb-2">Colaciones al día</p>
               <div className="flex gap-2">{[0, 1, 2].map((n) => <Chip key={n} on={(p.colaciones ?? 0) === n} onClick={() => setP((x) => ({ ...x, colaciones: n }))}>{n === 0 ? "Ninguna" : String(n)}</Chip>)}</div>
             </div>
+            {(p.dias ?? []).length > 0 && p.comidas.length > 0 && (() => {
+              const cols: TipoReceta[] = [...COMIDAS.map((c) => c.id).filter((c) => p.comidas.includes(c)), ...((p.colaciones ?? 0) > 0 ? ["colacion" as TipoReceta] : [])];
+              return (
+                <div>
+                  <p className="lab mb-1">¿Quién cocina?</p>
+                  <p className="mb-2 text-xs text-muted">Toca para cambiar: <b className="text-ink">Yo</b> = Brío te da receta y compras · <b className="text-ink">Casa</b> = comes lo que hacen en casa o fuera · <b className="text-ink">—</b> = no la haces.</p>
+                  <div className="grid gap-1" style={{ gridTemplateColumns: `44px repeat(${cols.length}, minmax(0, 1fr))` }}>
+                    <span />
+                    {cols.map((c) => <span key={c} className="lab truncate text-center !text-[10px]">{NOMBRE_TIPO[c]}</span>)}
+                    {(p.dias ?? []).map((d) => (
+                      <div key={d} className="contents">
+                        <span className="num self-center text-[15px] uppercase text-muted">{CORTO[d]}</span>
+                        {cols.map((c) => {
+                          const q = quienCocina(p, d, c);
+                          return (
+                            <button key={c} type="button" onClick={() => cambiarCelda(d, c)} aria-label={`${d}, ${NOMBRE_TIPO[c]}: ${CELDA[q].t}`}
+                              className={`h-9 rounded-[9px] border text-xs font-medium transition ${CELDA[q].cls}`}>{CELDA[q].t}</button>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
             <div>
               <p className="lab mb-2">¿Con qué cocinas?</p>
               <div className="flex flex-wrap gap-2">{EQUIPO.map((c) => <Chip key={c} on={p.equipo.includes(c)} onClick={() => toggle("equipo", c)}>{c}</Chip>)}</div>
@@ -119,6 +154,7 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
   const m = menuValido;
   const d = m.dias[Math.min(dia, m.dias.length - 1)];
   const tot = totalesDia(d.comidas);
+  const enCasa = d.comidas.reduce((a, c) => a + kcalCasa(c), 0);
   const lista = listaSuper(m, despensa);
   const porComprar = lista.items.filter((i) => i.unidades > 0);
   const yaTienes = lista.items.filter((i) => i.unidades === 0);
@@ -152,12 +188,31 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
         </div>
         <div className="mt-3 flex justify-between">
           <span className="lab">{d.dia}</span>
-          <span className="lab">{tot.kcal.toLocaleString("es-MX")} / {metas.kcal.toLocaleString("es-MX")} kcal · {tot.proteina} g prot</span>
+          <span className="lab">{(tot.kcal + enCasa).toLocaleString("es-MX")} / {metas.kcal.toLocaleString("es-MX")} kcal{enCasa ? ` · ~${enCasa.toLocaleString("es-MX")} en casa` : ` · ${tot.proteina} g prot`}</span>
         </div>
 
         <AnimatePresence mode="wait">
           <motion.ul key={dia} className="mt-1" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.2, ease }}>
             {d.comidas.map((c, ci) => {
+              if (c.casa) return (
+                <li key={ci} className="border-b border-line py-2.5 last:border-b-0">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="lab grid h-11 w-11 shrink-0 place-items-center rounded-[12px] bg-t-water !text-[10px] !text-ink">Casa</span>
+                    <span className="min-w-0">
+                      <span className="lab block !tracking-[0.08em]">{NOMBRE_TIPO[c.tipo]}</span>
+                      <span className="block font-medium">Lo que hagan en casa o fuera</span>
+                      <span className="lab !tracking-[0.06em]">Te tocan ~{c.factor.toLocaleString("es-MX")} kcal</span>
+                    </span>
+                  </div>
+                  <p className="mt-1.5 pl-[56px] text-xs leading-relaxed text-muted">
+                    {c.tipo === "colacion" ? "Una fruta, un puño de cacahuates o un yogur." : "Arma tu plato: la mitad verdura, un cuarto proteína (del tamaño de tu palma) y un cuarto tortilla, arroz o pan. Evita repetir y bebe agua."}
+                  </p>
+                  <div className="mt-2 pl-[56px]">
+                    <button onClick={() => document.getElementById("comidas-dia")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                      className="rounded-full border border-line px-3 py-1 text-xs text-muted hover:text-ink">Registrar lo que comí</button>
+                  </div>
+                </li>
+              );
               const r = recetaPorId(c.receta);
               if (!r) return null;
               const n = nutricion(r, c.factor);

@@ -6,7 +6,8 @@ import { ALIMENTOS } from "../data/alimentos";
 import { COMPRAS } from "../data/compras";
 import { RECETAS, costo, necesitaRefri, nutricion, recetaPorId, type Equipo, type Receta, type TipoReceta } from "../data/recetas";
 import type { ComidaMenu, ItemDespensa, MenuGuardado } from "./store";
-import { hoyISO } from "./calc";
+import { hoyISO, type QuienCocina } from "./calc";
+import { expandirGustos } from "../data/gustos";
 
 export interface OpcionesMenu {
   dias: string[];
@@ -20,7 +21,10 @@ export interface OpcionesMenu {
   evitar: string[];
   favoritas: string[];
   despensa: ItemDespensa[];
+  horario?: Record<string, Partial<Record<string, QuienCocina>>>;
 }
+
+export const quienCocina = (o: { horario?: OpcionesMenu["horario"] }, dia: string, tipo: TipoReceta): QuienCocina => o.horario?.[dia]?.[tipo] ?? "yo";
 
 const POR_ID = new Map(ALIMENTOS.map((a) => [a.id, a]));
 const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -67,7 +71,8 @@ function puntaje(r: Receta, o: OpcionesMenu, ctx: Contexto, pesoCosto: number) {
   p -= (ctx.principalesHoy.get(principal(r)) ?? 0) * 7;                      // no repetir proteína el mismo día
   p -= Math.max(0, (ctx.ingSemana.get(principal(r)) ?? 0) - 5) * 1.5;         // ni abusar en la semana
   p += ids.filter((id) => (ctx.ingSemana.get(id) ?? 0) > 0).length * 0.6 * pesoCosto; // reusar ingredientes = comprar menos
-  p += ids.filter((id) => o.gustos.includes(id)).length * 3;
+  const gustos = expandirGustos(o.gustos);
+  p += ids.filter((id) => gustos.includes(id)).length * 3;
   p += ids.filter((id) => enDespensa(o.despensa, id)).length * 2;
   if (o.favoritas.includes(r.id)) p += 4;
   const n = nutricion(r);
@@ -80,7 +85,8 @@ function puntaje(r: Receta, o: OpcionesMenu, ctx: Contexto, pesoCosto: number) {
 }
 
 function candidatos(tipo: TipoReceta, o: OpcionesMenu) {
-  return RECETAS.filter((r) => r.tipos.includes(tipo) && puedeHacerse(r, o.equipo) && !r.ing.some(([id]) => o.evitar.includes(id)));
+  const evitar = expandirGustos(o.evitar);
+  return RECETAS.filter((r) => r.tipos.includes(tipo) && puedeHacerse(r, o.equipo) && !r.ing.some(([id]) => evitar.includes(id)));
 }
 
 function elegir(tipo: TipoReceta, o: OpcionesMenu, ctx: Contexto, pesoCosto: number, excluir?: string): Receta | undefined {
@@ -99,11 +105,12 @@ function anotar(ctx: Contexto, r: Receta) {
 }
 
 /** Ajusta las porciones del día para acercarse a la meta de calorías. */
-function ajustar(comidas: { tipo: TipoReceta; r: Receta }[], o: OpcionesMenu): ComidaMenu[] {
+function ajustar(comidas: { tipo: TipoReceta; r: Receta | null }[], o: OpcionesMenu): ComidaMenu[] {
   const tipos = comidas.map((c) => c.tipo);
   const total = tipos.reduce((a, t) => a + REPARTO[t], 0);
   return comidas.map(({ tipo, r }) => {
-    const meta = (o.kcal * REPARTO[tipo]) / total / (tipo === "colacion" ? 1 : 1);
+    const meta = (o.kcal * REPARTO[tipo]) / total;
+    if (!r) return { tipo, receta: "", factor: Math.round(meta), casa: true };   // factor = kcal sugeridas
     const k = nutricion(r).kcal || 1;
     const factor = Math.min(1.6, Math.max(0.6, Math.round((meta / k) * 10) / 10));
     return { tipo, receta: r.id, factor };
@@ -123,11 +130,13 @@ function construir(o: OpcionesMenu, pesoCosto: number): MenuGuardado {
       if (t === "comida" && o.colaciones >= 2) orden.push("colacion");
     }
     if (o.colaciones >= 1 && !orden.includes("colacion")) orden.push("colacion");
-    const elegidas = orden.map((tipo) => {
+    const activas = orden.filter((t) => quienCocina(o, dia, t) !== "no");
+    const elegidas = activas.map((tipo) => {
+      if (quienCocina(o, dia, tipo) === "casa") return { tipo, r: null };
       const r = elegir(tipo, o, ctx, pesoCosto);
       if (r) anotar(ctx, r);
       return { tipo, r };
-    }).filter((x): x is { tipo: TipoReceta; r: Receta } => !!x.r);
+    }).filter((x): x is { tipo: TipoReceta; r: Receta | null } => x.r !== undefined);
     return { dia, comidas: ajustar(elegidas, o) };
   });
   return { creado: hoyISO(), dias, comprado: [] };
@@ -147,6 +156,9 @@ export function generarMenuReglas(o: OpcionesMenu): MenuGuardado {
 }
 
 /** Cambia una comida por otra receta del mismo tipo. */
+/** kcal sugeridas para una comida en casa. */
+export const kcalCasa = (c: ComidaMenu) => (c.casa ? c.factor : 0);
+
 export function cambiarComida(m: MenuGuardado, di: number, ci: number, o: OpcionesMenu): MenuGuardado {
   const ctx: Contexto = { usos: new Map(), hoy: new Set(), principalesHoy: new Map(), ingSemana: new Map() };
   m.dias.forEach((d, i) => d.comidas.forEach((c, j) => {
@@ -157,6 +169,7 @@ export function cambiarComida(m: MenuGuardado, di: number, ci: number, o: Opcion
     if (i === di) { ctx.hoy.add(rr.id); const pr = principal(rr); ctx.principalesHoy.set(pr, (ctx.principalesHoy.get(pr) ?? 0) + 1); }
   }));
   const actual = m.dias[di].comidas[ci];
+  if (actual.casa) return m;
   const r = elegir(actual.tipo, o, ctx, 1, actual.receta);
   if (!r) return m;
   const k = nutricion(r).kcal || 1;
@@ -168,6 +181,7 @@ export function cambiarComida(m: MenuGuardado, di: number, ci: number, o: Opcion
 
 export function totalesDia(comidas: ComidaMenu[]) {
   return comidas.reduce((t, c) => {
+    if (c.casa) return t;
     const r = recetaPorId(c.receta);
     if (!r) return t;
     const n = nutricion(r, c.factor);

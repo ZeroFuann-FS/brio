@@ -69,7 +69,7 @@ export function Tarjeta({ children, className = "", delay = 0, tono = "base" }: 
   );
 }
 
-export function Hoja({ abierta, onClose, titulo, children }: { abierta: boolean; onClose: () => void; titulo: string; children: ReactNode }) {
+export function Hoja({ abierta, onClose, titulo, children, ancha = false }: { abierta: boolean; onClose: () => void; titulo: string; children: ReactNode; ancha?: boolean }) {
   return (
     <AnimatePresence>
       {abierta && (
@@ -78,7 +78,7 @@ export function Hoja({ abierta, onClose, titulo, children }: { abierta: boolean;
           <motion.div
             role="dialog"
             aria-label={titulo}
-            className="relative max-h-[88vh] w-full max-w-md overflow-y-auto rounded-t-[24px] border border-line bg-bg p-5 pb-[max(env(safe-area-inset-bottom),1.25rem)] md:mb-[6vh] md:rounded-[24px]"
+            className={`relative max-h-[92vh] w-full overflow-y-auto ${ancha ? "max-w-md md:max-w-4xl" : "max-w-md"} rounded-t-[24px] border border-line bg-bg p-5 pb-[max(env(safe-area-inset-bottom),1.25rem)] md:mb-[4vh] md:rounded-[24px]`}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}

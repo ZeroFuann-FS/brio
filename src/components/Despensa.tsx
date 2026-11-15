@@ -129,7 +129,7 @@ export default function Despensa() {
         </Tarjeta>
       )}
 
-      <p className="px-2 text-center text-xs text-muted">Próximamente: Brío arma tu menú de la semana usando primero lo que hay aquí, y te da la lista del súper dentro de tu presupuesto.</p>
+      <p className="px-2 text-center text-xs text-muted">Tu menú semanal usa primero lo que hay aquí y no te lo vuelve a pedir en la lista del súper.</p>
     </div>
   );
 }

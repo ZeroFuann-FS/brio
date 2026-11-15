@@ -1,7 +1,10 @@
 /**
- * Fotos de ingredientes genéricos de TheMealDB (www.themealdb.com), uso gratuito no comercial.
- * Clave = id del alimento en data/alimentos.ts; valor = nombre del ingrediente en TheMealDB.
+ * Fotos de alimentos y platillos.
+ * 1) Fotos propias de la app (Wikimedia Commons, licencias libres; créditos en data/creditos.ts), en /public/fotos.
+ * 2) Si no hay, fotos de ingredientes sueltos de TheMealDB (www.themealdb.com).
  */
+import { FOTOS_ALIMENTOS, FOTOS_RECETAS } from "./creditos";
+
 const FOTOS: Record<string, string> = {
   "aceite": "Vegetable Oil",
   "aguacate": "Avocado",
@@ -11,7 +14,6 @@ const FOTOS: Record<string, string> = {
   "atun-aceite": "Tuna",
   "atun-agua": "Tuna",
   "avena": "Oats",
-  "azucar": "Sugar",
   "bistec": "Beef",
   "bolillo": "Bread Rolls",
   "brocoli": "Broccoli",
@@ -25,16 +27,13 @@ const FOTOS: Record<string, string> = {
   "cerveza": "Beer",
   "champinones": "Mushrooms",
   "chocolate": "Milk Chocolate",
-  "chorizo": "Chorizo",
   "chuleta": "Pork Chops",
   "clara": "Egg White",
-  "crema": "Full fat sour cream",
   "crema-cacahuate": "Peanut Butter",
   "ejotes": "Green Beans",
   "elote": "Sweetcorn",
   "espinaca": "Spinach",
   "fresas": "Strawberries",
-  "frijol-bayo": "Pinto Beans",
   "frijol-negro": "Black Beans",
   "garbanzos": "Chickpeas",
   "granola": "Oats",
@@ -79,7 +78,6 @@ const FOTOS: Record<string, string> = {
   "queso-panela": "Cheese",
   "refresco": "Coca-Cola",
   "refritos": "Refried Beans",
-  "salchicha-pavo": "Sausages",
   "salsa-roja": "Salsa",
   "salsa-verde": "Green Salsa",
   "sardina": "Sardines",
@@ -88,12 +86,12 @@ const FOTOS: Record<string, string> = {
   "tilapia": "Fish fillet",
   "tortilla-harina": "Flour Tortilla",
   "tortilla-maiz": "Corn Tortillas",
-  "tostada-frita": "Hard Taco Shells",
-  "tostada-horneada": "Hard Taco Shells",
-  "yogur": "Natural Yoghurt",
-  "yogur-griego": "Greek Yogurt",
   "zanahoria": "Carrots",
 };
 
 export const fotoDe = (id: string): string | undefined =>
-  FOTOS[id] ? `https://www.themealdb.com/images/ingredients/${encodeURIComponent(FOTOS[id])}-Small.png` : undefined;
+  FOTOS_ALIMENTOS.has(id) ? `/fotos/a/${id}.webp`
+    : FOTOS[id] ? `https://www.themealdb.com/images/ingredients/${encodeURIComponent(FOTOS[id])}-Small.png` : undefined;
+
+/** Foto del platillo terminado. */
+export const fotoReceta = (id: string): string | undefined => (FOTOS_RECETAS.has(id) ? `/fotos/r/${id}.webp` : undefined);

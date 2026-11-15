@@ -3,7 +3,8 @@ import { persist } from "zustand/middleware";
 import { hoyISO, sumarDias, type Habito, type Perfil, type PrefsComida } from "./calc";
 import type { TipoReceta } from "../data/recetas";
 
-export interface ComidaMenu { tipo: TipoReceta; receta: string; factor: number }
+/** receta vacía + casa = comida que se hace en casa o fuera (sin receta ni compras). */
+export interface ComidaMenu { tipo: TipoReceta; receta: string; factor: number; casa?: boolean }
 export interface MenuGuardado { creado: string; dias: { dia: string; comidas: ComidaMenu[] }[]; comprado: string[] }
 
 export type TipoComida = "desayuno" | "comida" | "cena" | "snack";

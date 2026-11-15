@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ALIMENTOS } from "../data/alimentos";
-import { fotoDe } from "../data/fotos";
+import { fotoDe, fotoReceta } from "../data/fotos";
 import { costo, etiquetas, necesitaRefri, nutricion, type Receta, type TipoReceta } from "../data/recetas";
 import { hoyISO } from "../lib/calc";
 import { coincidenciaDespensa, useBrio, type TipoComida } from "../lib/store";
@@ -11,16 +11,29 @@ const SIN_FAVORITAS: string[] = [];
 
 const POR_ID = new Map(ALIMENTOS.map((a) => [a.id, a]));
 
-/** Fotos de los ingredientes principales (para tarjetas y encabezados). */
+/** Fotos de los ingredientes principales. */
 export function fotosReceta(r: Receta, max = 4): string[] {
   return r.ing.map(([id]) => (id ? fotoDe(id) : undefined)).filter((x): x is string => !!x).slice(0, max);
 }
 
+/** Portada de la receta: foto del platillo o, si no hay, mosaico de ingredientes. */
+export function PortadaReceta({ r, className = "" }: { r: Receta; className?: string }) {
+  const f = fotoReceta(r.id);
+  if (f) return <img src={f} alt={r.nombre} loading="lazy" className={`h-full w-full object-cover ${className}`} />;
+  const ing = fotosReceta(r, 4);
+  return (
+    <div className={`grid h-full w-full grid-cols-2 gap-1 bg-white p-2 ${className}`}>
+      {ing.map((x) => <img key={x} src={x} alt="" loading="lazy" className="h-full w-full object-contain" />)}
+    </div>
+  );
+}
+
 export function MiniReceta({ r, size = 48 }: { r: Receta; size?: number }) {
-  const f = fotosReceta(r, 1)[0];
-  return f
-    ? <img src={f} alt="" loading="lazy" className="shrink-0 rounded-[12px] border border-line bg-white object-contain p-1" style={{ width: size, height: size }} />
-    : <span className="num grid shrink-0 place-items-center rounded-[12px] bg-t-food text-lg" style={{ width: size, height: size }}>{r.nombre.charAt(0)}</span>;
+  return (
+    <span className="block shrink-0 overflow-hidden rounded-[12px] border border-line bg-white" style={{ width: size, height: size }}>
+      <PortadaReceta r={r} />
+    </span>
+  );
 }
 
 /** Registra la receta en el día y descuenta de la despensa lo que coincida. */
@@ -51,72 +64,83 @@ export default function RecetaDetalle({ r, factorInicial = 1, onRegistrado }: { 
   const setPrefs = useBrio((s) => s.setPrefsComida);
   const n = nutricion(r, factor);
   const fav = favoritas.includes(r.id);
-  const fotos = fotosReceta(r);
 
   const alternarFav = () => {
-    const p = perfil?.prefsComida ?? { presupuesto: 500, comidas: ["Desayuno", "Comida", "Cena"], equipo: ["Estufa"], preferencias: "" };
+    const p = perfil?.prefsComida ?? { presupuesto: 500, comidas: ["desayuno", "comida", "cena"], equipo: ["Estufa"], preferencias: "" };
     const f = p.favoritas ?? [];
     setPrefs({ ...p, favoritas: fav ? f.filter((x) => x !== r.id) : [...f, r.id] });
   };
 
   return (
-    <div>
-      {fotos.length > 0 && (
-        <div className="mb-4 grid grid-cols-4 gap-2 rounded-[16px] border border-line bg-white p-3">
-          {fotos.map((f) => <img key={f} src={f} alt="" className="aspect-square w-full object-contain" />)}
+    <div className="md:grid md:grid-cols-[1fr_1.05fr] md:gap-7">
+      {/* Columna 1: foto, datos y acción */}
+      <div>
+        <div className="relative aspect-[4/3] overflow-hidden rounded-[18px] border border-line bg-white">
+          <PortadaReceta r={r} />
+          <button onClick={alternarFav} aria-pressed={fav} aria-label={fav ? "Quitar de favoritas" : "Agregar a favoritas"}
+            className={`absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full border text-lg shadow-sm backdrop-blur ${fav ? "border-lime bg-lime text-on-lime" : "border-white/60 bg-white/90 text-[#151515]"}`}>
+            {fav ? "♥" : "♡"}
+          </button>
         </div>
-      )}
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="lab">{r.tipos.map((t) => (t === "colacion" ? "colación" : t)).join(" · ")} · {r.min} min · ~${costo(r, factor)}</p>
-          <h3 className="mt-1 font-serif text-2xl font-medium leading-tight">{r.nombre}</h3>
+        <p className="lab mt-4">{r.tipos.map((t) => (t === "colacion" ? "colación" : t)).join(" · ")} · {r.min} min · ~${costo(r, factor)}</p>
+        <h3 className="mt-1 font-serif text-2xl font-medium leading-tight md:text-3xl">{r.nombre}</h3>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {etiquetas(r).map((e) => <span key={e} className="rounded-full bg-t-habit px-2.5 py-0.5 text-xs">{e}</span>)}
+          {necesitaRefri(r) && <span className="rounded-full bg-t-water px-2.5 py-0.5 text-xs">Sin refri: compra lo perecedero el mismo día</span>}
         </div>
-        <button onClick={alternarFav} aria-pressed={fav} aria-label={fav ? "Quitar de favoritas" : "Agregar a favoritas"}
-          className={`grid h-10 w-10 shrink-0 place-items-center rounded-full border text-lg ${fav ? "border-lime bg-lime text-on-lime" : "border-line text-muted"}`}>
-          {fav ? "♥" : "♡"}
+
+        <div className="mt-4 grid grid-cols-4 gap-2 rounded-[14px] border border-line bg-surface p-3">
+          {[["kcal", n.kcal], ["Prot", n.proteina], ["Carb", n.carbos], ["Grasa", n.grasa]].map(([l, v]) => (
+            <div key={l as string}><p className="lab">{l}</p><p className="num text-2xl">{v}</p></div>
+          ))}
+        </div>
+
+        <div className="mt-3 flex items-center justify-between">
+          <span className="lab">Porción</span>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setFactor((f) => Math.max(0.5, Math.round((f - 0.1) * 10) / 10))} aria-label="Menos" className="grid h-9 w-9 place-items-center rounded-[10px] border border-line">−</button>
+            <span className="num w-14 text-center text-xl">×{factor.toFixed(1)}</span>
+            <button onClick={() => setFactor((f) => Math.min(3, Math.round((f + 0.1) * 10) / 10))} aria-label="Más" className="grid h-9 w-9 place-items-center rounded-[10px] border border-line">+</button>
+          </div>
+        </div>
+
+        <button onClick={() => { const d = registrar(r, factor); onRegistrado?.(d ? "Registrado y descontado de tu despensa" : "Registrado en tus comidas de hoy"); }}
+          className={`${btnPrimario} mt-4 hidden w-full md:block`}>
+          Registrar hoy
         </button>
       </div>
-      <div className="mt-2 flex flex-wrap gap-1.5">
-        {etiquetas(r).map((e) => <span key={e} className="rounded-full bg-t-habit px-2.5 py-0.5 text-xs">{e}</span>)}
-        {necesitaRefri(r) && <span className="rounded-full bg-t-water px-2.5 py-0.5 text-xs">Compra lo perecedero el mismo día si no tienes refri</span>}
-      </div>
 
-      <div className="mt-4 grid grid-cols-4 gap-2 rounded-[14px] border border-line bg-surface p-3">
-        {[["kcal", n.kcal], ["Prot", n.proteina], ["Carb", n.carbos], ["Grasa", n.grasa]].map(([l, v]) => (
-          <div key={l as string}><p className="lab">{l}</p><p className="num text-2xl">{v}</p></div>
-        ))}
-      </div>
+      {/* Columna 2: ingredientes y pasos */}
+      <div>
+        <p className="lab mb-1 mt-5 md:mt-0">Ingredientes</p>
+        <ul>
+          {r.ing.map(([id, g, t], i) => {
+            const f = id ? fotoDe(id) : undefined;
+            return (
+              <li key={i} className="flex items-center gap-3 border-b border-line py-2 text-sm last:border-b-0">
+                {f ? <img src={f} alt="" loading="lazy" className="h-9 w-9 shrink-0 rounded-[8px] bg-white object-cover" /> : <span className="h-9 w-9 shrink-0" />}
+                <span className="flex-1">{t}</span>
+                {g > 0 && <span className="num text-muted">{Math.round(g * factor)} g</span>}
+              </li>
+            );
+          })}
+        </ul>
 
-      <div className="mt-3 flex items-center justify-between">
-        <span className="lab">Porción</span>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setFactor((f) => Math.max(0.5, Math.round((f - 0.1) * 10) / 10))} className="grid h-9 w-9 place-items-center rounded-[10px] border border-line">−</button>
-          <span className="num w-14 text-center text-xl">×{factor.toFixed(1)}</span>
-          <button onClick={() => setFactor((f) => Math.min(3, Math.round((f + 0.1) * 10) / 10))} className="grid h-9 w-9 place-items-center rounded-[10px] border border-line">+</button>
-        </div>
-      </div>
-
-      <p className="lab mb-1 mt-4">Ingredientes</p>
-      <ul>
-        {r.ing.map(([id, g, t], i) => {
-          const f = id ? fotoDe(id) : undefined;
-          return (
-            <li key={i} className="flex items-center gap-3 border-b border-line py-2 text-sm last:border-b-0">
-              {f ? <img src={f} alt="" loading="lazy" className="h-8 w-8 shrink-0 object-contain" /> : <span className="h-8 w-8 shrink-0" />}
-              <span className="flex-1">{t}</span>
-              {g > 0 && <span className="num text-muted">{Math.round(g * factor)} g</span>}
+        <p className="lab mb-2 mt-5">Preparación</p>
+        <ol className="space-y-2.5">
+          {r.pasos.map((p, i) => (
+            <li key={i} className="grid grid-cols-[26px_1fr] gap-2 text-sm leading-relaxed">
+              <span className="num grid h-[26px] w-[26px] place-items-center rounded-full bg-t-food text-[15px]">{i + 1}</span>
+              <span className="pt-0.5">{p}</span>
             </li>
-          );
-        })}
-      </ul>
+          ))}
+        </ol>
 
-      <p className="lab mb-1 mt-4">Preparación</p>
-      <ol className="list-decimal space-y-1.5 pl-5 text-sm leading-relaxed">{r.pasos.map((p, i) => <li key={i}>{p}</li>)}</ol>
-
-      <button onClick={() => { const d = registrar(r, factor); onRegistrado?.(d ? "Registrado y descontado de tu despensa" : "Registrado en tus comidas de hoy"); }}
-        className={`${btnPrimario} mt-5 w-full`}>
-        Registrar hoy
-      </button>
+        <button onClick={() => { const d = registrar(r, factor); onRegistrado?.(d ? "Registrado y descontado de tu despensa" : "Registrado en tus comidas de hoy"); }}
+          className={`${btnPrimario} mt-6 w-full md:hidden`}>
+          Registrar hoy
+        </button>
+      </div>
     </div>
   );
 }
