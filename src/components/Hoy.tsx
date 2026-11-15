@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { diasEntre, hoyISO, type Metas, type Perfil } from "../lib/calc";
-import { habitosDe, minBrio, puntosDia, useBrio } from "../lib/store";
+import { habitosDe, minBrio, puntosDia, seAcaban, useBrio } from "../lib/store";
 import { Barra, Numero, Segmentos, Tarjeta, Toast, ease, useToast } from "./ui";
 import ComidasDia from "./ComidasDia";
 
@@ -12,11 +12,12 @@ function saludo() {
   return h < 12 ? "Buenos días" : h < 19 ? "Buenas tardes" : "Buenas noches";
 }
 
-export default function Hoy({ perfil, metas }: { perfil: Perfil; metas: Metas }) {
+export default function Hoy({ perfil, metas, onIrComida }: { perfil: Perfil; metas: Metas; onIrComida?: () => void }) {
   const hoy = hoyISO();
   const dias = useBrio((s) => s.dias);
   const { addAgua, toggleHabito } = useBrio();
   const d = dias[hoy] ?? { comidas: [], aguaMl: 0, habitos: {} };
+  const pocos = seAcaban(useBrio((s) => s.despensa));
   const [toast, setToast] = useToast();
 
   const suma = (k: "kcal" | "proteina" | "carbos" | "grasa") => d.comidas.reduce((a, c) => a + (c[k] ?? 0), 0);
@@ -58,6 +59,14 @@ export default function Hoy({ perfil, metas }: { perfil: Perfil; metas: Metas })
         </h1>
         <p className="mt-1.5 text-muted first-letter:uppercase">{DIAS[fecha.getDay()]} {fecha.getDate()} de {MESES[fecha.getMonth()]}</p>
       </motion.div>
+
+      {pocos.length > 0 && (
+        <button onClick={onIrComida} className="mt-4 flex w-full items-center justify-between gap-3 rounded-[14px] border border-line bg-surface px-4 py-3 text-left">
+          <span className="min-w-0"><span className="lab block !text-ember">Se te está acabando</span>
+            <span className="block truncate text-sm">{pocos.map((i) => `${i.nombre.toLowerCase()} (${i.cantidad} ${i.unidad})`).join(", ")}</span></span>
+          <span className="lab shrink-0">Ver →</span>
+        </button>
+      )}
 
       <div className="mt-5 grid gap-3 md:grid-cols-12 md:gap-4">
         {/* Comida: número editorial + barra deportiva */}

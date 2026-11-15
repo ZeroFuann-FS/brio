@@ -68,7 +68,7 @@ async function bajar(): Promise<Snap> {
     supabase.from("dias").select("fecha, comidas, agua_ml, habitos"),
     supabase.from("pesos").select("fecha, kg"),
     supabase.from("medidas").select("fecha, valores"),
-    supabase.from("despensa").select("id, nombre, cantidad, unidad"),
+    supabase.from("despensa").select("id, nombre, cantidad, unidad, minimo"),
     supabase.from("menus").select("datos"),
   ]);
   const err = pf.error ?? ds.error ?? ps.error ?? ms.error ?? de.error ?? mn.error;
@@ -79,7 +79,7 @@ async function bajar(): Promise<Snap> {
   for (const d of ds.data ?? []) m.set(`dia:${d.fecha}`, { comidas: d.comidas, aguaMl: d.agua_ml, habitos: d.habitos });
   for (const p of ps.data ?? []) m.set(`peso:${p.fecha}`, Number(p.kg));
   for (const r of ms.data ?? []) m.set(`medida:${r.fecha}`, { fecha: r.fecha, ...(r.valores as object) });
-  for (const i of de.data ?? []) m.set(`despensa:${i.id}`, { id: i.id, nombre: i.nombre, cantidad: Number(i.cantidad), unidad: i.unidad });
+  for (const i of de.data ?? []) m.set(`despensa:${i.id}`, { id: i.id, nombre: i.nombre, cantidad: Number(i.cantidad), unidad: i.unidad, ...(i.minimo != null ? { minimo: Number(i.minimo) } : {}) });
   return m;
 }
 
@@ -106,7 +106,7 @@ async function subir(uid: string) {
       else del.medidas.push(id);
     } else if (tipo === "despensa") {
       const i = v as ItemDespensa | undefined;
-      i ? up.despensa.push({ user_id: uid, id, nombre: i.nombre, cantidad: i.cantidad, unidad: i.unidad, actualizado: ahora }) : del.despensa.push(id);
+      i ? up.despensa.push({ user_id: uid, id, nombre: i.nombre, cantidad: i.cantidad, unidad: i.unidad, minimo: i.minimo ?? null, actualizado: ahora }) : del.despensa.push(id);
     }
   }
 

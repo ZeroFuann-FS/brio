@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { useBrio } from "../lib/store";
+import { minimoDe, seAcaban, useBrio } from "../lib/store";
 import { Tarjeta, btnPrimario, inputCls } from "./ui";
 
 const SUGERENCIAS: { n: string; u: string }[] = [
@@ -21,7 +21,8 @@ const paso = (u: string) => (u === "g" ? 50 : 1);
 
 export default function Despensa() {
   const despensa = useBrio((s) => s.despensa);
-  const { addItem, cambiarCantidad, removeItem } = useBrio();
+  const { addItem, cambiarCantidad, removeItem, setMinimo } = useBrio();
+  const [editar, setEditar] = useState<string | null>(null);
   const [f, setF] = useState({ nombre: "", cantidad: "", unidad: "pzas" });
 
   const agregar = (nombre: string, cantidad: number, unidad: string) => {
@@ -31,6 +32,7 @@ export default function Despensa() {
 
   const conStock = despensa.filter((i) => i.cantidad > 0);
   const agotados = despensa.filter((i) => i.cantidad === 0);
+  const pocos = seAcaban(despensa);
 
   return (
     <div className="space-y-4">
@@ -55,12 +57,26 @@ export default function Despensa() {
         </form>
         <div className="mt-4 flex flex-wrap gap-2">
           {SUGERENCIAS.filter((s) => !despensa.some((i) => i.nombre.toLowerCase() === s.n.toLowerCase())).map((s) => (
-            <button key={s.n} onClick={() => setF({ nombre: s.n, cantidad: "", unidad: s.u })} className="rounded-full border border-line bg-bg px-3 py-1.5 text-sm hover:border-lime">
+            <button key={s.n} onClick={() => setF({ nombre: s.n, cantidad: "", unidad: s.u })} className="rounded-full border border-line bg-surface px-3 py-1.5 text-sm text-muted hover:text-ink">
               {s.n}
             </button>
           ))}
         </div>
       </Tarjeta>
+
+      {pocos.length > 0 && (
+        <Tarjeta tono="food" delay={0.02}>
+          <p className="lab !text-ember">Se está acabando</p>
+          <ul className="mt-1">
+            {pocos.map((i) => (
+              <li key={i.id} className="flex items-baseline justify-between border-b border-line py-2 last:border-b-0">
+                <span>{i.nombre}</span><span className="num text-lg">{i.cantidad} <small className="text-sm font-medium text-muted">{i.unidad}</small></span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs text-muted">Agrégalo a tu próxima compra. Toca un producto en "En casa" para cambiar cuándo te avisamos.</p>
+        </Tarjeta>
+      )}
 
       <Tarjeta delay={0.05}>
         <h2 className="font-serif text-xl font-medium">En casa <span className="text-sm font-normal text-muted">· {conStock.length}</span></h2>
@@ -68,16 +84,27 @@ export default function Despensa() {
           <AnimatePresence initial={false}>
             {conStock.map((i) => (
               <motion.li key={i.id} layout initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
-                className="flex items-center gap-3 rounded-2xl bg-bg px-3 py-2.5">
+                className="flex flex-wrap items-center gap-3 rounded-[14px] border border-line bg-surface px-3 py-2.5">
                 <span className="num grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-t-food text-lg">{inicial(i.nombre)}</span>
-                <div className="min-w-0 flex-1">
+                <button className="min-w-0 flex-1 text-left" onClick={() => setEditar(editar === i.id ? null : i.id)}>
                   <p className="truncate font-medium">{i.nombre}</p>
-                  <p className="text-xs text-muted">{i.cantidad} {i.unidad}</p>
-                </div>
+                  <p className={`text-xs ${i.cantidad <= minimoDe(i) ? "text-ember" : "text-muted"}`}>{i.cantidad} {i.unidad}{i.cantidad <= minimoDe(i) ? " · se está acabando" : ""}</p>
+                </button>
                 <div className="flex items-center gap-1">
                   <button onClick={() => cambiarCantidad(i.id, -paso(i.unidad))} className="grid h-9 w-9 place-items-center rounded-xl border border-line text-lg" aria-label={`Quitar ${i.nombre}`}>−</button>
                   <button onClick={() => cambiarCantidad(i.id, paso(i.unidad))} className="grid h-9 w-9 place-items-center rounded-xl border border-line text-lg" aria-label={`Agregar ${i.nombre}`}>+</button>
                 </div>
+                {editar === i.id && (
+                  <div className="flex w-full items-center justify-between gap-2 border-t border-line pt-2.5 text-sm">
+                    <span className="text-muted">Avisarme cuando queden</span>
+                    <span className="flex items-center gap-1.5">
+                      <button onClick={() => setMinimo(i.id, Math.max(0, minimoDe(i) - paso(i.unidad)))} className="grid h-8 w-8 place-items-center rounded-lg border border-line">−</button>
+                      <span className="num w-14 text-center text-lg">{minimoDe(i)} <small className="text-xs text-muted">{i.unidad}</small></span>
+                      <button onClick={() => setMinimo(i.id, minimoDe(i) + paso(i.unidad))} className="grid h-8 w-8 place-items-center rounded-lg border border-line">+</button>
+                    </span>
+                    <button onClick={() => { removeItem(i.id); setEditar(null); }} className="text-ember hover:underline">Quitar</button>
+                  </div>
+                )}
               </motion.li>
             ))}
           </AnimatePresence>

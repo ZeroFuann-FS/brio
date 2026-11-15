@@ -45,6 +45,7 @@ export interface ItemDespensa {
   nombre: string;
   cantidad: number;
   unidad: string;
+  minimo?: number; // avisar cuando quede esta cantidad o menos
 }
 
 /** Catálogo de hábitos para elegir en el onboarding. */
@@ -96,6 +97,8 @@ interface Estado {
   addItem: (i: Omit<ItemDespensa, "id">) => void;
   cambiarCantidad: (id: string, delta: number) => void;
   removeItem: (id: string) => void;
+  setMinimo: (id: string, minimo: number) => void;
+  descontar: (id: string, cantidad: number) => void;
   reset: () => void;
 }
 
@@ -153,6 +156,9 @@ export const useBrio = create<Estado>()(
         cambiarCantidad: (id, delta) =>
           set((s) => ({ despensa: s.despensa.map((x) => (x.id === id ? { ...x, cantidad: Math.max(0, x.cantidad + delta) } : x)) })),
         removeItem: (id) => set((s) => ({ despensa: s.despensa.filter((x) => x.id !== id) })),
+        setMinimo: (id, minimo) => set((s) => ({ despensa: s.despensa.map((x) => (x.id === id ? { ...x, minimo } : x)) })),
+        descontar: (id, cantidad) =>
+          set((s) => ({ despensa: s.despensa.map((x) => (x.id === id ? { ...x, cantidad: Math.max(0, Math.round((x.cantidad - cantidad) * 100) / 100) } : x)) })),
         reset: () => set({ perfil: null, dias: {}, pesos: [], despensa: [], medidas: [], menu: null }),
       };
     },
@@ -193,4 +199,28 @@ export function frecuentes(dias: Record<string, Dia>, max = 8): Omit<Comida, "id
     }
   }
   return [...vistas.values()];
+}
+
+/* ---------- Despensa: avisos y descuentos ---------- */
+const MIN_POR_UNIDAD: Record<string, number> = { pzas: 3, latas: 1, rebanadas: 4, g: 200, kg: 0.25, L: 0.5, paquete: 1 };
+export const minimoDe = (i: ItemDespensa) => i.minimo ?? MIN_POR_UNIDAD[i.unidad] ?? 1;
+
+/** Productos que se están acabando (aún hay, pero poco). */
+export const seAcaban = (d: ItemDespensa[]) => d.filter((i) => i.cantidad > 0 && i.cantidad <= minimoDe(i));
+
+const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
+/** Busca en la despensa el producto que corresponde a un alimento registrado y cuánto descontar. */
+export function coincidenciaDespensa(d: ItemDespensa[], alimento: string, porcion: string, cantidad: number, gramos: number) {
+  const nombre = norm(alimento);
+  const item = d.find((i) => i.cantidad > 0 && nombre.includes(norm(i.nombre).split(/\s+/)[0]));
+  if (!item) return null;
+  const pzs = ["pzas", "latas", "rebanadas", "paquete"].includes(item.unidad);
+  const porcionContable = /pieza|lata|rebanada|clara|taco|filete|barra/.test(norm(porcion));
+  let cuanto = 0;
+  if (pzs && porcionContable) cuanto = cantidad;
+  else if (item.unidad === "g") cuanto = gramos;
+  else if (item.unidad === "kg") cuanto = gramos / 1000;
+  if (!(cuanto > 0)) return null;
+  return { item, cuanto: Math.round(cuanto * 100) / 100 };
 }

@@ -1,5 +1,8 @@
 import { supabase } from "./supabase";
 
+/** La IA solo se muestra si está activada (requiere API key de Claude en Supabase). */
+export const iaActiva = import.meta.env.VITE_IA_ACTIVA === "1";
+
 export interface AlimentoIA { nombre: string; cantidad: string; kcal: number; proteina: number; carbos: number; grasa: number }
 export interface AnalisisIA { alimentos: AlimentoIA[]; nombre_comida: string; confianza: "alta" | "media" | "baja"; nota: string }
 

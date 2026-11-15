@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { hoyISO, type Metas, type Perfil, type PrefsComida } from "../lib/calc";
 import { useBrio } from "../lib/store";
 import { useSync } from "../lib/sync";
-import { generarMenu, ErrorIA } from "../lib/ia";
+import { generarMenu, ErrorIA, iaActiva } from "../lib/ia";
 import { Tarjeta, Toast, btnPrimario, btnSecundario, ease, inputCls, useToast } from "./ui";
 
 const EQUIPO = ["Estufa", "Microondas", "Air fryer", "Horno", "Refrigerador", "Licuadora"];
@@ -67,6 +67,16 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
     setMenu({ ...menu, comprado: [] });
     setToast(n ? `${n} productos agregados a tu despensa` : "Marca primero lo que compraste");
   };
+
+  if (!iaActiva) {
+    return (
+      <Tarjeta tono="food">
+        <p className="lab">Próximamente</p>
+        <h2 className="mt-1 font-serif text-xl font-medium">Tu menú de la semana</h2>
+        <p className="mt-1.5 text-sm text-muted">Brío armará tu menú usando primero lo que tienes en tu despensa, dentro de tu presupuesto, con recetas y tu lista del súper.</p>
+      </Tarjeta>
+    );
+  }
 
   if (!conCuenta) {
     return (
