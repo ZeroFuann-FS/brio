@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cerrarSesion, eliminarCuenta } from "../lib/sync";
-import { nubeDisponible } from "../lib/supabase";
+import { nubeDisponible, supabase } from "../lib/supabase";
 import { useTema, type Tema } from "../lib/tema";
 import type { Metas, Perfil as TPerfil } from "../lib/calc";
 import { useBrio } from "../lib/store";
@@ -9,6 +9,8 @@ import { CREDITOS } from "../data/creditos";
 import Logo from "./Logo";
 import MiIA from "./MiIA";
 import Recordatorios from "./dia/Recordatorios";
+import Comentarios from "./Comentarios";
+import PanelAdmin from "./admin/PanelAdmin";
 
 const TEXTO_SYNC: Record<string, string> = {
   ok: "Todo guardado en la nube",
@@ -25,6 +27,9 @@ type Props = {
 
 export default function Perfil({ perfil, metas, onEditar, onVerIntro, email, estadoSync, onCrearCuenta }: Props) {
   const [creditos, setCreditos] = useState(false);
+  const [admin, setAdmin] = useState(false);
+  const [panel, setPanel] = useState(false);
+  useEffect(() => { if (email) supabase.rpc("es_admin").then(({ data }) => setAdmin(data === true)); else setAdmin(false); }, [email]);
   const [saliendo, setSaliendo] = useState(false);
   const { tema, setTema } = useTema();
   const [eliminar, setEliminar] = useState<"no" | "confirmar" | "eliminando" | "error">("no");
@@ -86,6 +91,23 @@ export default function Perfil({ perfil, metas, onEditar, onVerIntro, email, est
           <Recordatorios perfil={perfil} />
         </Tarjeta>
       )}
+
+      <Tarjeta delay={0.14}>
+        <h2 className="font-serif text-xl font-medium">Ayúdame a mejorar Brío</h2>
+        <p className="mb-3 mt-1 text-sm text-muted">¿Una idea, algo que falla o algo que te encanta? Lo leo todo.</p>
+        <Comentarios />
+      </Tarjeta>
+
+      {admin && (
+        <Tarjeta delay={0.14} tono="habit">
+          <h2 className="font-serif text-xl font-medium">Administrador</h2>
+          <p className="mt-1 text-sm text-muted">Usuarios, estadísticas y comentarios.</p>
+          <button onClick={() => setPanel(true)} className={`${btnSecundario} mt-3 w-full`}>Abrir el panel</button>
+        </Tarjeta>
+      )}
+      <Hoja abierta={panel} onClose={() => setPanel(false)} titulo="Panel de administrador" ancha>
+        {panel && <PanelAdmin />}
+      </Hoja>
 
       <MiIA />
 
