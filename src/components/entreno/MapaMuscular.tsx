@@ -1,26 +1,34 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { MUSCULOS, NOMBRE_MUSCULO, fotosEjercicio, type Musculo } from "../../data/ejercicios";
 
-/** Alterna suavemente la foto inicial y final del ejercicio. */
-export function AnimEjercicio({ id, className = "", alt = "" }: { id: string; className?: string; alt?: string }) {
-  const [f0, f1] = fotosEjercicio(id);
-  const [paso, setPaso] = useState(0);
-  const [pausa, setPausa] = useState(false);
-  useEffect(() => {
-    if (pausa || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-    const t = setInterval(() => setPaso((p) => 1 - p), 1400);
-    return () => clearInterval(t);
-  }, [pausa]);
-  return (
-    <button type="button" onClick={() => setPausa((x) => !x)} aria-label={pausa ? "Reanudar animación" : "Pausar animación"}
-      className={`group relative block overflow-hidden bg-white ${className}`}>
-      <img src={f0} alt={alt} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
-      <img src={f1} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-in-out" style={{ opacity: paso }} />
-      <span className="absolute bottom-2 left-2 flex gap-1">
-        {[0, 1].map((i) => <i key={i} className={`h-1.5 w-5 rounded-full transition ${paso === i ? "bg-lime" : "bg-white/70"}`} />)}
+/** Posición inicial y final del ejercicio, lado a lado. Tocar una foto la agranda. */
+export function InicioFin({ id, alt = "" }: { id: string; alt?: string }) {
+  const fotos = fotosEjercicio(id);
+  const [zoom, setZoom] = useState<number | null>(null);
+  const etiquetas = ["Empieza así", "Termina así"];
+  if (zoom !== null) return (
+    <button type="button" onClick={() => setZoom(null)} className="relative block w-full overflow-hidden rounded-[18px] border border-line bg-white" aria-label="Volver a ver las dos fotos">
+      <img src={fotos[zoom]} alt={`${alt}: ${etiquetas[zoom].toLowerCase()}`} className="aspect-[4/3] w-full object-cover" />
+      <span className="absolute left-2 top-2 flex items-center gap-1.5 rounded-full bg-black/65 py-1 pl-1 pr-3 text-xs font-medium text-white">
+        <span className="num grid h-5 w-5 place-items-center rounded-full bg-lime text-[13px] text-on-lime">{zoom + 1}</span>{etiquetas[zoom]}
       </span>
-      <span className="lab absolute bottom-2 right-2 rounded-full bg-black/55 px-2 py-0.5 !text-[10px] !text-white opacity-0 transition group-hover:opacity-100">{pausa ? "Reanudar" : "Pausar"}</span>
+      <span className="lab absolute bottom-2 right-2 rounded-full bg-black/60 px-2 py-0.5 !text-[10px] !text-white">Toca para regresar</span>
     </button>
+  );
+  return (
+    <div className="relative grid grid-cols-2 gap-2">
+      {fotos.map((f, i) => (
+        <button key={f} type="button" onClick={() => setZoom(i)} className="group block min-w-0 text-left" aria-label={`Agrandar: ${etiquetas[i].toLowerCase()}`}>
+          <span className="block overflow-hidden rounded-[14px] border border-line bg-white">
+            <img src={f} alt={`${alt}: ${etiquetas[i].toLowerCase()}`} loading="lazy" className="aspect-[4/5] w-full object-cover transition duration-300 group-hover:scale-[1.03]" />
+          </span>
+          <span className="mt-1.5 flex items-center gap-1.5 text-sm font-medium">
+            <span className="num grid h-5 w-5 shrink-0 place-items-center rounded-full bg-lime text-[13px] text-on-lime">{i + 1}</span>{etiquetas[i]}
+          </span>
+        </button>
+      ))}
+      <span aria-hidden className="pointer-events-none absolute left-1/2 top-[40%] grid h-9 w-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-bg bg-lime text-lg font-bold text-on-lime shadow">→</span>
+    </div>
   );
 }
 

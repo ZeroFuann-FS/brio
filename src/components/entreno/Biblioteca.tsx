@@ -3,7 +3,7 @@ import { EJERCICIOS, NOMBRE_MUSCULO, type Ejercicio, type Musculo } from "../../
 import { mejorMarca, progreso, ultimaVez, type Lugar } from "../../lib/entreno";
 import { useBrio } from "../../lib/store";
 import { btnPrimario, inputCls } from "../ui";
-import MapaMuscular, { AnimEjercicio, FotoEjercicio } from "./MapaMuscular";
+import MapaMuscular, { FotoEjercicio, InicioFin } from "./MapaMuscular";
 
 const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
@@ -61,7 +61,7 @@ export function DetalleEjercicio({ e }: { e: Ejercicio }) {
   return (
     <div className="md:grid md:grid-cols-[1.1fr_1fr] md:gap-6">
       <div>
-        <AnimEjercicio id={e.id} alt={e.n} className="aspect-[4/3] w-full rounded-[18px] border border-line" />
+        <InicioFin id={e.id} alt={e.n} />
         <a href={video} target="_blank" rel="noreferrer" className="mt-2 flex items-center justify-center gap-2 rounded-[12px] border border-line py-2.5 text-sm hover:border-line-strong">
           <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden><path fill="currentColor" d="M8 5v14l11-7z" /></svg> Ver video de la técnica
         </a>

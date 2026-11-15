@@ -238,7 +238,7 @@ export default function Entreno() {
           )}
           <Tarjeta delay={0.16}>
             <h2 className="font-serif text-xl font-medium">Catálogo de ejercicios</h2>
-            <p className="mt-1 text-sm text-muted">Más de 160 ejercicios con animación, técnica, músculos y video.</p>
+            <p className="mt-1 text-sm text-muted">Más de 160 ejercicios con fotos de cómo empezar y terminar, técnica, músculos y video.</p>
             <div className="mt-3 flex -space-x-2">{["press-banca", "sentadilla", "dominadas", "hip-thrust", "curl-mancuernas", "plancha"].map((id) => <FotoEjercicio key={id} id={id} size={40} />)}</div>
             <button onClick={() => setBiblioteca(true)} className={`${btnSecundario} mt-3 w-full`}>Ver el catálogo</button>
           </Tarjeta>
