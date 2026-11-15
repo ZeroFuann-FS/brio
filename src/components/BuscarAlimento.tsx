@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { buscarLocal, type Alimento, type Porcion } from "../data/alimentos";
+import { fotoDe } from "../data/fotos";
 import { buscarOFF, porCodigoOFF } from "../lib/off";
 import { buscarComunidad, porCodigoComunidad } from "../lib/comunidad";
 import { useSync } from "../lib/sync";
@@ -29,8 +30,9 @@ const COLOR_CAT: Record<string, string> = {
 /** Foto del producto, o un cuadro con la inicial y el color de su categoría. */
 function Miniatura({ a }: { a: Alimento }) {
   const [rota, setRota] = useState(false);
-  if (a.img && !rota) {
-    return <img src={a.img} alt="" loading="lazy" onError={() => setRota(true)} className="h-11 w-11 shrink-0 rounded-[10px] border border-line bg-white object-contain" />;
+  const src = a.img ?? (a.fuente ? undefined : fotoDe(a.id));
+  if (src && !rota) {
+    return <img src={src} alt="" loading="lazy" onError={() => setRota(true)} className="h-11 w-11 shrink-0 rounded-[10px] border border-line bg-white object-contain" />;
   }
   const color = COLOR_CAT[a.cat] ?? (a.fuente === "comunidad" ? "bg-lime text-on-lime" : "bg-t-food text-ink");
   return <span className={`num grid h-11 w-11 shrink-0 place-items-center rounded-[10px] text-lg ${color}`}>{a.n.trim().charAt(0).toUpperCase()}</span>;

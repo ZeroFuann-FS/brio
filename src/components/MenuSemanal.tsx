@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { hoyISO, type Metas, type Perfil, type PrefsComida } from "../lib/calc";
+import type { Metas, Perfil, PrefsComida } from "../lib/calc";
+import { nutricion, recetaPorId, type Receta, type TipoReceta } from "../data/recetas";
+import { cambiarComida, generarMenuReglas, listaSuper, totalesDia, unidadDespensa, type OpcionesMenu } from "../lib/menu";
 import { useBrio } from "../lib/store";
-import { useSync } from "../lib/sync";
-import { generarMenu, ErrorIA, useIA } from "../lib/ia";
-import { Tarjeta, Toast, btnPrimario, btnSecundario, ease, inputCls, useToast } from "./ui";
+import Gustos from "./Gustos";
+import RecetaDetalle, { MiniReceta, useRegistrarReceta } from "./RecetaDetalle";
+import { Hoja, Tarjeta, Toast, btnPrimario, btnSecundario, ease, inputCls, useToast } from "./ui";
 
-const EQUIPO = ["Estufa", "Microondas", "Air fryer", "Horno", "Refrigerador", "Licuadora"];
-const COMIDAS = ["Desayuno", "Comida", "Cena", "Snack"];
-const DIAS_CORTOS: Record<string, string> = { lunes: "Lun", martes: "Mar", miércoles: "Mié", miercoles: "Mié", jueves: "Jue", viernes: "Vie", sábado: "Sáb", sabado: "Sáb", domingo: "Dom" };
-const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
-const PREFS_BASE: PrefsComida = { presupuesto: 500, comidas: ["Desayuno", "Comida", "Cena"], equipo: ["Estufa", "Microondas"], preferencias: "" };
+const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+const CORTO: Record<string, string> = { Lunes: "Lun", Martes: "Mar", Miércoles: "Mié", Jueves: "Jue", Viernes: "Vie", Sábado: "Sáb", Domingo: "Dom" };
+const COMIDAS: { id: TipoReceta; t: string }[] = [{ id: "desayuno", t: "Desayuno" }, { id: "comida", t: "Comida" }, { id: "cena", t: "Cena" }];
+const EQUIPO = ["Estufa", "Microondas", "Air fryer", "Horno", "Licuadora", "Refrigerador"];
+const NOMBRE_TIPO: Record<TipoReceta, string> = { desayuno: "Desayuno", comida: "Comida", cena: "Cena", colacion: "Colación" };
+const BASE: PrefsComida = { presupuesto: 500, comidas: ["desayuno", "comida", "cena"], equipo: ["Estufa", "Microondas"], preferencias: "", colaciones: 1, dias: DIAS.slice(0, 7), gustos: [], evitar: [] };
 const dinero = (n: number) => `$${Math.round(n).toLocaleString("es-MX")}`;
 
 function Chip({ on, children, onClick }: { on: boolean; children: string; onClick: () => void }) {
@@ -23,184 +26,156 @@ function Chip({ on, children, onClick }: { on: boolean; children: string; onClic
 }
 
 export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: Metas }) {
-  const { menu, setMenu, marcarComprado, setPrefsComida, despensa, addComida, addItem } = useBrio();
-  const conCuenta = useSync((s) => s.estado) !== "sin-cuenta";
-  const iaEst = useIA();
-  const [prefs, setPrefs] = useState<PrefsComida>(perfil.prefsComida ?? PREFS_BASE);
-  const [editando, setEditando] = useState(!menu);
-  const [estado, setEstado] = useState<"idle" | "pensando" | "error">("idle");
-  const [error, setError] = useState("");
+  const { menu, setMenu, marcarComprado, setPrefsComida, despensa, addItem } = useBrio();
+  const prefsGuardadas: PrefsComida = { ...BASE, ...(perfil.prefsComida ?? {}) };
+  if (!["desayuno", "comida", "cena"].some((c) => prefsGuardadas.comidas.includes(c))) prefsGuardadas.comidas = BASE.comidas;
+  const [p, setP] = useState<PrefsComida>(prefsGuardadas);
+  const menuValido = menu && Array.isArray(menu.dias) ? menu : null;
+  const [editando, setEditando] = useState(!menuValido);
+  const [gustosAbierto, setGustosAbierto] = useState(false);
   const [dia, setDia] = useState(0);
-  const [abierto, setAbierto] = useState<string | null>(null);
+  const [receta, setReceta] = useState<{ r: Receta; factor: number } | null>(null);
   const [toast, setToast] = useToast();
+  const registrar = useRegistrarReceta();
 
-  const toggle = (k: "comidas" | "equipo", v: string) =>
-    setPrefs((p) => ({ ...p, [k]: p[k].includes(v) ? p[k].filter((x) => x !== v) : [...p[k], v] }));
+  const opciones = (): OpcionesMenu => ({
+    dias: p.dias ?? DIAS, comidas: p.comidas as TipoReceta[], colaciones: p.colaciones ?? 0, kcal: metas.kcal, proteina: metas.proteina,
+    presupuesto: p.presupuesto, equipo: p.equipo, gustos: p.gustos ?? [], evitar: p.evitar ?? [], favoritas: perfil.prefsComida?.favoritas ?? [], despensa,
+  });
+  const toggle = (k: "comidas" | "equipo" | "dias", v: string) => setP((x) => {
+    const lista = (x[k] ?? []) as string[];
+    const nueva = lista.includes(v) ? lista.filter((y) => y !== v) : [...lista, v];
+    return { ...x, [k]: k === "dias" ? DIAS.filter((d) => nueva.includes(d)) : nueva };
+  });
 
-  const generar = async () => {
-    setPrefsComida(prefs);
-    setEstado("pensando");
-    try {
-      const enCasa = despensa.filter((i) => i.cantidad > 0).map((i) => `${i.nombre} (${i.cantidad} ${i.unidad})`).join(", ");
-      const equipo = prefs.equipo.includes("Refrigerador") ? prefs.equipo.join(", ") : `${prefs.equipo.join(", ")}. NO tengo refrigerador`;
-      const r = await generarMenu({
-        dias: 7, inicio: DIAS[new Date().getDay()], kcal: metas.kcal, proteina: metas.proteina,
-        comidas: prefs.comidas.join(", ").toLowerCase(), presupuesto: prefs.presupuesto, equipo,
-        preferencias: prefs.preferencias || "ninguna", despensa: enCasa || "nada",
-      });
-      setMenu({ creado: hoyISO(), menu: r, comprado: [] });
-      setDia(0); setEditando(false); setEstado("idle");
-    } catch (e) {
-      setError(e instanceof ErrorIA ? e.message : "Algo salió mal. Intenta de nuevo.");
-      setEstado("error");
-    }
+  const generar = () => {
+    setPrefsComida({ ...p, favoritas: perfil.prefsComida?.favoritas });
+    setMenu(generarMenuReglas(opciones()));
+    setDia(0); setEditando(false);
   };
 
-  const pasarADespensa = () => {
-    if (!menu) return;
-    let n = 0;
-    for (const it of menu.menu.lista_super) {
-      if (!menu.comprado.includes(it.producto)) continue;
-      const m = it.cantidad.match(/^([\d.,]+)\s*(.*)$/);
-      addItem({ nombre: it.producto, cantidad: m ? Number(m[1].replace(",", ".")) || 1 : 1, unidad: (m?.[2] || "pzas").slice(0, 12) });
-      n++;
-    }
-    setMenu({ ...menu, comprado: [] });
-    setToast(n ? `${n} productos agregados a tu despensa` : "Marca primero lo que compraste");
-  };
-
-  if (!iaEst.disponible) {
+  /* ---------- Configuración ---------- */
+  if (editando || !menuValido) {
+    const nGustos = (p.gustos ?? []).length, nEvitar = (p.evitar ?? []).length;
     return (
-      <Tarjeta tono="food">
-        <p className="lab">Próximamente</p>
-        <h2 className="mt-1 font-serif text-xl font-medium">Tu menú de la semana</h2>
-        <p className="mt-1.5 text-sm text-muted">Brío armará tu menú usando primero lo que tienes en tu despensa, dentro de tu presupuesto, con recetas y tu lista del súper.</p>
-      </Tarjeta>
-    );
-  }
+      <>
+        <Tarjeta tono="food">
+          <p className="lab">Menú semanal</p>
+          <h2 className="mt-1 font-serif text-xl font-medium">Arma tu menú</h2>
+          <p className="mt-1 text-sm text-muted">Con tu meta de {metas.kcal.toLocaleString("es-MX")} kcal y {metas.proteina} g de proteína. Brío elige recetas que te gustan, usa primero tu despensa y ajusta las porciones.</p>
 
-  if (iaEst.requiereCuenta && !conCuenta) {
-    return (
-      <Tarjeta tono="food">
-        <p className="lab">Menú semanal con IA</p>
-        <h2 className="mt-1 font-serif text-xl font-medium">Tu menú de la semana</h2>
-        <p className="mt-1.5 text-sm text-muted">Crea tu cuenta gratis en Perfil y Brío armará tu menú usando primero lo que tienes en casa, dentro de tu presupuesto.</p>
-      </Tarjeta>
-    );
-  }
-
-  /* ---------- Formulario ---------- */
-  if (editando || !menu) {
-    return (
-      <Tarjeta tono="food">
-        <p className="lab">Menú semanal con IA</p>
-        <h2 className="mt-1 font-serif text-xl font-medium">Arma tu menú de la semana</h2>
-        <p className="mt-1 text-sm text-muted">Con tu meta de {metas.kcal.toLocaleString("es-MX")} kcal y {metas.proteina} g de proteína. Usa primero lo que tienes en tu despensa ({despensa.filter((i) => i.cantidad > 0).length} productos).</p>
-
-        <div className="mt-4 space-y-4">
-          <label className="block">
-            <span className="lab mb-1.5 block">Presupuesto para el súper (semana)</span>
-            <div className="relative">
-              <span className="num pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-xl text-muted">$</span>
-              <input className={`${inputCls} num h-[54px] pl-8 text-2xl`} inputMode="numeric" value={prefs.presupuesto || ""}
-                onChange={(e) => setPrefs((p) => ({ ...p, presupuesto: Number(e.target.value.replace(/\D/g, "")) }))} />
+          <div className="mt-4 space-y-4">
+            <div>
+              <p className="lab mb-2">¿Qué días?</p>
+              <div className="grid grid-cols-7 gap-1.5">
+                {DIAS.map((d) => {
+                  const on = (p.dias ?? []).includes(d);
+                  return <button key={d} onClick={() => toggle("dias", d)} aria-pressed={on}
+                    className={`num h-11 rounded-[10px] border text-[15px] uppercase transition ${on ? "border-lime bg-lime text-on-lime" : "border-line bg-surface text-muted"}`}>{CORTO[d]}</button>;
+                })}
+              </div>
             </div>
-          </label>
-          <div>
-            <p className="lab mb-2">Comidas al día</p>
-            <div className="flex flex-wrap gap-2">{COMIDAS.map((c) => <Chip key={c} on={prefs.comidas.includes(c)} onClick={() => toggle("comidas", c)}>{c}</Chip>)}</div>
-          </div>
-          <div>
-            <p className="lab mb-2">¿Con qué cocinas?</p>
-            <div className="flex flex-wrap gap-2">{EQUIPO.map((c) => <Chip key={c} on={prefs.equipo.includes(c)} onClick={() => toggle("equipo", c)}>{c}</Chip>)}</div>
-            {!prefs.equipo.includes("Refrigerador") && <p className="mt-2 text-xs text-muted">Sin refri: Brío evitará guardar carne o pollo cocinado para otro día.</p>}
-          </div>
-          <label className="block">
-            <span className="lab mb-1.5 block">Gustos o alimentos que no comes (opcional)</span>
-            <input className={inputCls} placeholder="Ej. no me gusta el brócoli, me encanta el atún" maxLength={300} value={prefs.preferencias}
-              onChange={(e) => setPrefs((p) => ({ ...p, preferencias: e.target.value }))} />
-          </label>
-        </div>
-
-        {estado === "pensando" ? (
-          <div className="mt-5">
-            <div className="grid grid-cols-7 gap-1.5">
-              {["L", "M", "M", "J", "V", "S", "D"].map((d, i) => (
-                <motion.div key={i} className="num grid h-11 place-items-center rounded-[10px] border border-line bg-surface text-muted"
-                  animate={{ backgroundColor: ["var(--surface)", "var(--lime)", "var(--surface)"], color: ["var(--muted)", "var(--on-lime)", "var(--muted)"] }}
-                  transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.18 }}>{d}</motion.div>
-              ))}
+            <div>
+              <p className="lab mb-2">Comidas</p>
+              <div className="flex flex-wrap gap-2">{COMIDAS.map((c) => <Chip key={c.id} on={p.comidas.includes(c.id)} onClick={() => toggle("comidas", c.id)}>{c.t}</Chip>)}</div>
             </div>
-            <p className="mt-3 text-center text-sm text-muted">Armando tu semana… tarda alrededor de un minuto.</p>
-          </div>
-        ) : (
-          <div className="mt-5 flex gap-2">
-            {menu && <button onClick={() => setEditando(false)} className={btnSecundario}>Cancelar</button>}
-            <button onClick={generar} disabled={!prefs.comidas.length || !prefs.equipo.length || prefs.presupuesto < 50} className={`${btnPrimario} flex-1`}>
-              {menu ? "Generar nuevo menú" : "Generar mi menú"}
+            <div>
+              <p className="lab mb-2">Colaciones al día</p>
+              <div className="flex gap-2">{[0, 1, 2].map((n) => <Chip key={n} on={(p.colaciones ?? 0) === n} onClick={() => setP((x) => ({ ...x, colaciones: n }))}>{n === 0 ? "Ninguna" : String(n)}</Chip>)}</div>
+            </div>
+            <div>
+              <p className="lab mb-2">¿Con qué cocinas?</p>
+              <div className="flex flex-wrap gap-2">{EQUIPO.map((c) => <Chip key={c} on={p.equipo.includes(c)} onClick={() => toggle("equipo", c)}>{c}</Chip>)}</div>
+            </div>
+            <label className="block">
+              <span className="lab mb-1.5 block">Presupuesto para el súper</span>
+              <div className="relative">
+                <span className="num pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-xl text-muted">$</span>
+                <input className={`${inputCls} num h-[54px] pl-8 text-2xl`} inputMode="numeric" value={p.presupuesto || ""}
+                  onChange={(e) => setP((x) => ({ ...x, presupuesto: Number(e.target.value.replace(/\D/g, "")) }))} />
+              </div>
+            </label>
+            <button onClick={() => setGustosAbierto(true)} className="flex w-full items-center justify-between rounded-[14px] border border-line bg-surface px-4 py-3 text-left">
+              <span><span className="block font-medium">Tus gustos</span><span className="lab !tracking-[0.06em]">{nGustos || nEvitar ? `${nGustos} te gustan · ${nEvitar} no comes` : "Elige lo que te gusta y lo que no comes"}</span></span>
+              <span className="lab">Elegir →</span>
             </button>
           </div>
-        )}
-        {estado === "error" && <p className="mt-3 text-sm text-ember">{error}</p>}
-      </Tarjeta>
+
+          <div className="mt-5 flex gap-2">
+            {menuValido && <button onClick={() => setEditando(false)} className={btnSecundario}>Cancelar</button>}
+            <button onClick={generar} disabled={!p.comidas.length || !(p.dias ?? []).length} className={`${btnPrimario} flex-1`}>{menuValido ? "Generar nuevo menú" : "Generar mi menú"}</button>
+          </div>
+        </Tarjeta>
+
+        <Hoja abierta={gustosAbierto} onClose={() => setGustosAbierto(false)} titulo="Tus gustos">
+          <Gustos gustos={p.gustos ?? []} evitar={p.evitar ?? []} onCambio={(g, e) => setP((x) => ({ ...x, gustos: g, evitar: e }))} />
+          <button onClick={() => setGustosAbierto(false)} className={`${btnPrimario} mt-5 w-full`}>Listo</button>
+        </Hoja>
+      </>
     );
   }
 
   /* ---------- Menú ---------- */
-  const m = menu.menu;
+  const m = menuValido;
   const d = m.dias[Math.min(dia, m.dias.length - 1)];
-  const kcalDia = d.platillos.reduce((a, p) => a + p.kcal, 0);
-  const protDia = d.platillos.reduce((a, p) => a + p.proteina, 0);
+  const tot = totalesDia(d.comidas);
+  const lista = listaSuper(m, despensa);
+  const porComprar = lista.items.filter((i) => i.unidades > 0);
+  const yaTienes = lista.items.filter((i) => i.unidades === 0);
+
+  const pasarADespensa = () => {
+    let n = 0;
+    for (const it of porComprar) {
+      if (!m.comprado.includes(it.nombre)) continue;
+      const u = unidadDespensa(it);
+      addItem({ nombre: it.nombre, cantidad: u.cantidad, unidad: u.unidad });
+      n++;
+    }
+    setMenu({ ...m, comprado: [] });
+    setToast(n ? `${n} productos agregados a tu despensa` : "Marca primero lo que compraste");
+  };
 
   return (
     <>
       <Tarjeta tono="food">
         <div className="flex items-baseline justify-between">
-          <h2 className="font-serif text-xl font-medium">Tu menú de la semana</h2>
-          <button onClick={() => setEditando(true)} className="lab !text-lime-ink hover:underline">Cambiar</button>
+          <h2 className="font-serif text-xl font-medium">Tu menú</h2>
+          <button onClick={() => setEditando(true)} className="lab !text-lime-ink hover:underline">Ajustar</button>
         </div>
-
-        <div className="mt-3 grid grid-cols-7 gap-1.5">
+        <div className="mt-3 grid gap-1.5" style={{ gridTemplateColumns: `repeat(${Math.min(7, m.dias.length)}, 1fr)` }}>
           {m.dias.map((x, i) => (
-            <button key={i} onClick={() => { setDia(i); setAbierto(null); }} aria-pressed={i === dia}
+            <button key={x.dia} onClick={() => setDia(i)} aria-pressed={i === dia}
               className={`num h-11 rounded-[10px] border text-[15px] uppercase transition ${i === dia ? "border-ink bg-ink text-bg dark:border-lime dark:bg-lime dark:text-on-lime" : "border-line bg-surface text-muted"}`}>
-              {DIAS_CORTOS[x.dia.toLowerCase()] ?? x.dia.slice(0, 3)}
+              {CORTO[x.dia] ?? x.dia.slice(0, 3)}
             </button>
           ))}
         </div>
-
-        <div className="mt-3 flex justify-between"><span className="lab first-letter:uppercase">{d.dia}</span><span className="lab">{kcalDia.toLocaleString("es-MX")} kcal · {protDia} g proteína</span></div>
+        <div className="mt-3 flex justify-between">
+          <span className="lab">{d.dia}</span>
+          <span className="lab">{tot.kcal.toLocaleString("es-MX")} / {metas.kcal.toLocaleString("es-MX")} kcal · {tot.proteina} g prot</span>
+        </div>
 
         <AnimatePresence mode="wait">
           <motion.ul key={dia} className="mt-1" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.2, ease }}>
-            {d.platillos.map((p, i) => {
-              const id = `${dia}-${i}`;
-              const open = abierto === id;
+            {d.comidas.map((c, ci) => {
+              const r = recetaPorId(c.receta);
+              if (!r) return null;
+              const n = nutricion(r, c.factor);
               return (
-                <li key={id} className="border-b border-line last:border-b-0">
-                  <button onClick={() => setAbierto(open ? null : id)} className="grid w-full grid-cols-[72px_1fr_auto] items-center gap-2 py-3 text-left">
-                    <span className="lab !tracking-[0.08em]">{p.tipo}</span>
-                    <span className="font-medium">{p.nombre}</span>
-                    <span className="num text-[17px]">{p.kcal}</span>
+                <li key={ci} className="border-b border-line py-2.5 last:border-b-0">
+                  <button onClick={() => setReceta({ r, factor: c.factor })} className="flex w-full min-w-0 items-center gap-3 text-left">
+                    <MiniReceta r={r} size={44} />
+                    <span className="min-w-0">
+                      <span className="lab block !tracking-[0.08em]">{NOMBRE_TIPO[c.tipo]}{c.factor !== 1 ? ` · porción ×${c.factor.toFixed(1)}` : ""}</span>
+                      <span className="block truncate font-medium">{r.nombre}</span>
+                      <span className="lab !tracking-[0.06em]">{n.kcal} kcal · {n.proteina} g prot</span>
+                    </span>
                   </button>
-                  <AnimatePresence>
-                    {open && (
-                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                        <div className="pb-3 pl-[80px] text-sm">
-                          <p className="lab mb-1">Ingredientes</p>
-                          <ul className="list-disc pl-4 text-ink/90">{p.ingredientes.map((x, j) => <li key={j}>{x}</li>)}</ul>
-                          <p className="lab mb-1 mt-2">Cómo se hace</p>
-                          <p className="leading-relaxed text-ink/90">{p.preparacion}</p>
-                          {p.usa_despensa.length > 0 && <p className="mt-2 text-xs text-lime-ink">De tu despensa: {p.usa_despensa.join(", ")}</p>}
-                          <button
-                            onClick={() => { addComida(hoyISO(), { nombre: p.nombre, kcal: p.kcal, proteina: p.proteina, tipo: p.tipo }); setToast(`${p.nombre} registrado hoy`); }}
-                            className={`${btnSecundario} mt-3 h-10 text-sm`}>
-                            Registrar hoy
-                          </button>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  <div className="mt-2 flex gap-2 pl-[56px]">
+                    <button onClick={() => setMenu(cambiarComida(m, dia, ci, opciones()))} className="rounded-full border border-line px-3 py-1 text-xs text-muted hover:text-ink">Cambiar</button>
+                    <button onClick={() => { const k = registrar(r, c.factor, c.tipo === "colacion" ? "snack" : c.tipo); setToast(k ? "Registrado y descontado de tu despensa" : "Registrado hoy"); }}
+                      className="rounded-full border border-line px-3 py-1 text-xs text-muted hover:text-ink">Registrar hoy</button>
+                  </div>
                 </li>
               );
             })}
@@ -211,34 +186,32 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
       <Tarjeta delay={0.05}>
         <div className="flex items-baseline justify-between">
           <h2 className="font-serif text-xl font-medium">Lista del súper</h2>
-          <span className={`num text-xl ${m.total_estimado > prefs.presupuesto ? "text-ember" : ""}`}>
-            {dinero(m.total_estimado)}<small className="text-sm font-medium text-muted"> / {dinero(prefs.presupuesto)}</small>
-          </span>
+          <span className={`num text-xl ${lista.total > p.presupuesto ? "text-ember" : ""}`}>{dinero(lista.total)}<small className="text-sm font-medium text-muted"> / {dinero(p.presupuesto)}</small></span>
         </div>
+        <p className="mt-1 text-xs text-muted">Lo que comes esta semana vale <b className="text-ink">{dinero(lista.usado)}</b>. El resto de la compra (aceite, frascos, bolsas) te dura más semanas.</p>
+        {lista.usado > p.presupuesto && <p className="mt-1 text-xs text-ember">Tu menú se pasa del presupuesto. Prueba con menos días, quitar una colación o "Cambiar" platillos caros.</p>}
         <ul className="mt-2">
-          {m.lista_super.map((it) => {
-            const ok = menu.comprado.includes(it.producto);
+          {porComprar.map((it) => {
+            const ok = m.comprado.includes(it.nombre);
             return (
-              <li key={it.producto} className="border-b border-line last:border-b-0">
-                <button onClick={() => marcarComprado(it.producto)} className="grid w-full grid-cols-[22px_1fr_auto] items-center gap-3 py-2.5 text-left">
+              <li key={it.nombre} className="border-b border-line last:border-b-0">
+                <button onClick={() => marcarComprado(it.nombre)} className="grid w-full grid-cols-[22px_1fr_auto] items-center gap-3 py-2.5 text-left">
                   <span className={`grid h-[22px] w-[22px] place-items-center rounded-[7px] border-[1.5px] text-[13px] font-extrabold ${ok ? "border-lime bg-lime text-on-lime" : "border-line-strong"}`}>{ok ? "✓" : ""}</span>
-                  <span className={ok ? "text-muted line-through" : ""}>{it.producto} <span className="text-muted">· {it.cantidad}</span><span className="lab mt-0.5 block !tracking-[0.06em]">{it.donde}</span></span>
-                  <span className="num text-[17px]">{dinero(it.precio_estimado)}</span>
+                  <span className={ok ? "text-muted line-through" : ""}>{it.nombre}<span className="lab mt-0.5 block !tracking-[0.06em]">{it.unidad.startsWith("kg") ? `${it.unidades.toLocaleString("es-MX")} kg${it.unidad.slice(2)}` : `${it.unidades} ${it.unidad}`}{it.enCasa > 0 ? " · ya tienes una parte" : ""}</span></span>
+                  <span className="num text-[17px]">{dinero(it.costo)}</span>
                 </button>
               </li>
             );
           })}
         </ul>
+        {yaTienes.length > 0 && <p className="mt-2 text-xs text-muted">Ya lo tienes en tu despensa: {yaTienes.map((i) => i.nombre.toLowerCase()).join(", ")}.</p>}
         <button onClick={pasarADespensa} className={`${btnSecundario} mt-3 w-full`}>Pasar lo comprado a mi despensa</button>
-        <p className="mt-2 text-xs text-muted">Precios estimados; pueden variar según la tienda.</p>
+        <p className="mt-2 text-xs text-muted">Precios aproximados de tiendas como 3B, Aurrera y mercados; pueden variar.</p>
       </Tarjeta>
 
-      {m.consejos.length > 0 && (
-        <Tarjeta delay={0.1} tono="habit">
-          <h2 className="font-serif text-xl font-medium">Consejos para esta semana</h2>
-          <ul className="mt-2">{m.consejos.map((c, i) => <li key={i} className="border-b border-line py-2.5 text-sm leading-relaxed last:border-b-0">{c}</li>)}</ul>
-        </Tarjeta>
-      )}
+      <Hoja abierta={!!receta} onClose={() => setReceta(null)} titulo="Receta">
+        {receta && <RecetaDetalle r={receta.r} factorInicial={receta.factor} onRegistrado={(msg) => { setReceta(null); setToast(msg); }} />}
+      </Hoja>
       <Toast texto={toast} />
     </>
   );

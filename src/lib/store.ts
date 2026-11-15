@@ -1,9 +1,10 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { hoyISO, sumarDias, type Habito, type Perfil, type PrefsComida } from "./calc";
-import type { MenuIA } from "./ia";
+import type { TipoReceta } from "../data/recetas";
 
-export interface MenuGuardado { creado: string; menu: MenuIA; comprado: string[] }
+export interface ComidaMenu { tipo: TipoReceta; receta: string; factor: number }
+export interface MenuGuardado { creado: string; dias: { dia: string; comidas: ComidaMenu[] }[]; comprado: string[] }
 
 export type TipoComida = "desayuno" | "comida" | "cena" | "snack";
 
@@ -212,8 +213,12 @@ const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,
 
 /** Busca en la despensa el producto que corresponde a un alimento registrado y cuánto descontar. */
 export function coincidenciaDespensa(d: ItemDespensa[], alimento: string, porcion: string, cantidad: number, gramos: number) {
-  const nombre = norm(alimento);
-  const item = d.find((i) => i.cantidad > 0 && nombre.includes(norm(i.nombre).split(/\s+/)[0]));
+  const palabras = norm(alimento).split(/[\s,()·]+/);
+  const item = d.find((i) => {
+    if (i.cantidad <= 0) return false;
+    const w = norm(i.nombre).split(/\s+/)[0];
+    return palabras.some((p) => p === w || p === `${w}s` || `${p}s` === w);
+  });
   if (!item) return null;
   const pzs = ["pzas", "latas", "rebanadas", "paquete"].includes(item.unidad);
   const porcionContable = /pieza|lata|rebanada|clara|taco|filete|barra/.test(norm(porcion));

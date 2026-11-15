@@ -2,7 +2,14 @@ export type Sexo = "h" | "m";
 export type DiaADia = "sentado" | "de-pie" | "fisico";
 export type Ritmo = 0.5 | 0.75 | 1;
 export interface Habito { id: string; e: string; t: string }
-export interface PrefsComida { presupuesto: number; comidas: string[]; equipo: string[]; preferencias: string }
+export interface PrefsComida {
+  presupuesto: number; comidas: string[]; equipo: string[]; preferencias: string;
+  colaciones?: number;      // 0, 1 o 2 al día
+  dias?: string[];          // días del menú
+  gustos?: string[];        // ids de alimentos que le gustan
+  evitar?: string[];        // ids de alimentos que no come
+  favoritas?: string[];     // ids de recetas favoritas
+}
 
 export interface Perfil {
   nombre: string;

@@ -68,7 +68,7 @@ export default function Hoy({ perfil, metas, onIrComida }: { perfil: Perfil; met
         </button>
       )}
 
-      <div className="mt-5 grid gap-3 md:grid-cols-12 md:gap-4">
+      <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-12 md:gap-4">
         {/* Comida: número editorial + barra deportiva */}
         <Tarjeta tono="food" className="md:col-span-7">
           <div className="flex justify-between"><span className="lab">{restantes >= 0 ? "Te quedan hoy" : "Te pasaste por"}</span><span className="lab">Meta {metas.kcal.toLocaleString("es-MX")}</span></div>
