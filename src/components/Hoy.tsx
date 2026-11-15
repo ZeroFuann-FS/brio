@@ -72,7 +72,7 @@ export default function Hoy({ perfil, metas, onIrComida }: { perfil: Perfil; met
 
       <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-12 md:gap-4">
         {/* Comida: número editorial + barra deportiva */}
-        <Tarjeta tono="food" className="md:col-span-7">
+        <Tarjeta tono="food" className="md:col-span-7" tour="kcal">
           <div className="flex justify-between"><span className="lab">{restantes >= 0 ? "Te quedan hoy" : "Te pasaste por"}</span><span className="lab">Meta {metas.kcal.toLocaleString("es-MX")}</span></div>
           <p className="num mt-2 text-[clamp(76px,22vw,120px)] leading-[0.85]">
             <span className={restantes >= 0 ? "resalta" : "text-ember"}><Numero valor={Math.abs(restantes)} /></span>
@@ -92,7 +92,7 @@ export default function Hoy({ perfil, metas, onIrComida }: { perfil: Perfil; met
         </Tarjeta>
 
         {/* Agua */}
-        <Tarjeta tono="water" delay={0.05} className="md:col-span-5">
+        <Tarjeta tono="water" delay={0.05} className="md:col-span-5" tour="agua">
           <div className="flex items-baseline justify-between">
             <h2 className="font-serif text-xl font-medium">Agua</h2>
             <span className="num text-[34px]">{(d.aguaMl / 1000).toFixed(1)}<small className="text-base font-medium text-muted"> / {(metas.aguaMl / 1000).toFixed(1)} L</small></span>
@@ -113,10 +113,10 @@ export default function Hoy({ perfil, metas, onIrComida }: { perfil: Perfil; met
 
         <AvisoPago perfil={perfil} className="md:col-span-12" />
         <TarjetaPlan perfil={perfil} metas={metas} delay={0.08} className="md:col-span-12" />
-        <ComidasDia delay={0.1} className="md:col-span-7" />
+        <ComidasDia delay={0.1} className="md:col-span-7" tour="comidas" />
 
         {/* Hábitos */}
-        <Tarjeta tono="habit" delay={0.15} className="md:col-span-5">
+        <Tarjeta tono="habit" delay={0.15} className="md:col-span-5" tour="habitos">
           <div className="flex items-baseline justify-between">
             <h2 className="font-serif text-xl font-medium">Hábitos</h2>
             <span className="lab">{puntos} de {habitos.length + 1}</span>
@@ -142,7 +142,7 @@ export default function Hoy({ perfil, metas, onIrComida }: { perfil: Perfil; met
           <p className="lab mt-2.5">{puntos >= MIN ? "Día con brío · tu racha sigue" : `Cumple ${MIN - puntos} más para sumar a tu racha`}</p>
         </Tarjeta>
 
-        <TuDia perfil={perfil} delay={0.18} className="md:col-span-12" />
+        <TuDia perfil={perfil} delay={0.18} className="md:col-span-12" tour="tudia" />
 
         {perfil.motivo && faltaMotivo !== null && faltaMotivo >= 0 && (
           <p className="border-t border-line-strong px-1 pt-4 font-serif text-[22px] italic leading-snug md:col-span-12">

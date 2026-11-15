@@ -69,7 +69,7 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
     const nGustos = (p.gustos ?? []).length, nEvitar = (p.evitar ?? []).length;
     return (
       <>
-        <Tarjeta tono="food">
+        <Tarjeta tono="food" tour="menu">
           <p className="lab">Menú semanal</p>
           <h2 className="mt-1 font-serif text-xl font-medium">Arma tu menú</h2>
           {tienePlanMenu(perfil.plan) && <p className="mt-1 rounded-[10px] bg-surface px-3 py-2 text-xs text-muted">Ya sigues el menú de tu nutriólogo. Usa este solo si quieres ideas para días libres.</p>}
@@ -174,7 +174,7 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
 
   return (
     <>
-      <Tarjeta tono="food">
+      <Tarjeta tono="food" tour="menu">
         <div className="flex items-baseline justify-between">
           <h2 className="font-serif text-xl font-medium">Tu menú</h2>
           <button onClick={() => setEditando(true)} className="lab !text-lime-ink hover:underline">Ajustar</button>

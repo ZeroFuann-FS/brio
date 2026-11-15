@@ -28,7 +28,7 @@ type Modo = "buscar" | "ia" | "mano";
 interface ItemPlato extends Seleccion { id: string }
 
 /** Bloque de comidas del día con registro: buscar alimentos, escribir con IA o a mano. */
-export default function ComidasDia({ delay = 0, className = "" }: { delay?: number; className?: string }) {
+export default function ComidasDia({ delay = 0, className = "", tour }: { delay?: number; className?: string; tour?: string }) {
   const hoy = hoyISO();
   const ayer = sumarDias(hoy, -1);
   const dias = useBrio((s) => s.dias);
@@ -103,7 +103,7 @@ export default function ComidasDia({ delay = 0, className = "" }: { delay?: numb
 
   return (
     <>
-      <Tarjeta delay={delay} className={className}>
+      <Tarjeta delay={delay} className={className} tour={tour}>
         <div className="flex items-baseline justify-between">
           <h2 className="font-serif text-xl font-medium">Comidas</h2>
           {comidasAyer > 0 && (

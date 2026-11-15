@@ -27,7 +27,7 @@ export function AvisoPago({ perfil, className = "" }: { perfil: Perfil; classNam
   );
 }
 
-export default function TuDia({ perfil, className = "", delay = 0 }: { perfil: Perfil; className?: string; delay?: number }) {
+export default function TuDia({ perfil, className = "", delay = 0, tour }: { perfil: Perfil; className?: string; delay?: number; tour?: string }) {
   const menu = useBrio((s) => s.menu);
   const [vista, setVista] = useState<"dia" | "editar" | "avisos" | null>(null);
   const hoy = hoyISO();
@@ -45,7 +45,7 @@ export default function TuDia({ perfil, className = "", delay = 0 }: { perfil: P
 
   return (
     <>
-      <Tarjeta delay={delay} className={className}>
+      <Tarjeta delay={delay} className={className} tour={tour}>
         <div className="flex items-baseline justify-between gap-2">
           <h2 className="font-serif text-xl font-medium">Tu día</h2>
           <div className="flex gap-3">

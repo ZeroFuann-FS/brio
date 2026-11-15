@@ -113,7 +113,7 @@ export default function Entreno() {
 
       <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-12 md:gap-4">
         {/* Empezar */}
-        <Tarjeta tono="habit" className="min-w-0 md:col-span-7">
+        <Tarjeta tono="habit" className="min-w-0 md:col-span-7" tour="entreno-inicio">
           {rutina && dia ? (
             <>
               <div className="flex items-baseline justify-between gap-2">
@@ -178,7 +178,7 @@ export default function Entreno() {
         </Tarjeta>
 
         {/* Semana y mapa muscular */}
-        <Tarjeta delay={0.05} className="min-w-0 md:col-span-5">
+        <Tarjeta delay={0.05} className="min-w-0 md:col-span-5" tour="mapa">
           <div className="flex items-baseline justify-between">
             <h2 className="font-serif text-xl font-medium">Músculos de la semana</h2>
             <span className="lab">7 días</span>
@@ -236,7 +236,7 @@ export default function Entreno() {
               </ul>
             </Tarjeta>
           )}
-          <Tarjeta delay={0.16}>
+          <Tarjeta delay={0.16} tour="catalogo">
             <h2 className="font-serif text-xl font-medium">Catálogo de ejercicios</h2>
             <p className="mt-1 text-sm text-muted">Más de 160 ejercicios con fotos de cómo empezar y terminar, técnica, músculos y video.</p>
             <div className="mt-3 flex -space-x-2">{["press-banca", "sentadilla", "dominadas", "hip-thrust", "curl-mancuernas", "plancha"].map((id) => <FotoEjercicio key={id} id={id} size={40} />)}</div>

@@ -35,7 +35,7 @@ export default function Despensa() {
   const pocos = seAcaban(despensa);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-tour="despensa">
       <div>
         <h2 className="font-serif text-2xl font-medium">Despensa</h2>
         <p className="mt-1 text-muted">Lo que tienes en casa. Brío lo usa primero al armar tu menú y tu lista del súper.</p>

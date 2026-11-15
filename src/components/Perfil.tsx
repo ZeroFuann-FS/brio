@@ -21,11 +21,11 @@ const TEXTO_SYNC: Record<string, string> = {
 };
 
 type Props = {
-  perfil: TPerfil; metas: Metas; onEditar: () => void; onVerIntro: () => void;
+  perfil: TPerfil; metas: Metas; onEditar: () => void; onVerIntro: () => void; onVerTutorial: () => void;
   email: string | null; estadoSync: string; onCrearCuenta: () => void;
 };
 
-export default function Perfil({ perfil, metas, onEditar, onVerIntro, email, estadoSync, onCrearCuenta }: Props) {
+export default function Perfil({ perfil, metas, onEditar, onVerIntro, onVerTutorial, email, estadoSync, onCrearCuenta }: Props) {
   const [creditos, setCreditos] = useState(false);
   const [admin, setAdmin] = useState(false);
   const [panel, setPanel] = useState(false);
@@ -68,7 +68,10 @@ export default function Perfil({ perfil, metas, onEditar, onVerIntro, email, est
       <Tarjeta delay={0.1} className="text-center">
         <Logo className="text-4xl" />
         <p className="mt-2 text-sm text-muted">Pujanza, espíritu, valor, resolución.</p>
-        <button onClick={onVerIntro} className={`${btnSecundario} mt-4 w-full`}>¿Por qué Brío?</button>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <button onClick={onVerIntro} className={btnSecundario}>¿Por qué Brío?</button>
+          <button onClick={onVerTutorial} className={btnSecundario}>Ver tutorial</button>
+        </div>
       </Tarjeta>
 
       <Tarjeta delay={0.12}>

@@ -16,6 +16,7 @@ import { nubeDisponible, supabase } from "./lib/supabase";
 import { iniciarSync, useSync } from "./lib/sync";
 import { aplicarPlan, calcularMetas } from "./lib/calc";
 import { useAvisosLocales } from "./lib/avisosLocales";
+import Tour, { RECORRIDOS, marcarTutorial, reiniciarTutorial, tutorialVisto, type Recorrido } from "./components/Tour";
 import { habitosDe, pesoActual, racha, useBrio } from "./lib/store";
 
 const KEY = "brio:intro-visto-v3";
@@ -56,6 +57,7 @@ export default function App() {
   const dias = useBrio((s) => s.dias);
   const { oscuro, alternar } = useTema();
   useAvisosLocales(!session);
+  const [tour, setTour] = useState<Recorrido | null>(null);
 
   useEffect(() => {
     if (!nubeDisponible) return;
@@ -100,7 +102,15 @@ export default function App() {
     : !perfil || editando ? "onboarding"
     : "app";
 
+  // Tutorial: la primera vez en cada sección (Hoy tiene el recorrido completo)
+  useEffect(() => {
+    if (vista !== "app" || tour || tab === "perfil" || tutorialVisto(tab)) return;
+    const t = setTimeout(() => setTour(tab), 1100);
+    return () => clearTimeout(t);
+  }, [vista, tab, tour]);
+
   return (
+    <>
     <AnimatePresence mode="wait">
       {vista === "splash" && (
         <motion.button key="splash" onClick={() => setSplash(false)} aria-label="Entrar"
@@ -130,7 +140,7 @@ export default function App() {
       {vista === "app" && perfil && metas && (
         <motion.div key="app" className="min-h-full md:grid md:grid-cols-[232px_1fr]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
           {/* Barra lateral (laptop) */}
-          <aside className="sticky top-0 hidden h-screen flex-col gap-1 border-r border-line px-4 py-6 md:flex">
+          <aside data-tour="nav" className="sticky top-0 hidden h-screen flex-col gap-1 border-r border-line px-4 py-6 md:flex">
             <div className="px-3 pb-6"><Logo className="text-[30px]" /></div>
             {TABS.map((t) => (
               <button key={t.id} onClick={() => setTab(t.id)} aria-current={tab === t.id}
@@ -161,7 +171,7 @@ export default function App() {
                   {tab === "entreno" && <Entreno />}
                   {tab === "progreso" && <Progreso perfil={perfil} metas={metas} actual={actual} />}
                   {tab === "perfil" && (
-                    <Perfil perfil={perfil} metas={metas} onEditar={() => setEditando(true)} onVerIntro={() => setIntro(true)}
+                    <Perfil perfil={perfil} metas={metas} onEditar={() => setEditando(true)} onVerIntro={() => setIntro(true)} onVerTutorial={() => { reiniciarTutorial(); setTab("hoy"); window.scrollTo(0, 0); setTimeout(() => setTour("hoy"), 500); }}
                       email={session?.user.email ?? null} estadoSync={estadoSync} onCrearCuenta={() => setVerCuenta(true)} />
                   )}
                 </motion.div>
@@ -170,7 +180,7 @@ export default function App() {
           </div>
 
           {/* Barra inferior (celular) */}
-          <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-bg/90 backdrop-blur-lg md:hidden">
+          <nav data-tour="nav" className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-bg/90 backdrop-blur-lg md:hidden">
             <ul className="mx-auto grid max-w-md grid-cols-5 px-1 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2">
               {TABS.map((t) => (
                 <li key={t.id}>
@@ -185,5 +195,7 @@ export default function App() {
         </motion.div>
       )}
     </AnimatePresence>
+    {vista === "app" && tour && <Tour key={`tour-${tour}`} pasos={RECORRIDOS[tour]} onFin={() => { marcarTutorial(tour); setTour(null); }} />}
+    </>
   );
 }

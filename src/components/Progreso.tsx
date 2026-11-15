@@ -13,7 +13,7 @@ export default function Progreso({ perfil, metas, actual }: { perfil: Perfil; me
     <div>
       <h1 className="font-serif text-4xl font-medium tracking-tight">Progreso</h1>
       <p className="mt-1.5 text-muted">Tu semana, tus metas y tu cuerpo.</p>
-      <div className="mt-4 flex max-w-md gap-1 rounded-[14px] border border-line bg-surface p-1">
+      <div className="mt-4 flex max-w-md gap-1 rounded-[14px] border border-line bg-surface p-1" data-tour="progreso-tabs">
         {VISTAS.map((v) => (
           <button key={v.id} onClick={() => setVista(v.id)} aria-pressed={vista === v.id}
             className={`h-10 flex-1 rounded-[10px] font-display text-sm font-semibold uppercase tracking-[0.08em] transition ${vista === v.id ? "bg-ink text-bg dark:bg-lime dark:text-on-lime" : "text-muted"}`}>{v.t}</button>

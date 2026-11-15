@@ -76,7 +76,7 @@ export default function Recetas() {
   const toggle = (f: Filtro) => { setCuantas(8); setFiltros((x) => (x.includes(f) ? x.filter((y) => y !== f) : [...x, f])); };
 
   return (
-    <section className="mt-8">
+    <section className="mt-8" data-tour="recetas">
       <div className="flex items-end justify-between gap-3">
         <div>
           <p className="lab">Recetario de Brío</p>

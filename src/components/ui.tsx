@@ -56,9 +56,10 @@ export function Barra({ progreso, color = "bg-ink dark:bg-lime", alto = "h-[3px]
 
 const TONOS = { base: "bg-surface", food: "bg-t-food", water: "bg-t-water", habit: "bg-t-habit" } as const;
 
-export function Tarjeta({ children, className = "", delay = 0, tono = "base" }: { children: ReactNode; className?: string; delay?: number; tono?: keyof typeof TONOS }) {
+export function Tarjeta({ children, className = "", delay = 0, tono = "base", tour }: { children: ReactNode; className?: string; delay?: number; tono?: keyof typeof TONOS; tour?: string }) {
   return (
     <motion.section
+      data-tour={tour}
       className={`rounded-[20px] border border-line ${TONOS[tono]} p-5 ${className}`}
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
