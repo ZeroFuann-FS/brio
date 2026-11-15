@@ -1,6 +1,9 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { hoyISO, sumarDias, type Habito, type Perfil } from "./calc";
+import { hoyISO, sumarDias, type Habito, type Perfil, type PrefsComida } from "./calc";
+import type { MenuIA } from "./ia";
+
+export interface MenuGuardado { creado: string; menu: MenuIA; comprado: string[] }
 
 export type TipoComida = "desayuno" | "comida" | "cena" | "snack";
 
@@ -75,6 +78,10 @@ interface Estado {
   pesos: Peso[];
   despensa: ItemDespensa[];
   medidas: RegistroMedidas[];
+  menu: MenuGuardado | null;
+  setMenu: (m: MenuGuardado | null) => void;
+  marcarComprado: (producto: string) => void;
+  setPrefsComida: (p: PrefsComida) => void;
   setPerfil: (p: Perfil) => void;
   dia: (fecha: string) => Dia;
   addComida: (fecha: string, c: Omit<Comida, "id">) => void;
@@ -104,6 +111,11 @@ export const useBrio = create<Estado>()(
         pesos: [],
         despensa: [],
         medidas: [],
+        menu: null,
+        setMenu: (m) => set({ menu: m }),
+        marcarComprado: (producto) =>
+          set((s) => s.menu ? { menu: { ...s.menu, comprado: s.menu.comprado.includes(producto) ? s.menu.comprado.filter((x) => x !== producto) : [...s.menu.comprado, producto] } } : {}),
+        setPrefsComida: (p) => set((s) => (s.perfil ? { perfil: { ...s.perfil, prefsComida: p } } : {})),
         setPerfil: (p) =>
           set((s) => ({
             perfil: p,
@@ -141,10 +153,10 @@ export const useBrio = create<Estado>()(
         cambiarCantidad: (id, delta) =>
           set((s) => ({ despensa: s.despensa.map((x) => (x.id === id ? { ...x, cantidad: Math.max(0, x.cantidad + delta) } : x)) })),
         removeItem: (id) => set((s) => ({ despensa: s.despensa.filter((x) => x.id !== id) })),
-        reset: () => set({ perfil: null, dias: {}, pesos: [], despensa: [], medidas: [] }),
+        reset: () => set({ perfil: null, dias: {}, pesos: [], despensa: [], medidas: [], menu: null }),
       };
     },
-    { name: "brio:datos-v3", version: 2, migrate: (e) => ({ medidas: [], ...(e as object) }) as unknown as Estado },
+    { name: "brio:datos-v3", version: 3, migrate: (e) => ({ medidas: [], menu: null, ...(e as object) }) as unknown as Estado },
   ),
 );
 

@@ -2,7 +2,9 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { hoyISO, sumarDias } from "../lib/calc";
 import { frecuentes, useBrio, type TipoComida } from "../lib/store";
-import { Hoja, Tarjeta, Toast, btnPrimario, inputCls, useToast } from "./ui";
+import { analizarComida, ErrorIA, type AnalisisIA } from "../lib/ia";
+import { useSync } from "../lib/sync";
+import { Hoja, Tarjeta, Toast, btnPrimario, btnSecundario, inputCls, useToast } from "./ui";
 
 export const TIPOS: { id: TipoComida; t: string }[] = [
   { id: "desayuno", t: "Desayuno" },
@@ -34,6 +36,35 @@ export default function ComidasDia({ delay = 0, className = "" }: { delay?: numb
   const [hoja, setHoja] = useState(false);
   const vacio = { nombre: "", kcal: "", proteina: "", carbos: "", grasa: "", tipo: tipoPorHora() };
   const [f, setF] = useState(vacio);
+  const conCuenta = useSync((s) => s.estado) !== "sin-cuenta";
+  const [texto, setTexto] = useState("");
+  const [ia, setIa] = useState<{ estado: "idle" | "pensando" | "listo" | "error"; r?: AnalisisIA; error?: string }>({ estado: "idle" });
+
+  const calcular = async () => {
+    if (!texto.trim()) return;
+    setIa({ estado: "pensando" });
+    try { setIa({ estado: "listo", r: await analizarComida(texto) }); }
+    catch (e) { setIa({ estado: "error", error: e instanceof ErrorIA ? e.message : "Algo salió mal. Intenta de nuevo." }); }
+  };
+
+  const totales = (r: AnalisisIA) => r.alimentos.reduce(
+    (a, x) => ({ kcal: a.kcal + x.kcal, proteina: a.proteina + x.proteina, carbos: a.carbos + x.carbos, grasa: a.grasa + x.grasa }),
+    { kcal: 0, proteina: 0, carbos: 0, grasa: 0 },
+  );
+
+  const registrarIA = () => {
+    if (!ia.r) return;
+    const t = totales(ia.r);
+    addComida(hoy, { nombre: ia.r.nombre_comida, kcal: Math.round(t.kcal), proteina: Math.round(t.proteina), carbos: Math.round(t.carbos), grasa: Math.round(t.grasa), tipo: f.tipo });
+    setTexto(""); setIa({ estado: "idle" }); setHoja(false); setToast("Registrado");
+  };
+
+  const ajustarAMano = () => {
+    if (!ia.r) return;
+    const t = totales(ia.r);
+    setF((x) => ({ ...x, nombre: ia.r!.nombre_comida, kcal: String(Math.round(t.kcal)), proteina: String(Math.round(t.proteina)), carbos: String(Math.round(t.carbos)), grasa: String(Math.round(t.grasa)) }));
+    setIa({ estado: "idle" });
+  };
 
   const guardar = () => {
     const k = Number(f.kcal);
@@ -98,6 +129,63 @@ export default function ComidasDia({ delay = 0, className = "" }: { delay?: numb
             </div>
           </div>
         )}
+        {/* Escribir normal: la IA calcula */}
+        <div className="mb-5 rounded-[16px] border border-line bg-t-food p-4">
+          <p className="lab">Escríbelo como lo dirías</p>
+          {conCuenta ? (
+            <>
+              <textarea
+                className={`${inputCls} mt-2 min-h-[76px] resize-none`}
+                placeholder="Ej. 4 tacos de bistec con doble tortilla y un refresco chico"
+                value={texto}
+                maxLength={500}
+                onChange={(e) => { setTexto(e.target.value); if (ia.estado !== "pensando") setIa({ estado: "idle" }); }}
+              />
+              {ia.estado !== "listo" && (
+                <button type="button" onClick={calcular} disabled={!texto.trim() || ia.estado === "pensando"} className={`${btnPrimario} mt-2 w-full`}>
+                  {ia.estado === "pensando" ? "Calculando…" : "Calcular con IA"}
+                </button>
+              )}
+              {ia.estado === "pensando" && (
+                <div className="mt-3 grid grid-cols-12 gap-1">{Array.from({ length: 12 }, (_, i) => (
+                  <motion.i key={i} className="block h-1.5 rounded-full bg-ink dark:bg-lime" animate={{ opacity: [0.15, 1, 0.15] }} transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.08 }} />
+                ))}</div>
+              )}
+              {ia.estado === "error" && <p className="mt-2 text-sm text-ember">{ia.error}</p>}
+              {ia.estado === "listo" && ia.r && (() => {
+                const t = totales(ia.r);
+                return (
+                  <motion.div className="mt-3" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
+                    <p className="font-serif text-lg font-medium">{ia.r.nombre_comida}</p>
+                    <ul className="mt-1">
+                      {ia.r.alimentos.map((a, i) => (
+                        <li key={i} className="grid grid-cols-[1fr_auto] gap-2 border-b border-line py-2 text-sm last:border-b-0">
+                          <span>{a.nombre} <span className="text-muted">· {a.cantidad}</span></span>
+                          <span className="num text-base">{Math.round(a.kcal)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-2 grid grid-cols-4 gap-2 border-t border-line-strong pt-2">
+                      {[["kcal", t.kcal], ["Prot", t.proteina], ["Carb", t.carbos], ["Grasa", t.grasa]].map(([l, v]) => (
+                        <div key={l as string}><p className="lab">{l}</p><p className="num text-xl">{Math.round(v as number)}</p></div>
+                      ))}
+                    </div>
+                    {ia.r.nota && <p className="mt-2 text-xs text-muted">{ia.r.nota}</p>}
+                    {ia.r.confianza === "baja" && <p className="mt-1 text-xs text-ember">Estimación con poca información: revisa las cantidades.</p>}
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <button type="button" onClick={ajustarAMano} className={btnSecundario}>Ajustar a mano</button>
+                      <button type="button" onClick={registrarIA} className={btnPrimario}>Registrar</button>
+                    </div>
+                  </motion.div>
+                );
+              })()}
+            </>
+          ) : (
+            <p className="mt-1.5 text-sm text-muted">Crea tu cuenta gratis en Perfil para que Brío calcule las calorías solo con escribir lo que comiste.</p>
+          )}
+        </div>
+
+        <p className="lab mb-2">O regístralo a mano</p>
         <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); guardar(); }}>
           <div className="grid grid-cols-4 gap-1.5">
             {TIPOS.map((t) => (
@@ -118,7 +206,6 @@ export default function ComidasDia({ delay = 0, className = "" }: { delay?: numb
             <input className={inputCls} inputMode="numeric" placeholder="Carbos (g) · opcional" value={f.carbos} onChange={(e) => setF((x) => ({ ...x, carbos: soloNum(e.target.value) }))} />
             <input className={inputCls} inputMode="numeric" placeholder="Grasa (g) · opcional" value={f.grasa} onChange={(e) => setF((x) => ({ ...x, grasa: soloNum(e.target.value) }))} />
           </div>
-          <p className="text-xs text-muted">Pronto: escribe "2 tacos de bistec" y Brío calcula todo solo.</p>
           <button type="submit" disabled={!f.nombre.trim() || !f.kcal} className={`${btnPrimario} w-full`}>Guardar</button>
         </form>
       </Hoja>

@@ -9,7 +9,7 @@
  */
 import { create } from "zustand";
 import { supabase } from "./supabase";
-import { useBrio, type Dia, type ItemDespensa, type RegistroMedidas } from "./store";
+import { useBrio, type Dia, type ItemDespensa, type MenuGuardado, type RegistroMedidas } from "./store";
 import type { Perfil } from "./calc";
 
 type Estado = "sin-cuenta" | "sincronizando" | "ok" | "pendiente" | "error";
@@ -31,6 +31,7 @@ type Snap = Map<string, unknown>;
 function snapshot(s = useBrio.getState()): Snap {
   const m: Snap = new Map();
   if (s.perfil) m.set("perfil", s.perfil);
+  if (s.menu) m.set("menu", s.menu);
   for (const [f, d] of Object.entries(s.dias)) m.set(`dia:${f}`, d);
   for (const p of s.pesos) m.set(`peso:${p.fecha}`, p.kg);
   for (const r of s.medidas) m.set(`medida:${r.fecha}`, r);
@@ -44,9 +45,11 @@ function aplicar(m: Snap) {
   const medidas: RegistroMedidas[] = [];
   const despensa: ItemDespensa[] = [];
   let perfil: Perfil | null = null;
+  let menu: MenuGuardado | null = null;
   for (const [k, v] of m) {
     const [tipo, id] = [k.slice(0, k.indexOf(":") === -1 ? k.length : k.indexOf(":")), k.slice(k.indexOf(":") + 1)];
     if (k === "perfil") perfil = v as Perfil;
+    else if (k === "menu") menu = v as MenuGuardado;
     else if (tipo === "dia") dias[id] = v as Dia;
     else if (tipo === "peso") pesos.push({ fecha: id, kg: v as number });
     else if (tipo === "medida") medidas.push(v as RegistroMedidas);
@@ -55,22 +58,24 @@ function aplicar(m: Snap) {
   pesos.sort((a, b) => a.fecha.localeCompare(b.fecha));
   medidas.sort((a, b) => a.fecha.localeCompare(b.fecha));
   aplicandoRemoto = true;
-  useBrio.setState({ perfil, dias, pesos, medidas, despensa });
+  useBrio.setState({ perfil, dias, pesos, medidas, despensa, menu });
   aplicandoRemoto = false;
 }
 
 async function bajar(): Promise<Snap> {
-  const [pf, ds, ps, ms, de] = await Promise.all([
+  const [pf, ds, ps, ms, de, mn] = await Promise.all([
     supabase.from("perfiles").select("datos"),
     supabase.from("dias").select("fecha, comidas, agua_ml, habitos"),
     supabase.from("pesos").select("fecha, kg"),
     supabase.from("medidas").select("fecha, valores"),
     supabase.from("despensa").select("id, nombre, cantidad, unidad"),
+    supabase.from("menus").select("datos"),
   ]);
-  const err = pf.error ?? ds.error ?? ps.error ?? ms.error ?? de.error;
+  const err = pf.error ?? ds.error ?? ps.error ?? ms.error ?? de.error ?? mn.error;
   if (err) throw err;
   const m: Snap = new Map();
   if (pf.data?.[0]) m.set("perfil", pf.data[0].datos);
+  if (mn.data?.[0]) m.set("menu", mn.data[0].datos);
   for (const d of ds.data ?? []) m.set(`dia:${d.fecha}`, { comidas: d.comidas, aguaMl: d.agua_ml, habitos: d.habitos });
   for (const p of ps.data ?? []) m.set(`peso:${p.fecha}`, Number(p.kg));
   for (const r of ms.data ?? []) m.set(`medida:${r.fecha}`, { fecha: r.fecha, ...(r.valores as object) });
@@ -83,14 +88,15 @@ async function subir(uid: string) {
   const lote = [...pendientes];
   const local = snapshot();
   const ahora = new Date().toISOString();
-  const up: Record<string, object[]> = { perfiles: [], dias: [], pesos: [], medidas: [], despensa: [] };
-  const del: Record<string, string[]> = { perfiles: [], dias: [], pesos: [], medidas: [], despensa: [] };
+  const up: Record<string, object[]> = { perfiles: [], dias: [], pesos: [], medidas: [], despensa: [], menus: [] };
+  const del: Record<string, string[]> = { perfiles: [], dias: [], pesos: [], medidas: [], despensa: [], menus: [] };
 
   for (const k of lote) {
     const v = local.get(k);
-    const tipo = k === "perfil" ? "perfil" : k.slice(0, k.indexOf(":"));
+    const tipo = k === "perfil" || k === "menu" ? k : k.slice(0, k.indexOf(":"));
     const id = k.slice(k.indexOf(":") + 1);
     if (tipo === "perfil") v ? up.perfiles.push({ user_id: uid, datos: v, actualizado: ahora }) : del.perfiles.push(uid);
+    else if (tipo === "menu") v ? up.menus.push({ user_id: uid, datos: v, actualizado: ahora }) : del.menus.push(uid);
     else if (tipo === "dia") {
       const d = v as Dia | undefined;
       d ? up.dias.push({ user_id: uid, fecha: id, comidas: d.comidas, agua_ml: d.aguaMl, habitos: d.habitos, actualizado: ahora }) : del.dias.push(id);
@@ -105,9 +111,10 @@ async function subir(uid: string) {
   }
 
   const ops: PromiseLike<{ error: unknown }>[] = [];
-  const pk: Record<string, string> = { perfiles: "user_id", dias: "user_id,fecha", pesos: "user_id,fecha", medidas: "user_id,fecha", despensa: "user_id,id" };
+  const pk: Record<string, string> = { menus: "user_id", perfiles: "user_id", dias: "user_id,fecha", pesos: "user_id,fecha", medidas: "user_id,fecha", despensa: "user_id,id" };
   for (const t of Object.keys(up)) if (up[t].length) ops.push(supabase.from(t).upsert(up[t], { onConflict: pk[t] }));
   if (del.perfiles.length) ops.push(supabase.from("perfiles").delete().eq("user_id", uid));
+  if (del.menus.length) ops.push(supabase.from("menus").delete().eq("user_id", uid));
   for (const t of ["dias", "pesos", "medidas"]) if (del[t].length) ops.push(supabase.from(t).delete().eq("user_id", uid).in("fecha", del[t]));
   if (del.despensa.length) ops.push(supabase.from("despensa").delete().eq("user_id", uid).in("id", del.despensa));
 

@@ -151,7 +151,7 @@ export default function App() {
               <AnimatePresence mode="wait">
                 <motion.div key={tab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.22 }}>
                   {tab === "hoy" && <Hoy perfil={perfil} metas={metas} />}
-                  {tab === "comida" && <Comida />}
+                  {tab === "comida" && <Comida perfil={perfil} metas={metas} />}
                   {tab === "entreno" && <Entreno />}
                   {tab === "progreso" && <Peso perfil={perfil} metas={metas} actual={actual} />}
                   {tab === "perfil" && (
