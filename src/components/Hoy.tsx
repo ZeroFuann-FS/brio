@@ -1,8 +1,10 @@
 import { motion } from "motion/react";
 import { diasEntre, hoyISO, type Metas, type Perfil } from "../lib/calc";
 import { habitosDe, minBrio, puntosDia, seAcaban, useBrio } from "../lib/store";
-import { Barra, Numero, Segmentos, Tarjeta, Toast, ease, useToast } from "./ui";
+import { Barra, Hoja, Numero, Segmentos, Tarjeta, Toast, ease, useToast } from "./ui";
 import ComidasDia from "./ComidasDia";
+import EditorHabitos from "./EditorHabitos";
+import { useState } from "react";
 import { TarjetaPlan } from "./PlanNutriologo";
 import TuDia, { AvisoPago } from "./dia/TuDia";
 
@@ -21,6 +23,7 @@ export default function Hoy({ perfil, metas, onIrComida }: { perfil: Perfil; met
   const d = dias[hoy] ?? { comidas: [], aguaMl: 0, habitos: {} };
   const pocos = seAcaban(useBrio((s) => s.despensa));
   const [toast, setToast] = useToast();
+  const [editarHabitos, setEditarHabitos] = useState(false);
 
   const suma = (k: "kcal" | "proteina" | "carbos" | "grasa") => d.comidas.reduce((a, c) => a + (c[k] ?? 0), 0);
   const kcal = suma("kcal");
@@ -42,6 +45,12 @@ export default function Hoy({ perfil, metas, onIrComida }: { perfil: Perfil; met
   const tocarVaso = (i: number) => {
     const objetivo = i + 1 === llenos ? i : i + 1;
     const ml = objetivo * 250 - d.aguaMl;
+    if (!ml) return;
+    sumarAgua(ml);
+  };
+  /** Suma (o resta) agua sin tope: se puede pasar de la meta. */
+  const sumarAgua = (ml: number) => {
+    if (d.aguaMl + ml < 0) ml = -d.aguaMl;
     if (!ml) return;
     addAgua(hoy, ml);
     if (d.aguaMl < metas.aguaMl && d.aguaMl + ml >= metas.aguaMl) setToast(puntos + 1 === MIN ? "¡Día con brío! Tu racha sigue" : "Meta de agua cumplida");
@@ -98,17 +107,22 @@ export default function Hoy({ perfil, metas, onIrComida }: { perfil: Perfil; met
             <span className="num text-[34px]">{(d.aguaMl / 1000).toFixed(1)}<small className="text-base font-medium text-muted"> / {(metas.aguaMl / 1000).toFixed(1)} L</small></span>
           </div>
           <div className="mt-3.5 grid grid-cols-6 gap-1.5">
-            {Array.from({ length: vasos }, (_, i) => (
+            {Array.from({ length: Math.max(vasos, llenos) }, (_, i) => (
               <motion.button
                 key={i}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => tocarVaso(i)}
                 aria-label={`${i + 1} vasos`}
-                className={`h-[30px] rounded-[5px_5px_9px_9px] border transition-colors ${i < llenos ? "border-water bg-water" : "border-line-strong/60"}`}
+                className={`h-[30px] rounded-[5px_5px_9px_9px] border transition-colors ${i < llenos ? (i >= vasos ? "border-lime bg-water" : "border-water bg-water") : "border-line-strong/60"}`}
               />
             ))}
           </div>
-          <p className="lab mt-3">Toca un vaso para sumar 250 ml</p>
+          <div className="mt-3 flex items-center gap-1.5">
+            <button onClick={() => sumarAgua(250)} className="rounded-full border border-water/50 bg-surface px-3 py-1.5 text-sm font-medium">+250 ml</button>
+            <button onClick={() => sumarAgua(500)} className="rounded-full border border-water/50 bg-surface px-3 py-1.5 text-sm font-medium">+500 ml</button>
+            <button onClick={() => sumarAgua(-250)} disabled={!d.aguaMl} aria-label="Quitar 250 ml" className="rounded-full border border-line px-3 py-1.5 text-sm text-muted disabled:opacity-40">−250</button>
+          </div>
+          <p className="lab mt-2.5">{d.aguaMl > metas.aguaMl ? `¡${((d.aguaMl - metas.aguaMl) / 1000).toFixed(2).replace(/0$/, "")} L más que tu meta!` : "Toca un vaso o usa los botones"}</p>
         </Tarjeta>
 
         <AvisoPago perfil={perfil} className="md:col-span-12" />
@@ -119,7 +133,7 @@ export default function Hoy({ perfil, metas, onIrComida }: { perfil: Perfil; met
         <Tarjeta tono="habit" delay={0.15} className="md:col-span-5" tour="habitos">
           <div className="flex items-baseline justify-between">
             <h2 className="font-serif text-xl font-medium">Hábitos</h2>
-            <span className="lab">{puntos} de {habitos.length + 1}</span>
+            <span className="flex items-baseline gap-3"><span className="lab">{puntos} de {habitos.length + 1}</span><button onClick={() => setEditarHabitos(true)} className="lab !text-lime-ink hover:underline">Editar</button></span>
           </div>
           <ul className="mt-2">
             {habitos.map((h) => {
@@ -150,6 +164,9 @@ export default function Hoy({ perfil, metas, onIrComida }: { perfil: Perfil; met
           </p>
         )}
       </div>
+      <Hoja abierta={editarHabitos} onClose={() => setEditarHabitos(false)} titulo="Tus hábitos">
+        {editarHabitos && <EditorHabitos perfil={perfil} onListo={() => { setEditarHabitos(false); setToast("Hábitos guardados"); }} />}
+      </Hoja>
       <Toast texto={toast} />
     </div>
   );
