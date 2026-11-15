@@ -23,6 +23,7 @@ export interface Recordatorios {
   entreno?: { activo: boolean; antes: number };
   habitos?: { activo: boolean; hora: string };
   agua?: { activo: boolean };
+  resumen?: { activo: boolean; hora: string };
 }
 
 export interface Evento { inicio: number; fin: number; tipo: TipoBloque; titulo: string; detalle?: string; id: string }

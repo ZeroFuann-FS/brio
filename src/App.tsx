@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import Intro from "./components/Intro";
 import Onboarding from "./components/Onboarding";
 import Hoy from "./components/Hoy";
-import Peso from "./components/Peso";
+import Progreso from "./components/Progreso";
 import Comida from "./components/Comida";
 import Entreno from "./components/Entreno";
 import { IcComida, IcEntreno, IcHoy, IcLuna, IcPerfil, IcProgreso, IcSol } from "./components/Iconos";
@@ -159,7 +159,7 @@ export default function App() {
                   {tab === "hoy" && <Hoy perfil={perfil} metas={metas} onIrComida={() => setTab("comida")} />}
                   {tab === "comida" && <Comida perfil={perfil} metas={metas} />}
                   {tab === "entreno" && <Entreno />}
-                  {tab === "progreso" && <Peso perfil={perfil} metas={metas} actual={actual} />}
+                  {tab === "progreso" && <Progreso perfil={perfil} metas={metas} actual={actual} />}
                   {tab === "perfil" && (
                     <Perfil perfil={perfil} metas={metas} onEditar={() => setEditando(true)} onVerIntro={() => setIntro(true)}
                       email={session?.user.email ?? null} estadoSync={estadoSync} onCrearCuenta={() => setVerCuenta(true)} />

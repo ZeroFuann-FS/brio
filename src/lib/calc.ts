@@ -47,6 +47,7 @@ export interface Perfil {
   entreno?: import("./entreno").PrefsEntreno;
   agenda?: import("./agenda").Agenda;
   recordatorios?: import("./agenda").Recordatorios;
+  metas?: import("./metas").Meta[];
   creado: string;
 }
 

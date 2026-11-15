@@ -91,5 +91,9 @@ export function avisosDelMinuto(e: EntradaAvisos, ventana = 5): Aviso[] {
       }
     }
   }
+  // Resumen semanal: domingo en la noche
+  if (r.resumen?.activo && wd === 0 && en(aMin(r.resumen.hora || "20:00"))) {
+    out.push({ clave: `resumen:${e.hoy}`, titulo: "Tu semana en Brío", cuerpo: "Ya está tu resumen: días con brío, entrenos, comida y metas. Planea la que viene.", url: "/?tab=progreso" });
+  }
   return out;
 }

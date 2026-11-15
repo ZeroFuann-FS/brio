@@ -6,7 +6,7 @@ import Medidas from "./Medidas";
 import { useBrio } from "../lib/store";
 import { Numero, Tarjeta, Toast, btnPrimario, ease, inputCls, useToast } from "./ui";
 
-export default function Peso({ perfil, metas, actual }: { perfil: Perfil; metas: Metas; actual: number }) {
+export default function Peso({ perfil, metas, actual, sinTitulo = false }: { perfil: Perfil; metas: Metas; actual: number; sinTitulo?: boolean }) {
   const pesos = useBrio((s) => s.pesos);
   const { addPeso, removePeso } = useBrio();
   const [valor, setValor] = useState("");
@@ -29,8 +29,8 @@ export default function Peso({ perfil, metas, actual }: { perfil: Perfil; metas:
 
   return (
     <div className="space-y-4 md:max-w-3xl">
-      <h1 className="font-serif text-4xl font-medium tracking-tight">Progreso</h1>
-      <p className="-mt-2 text-muted">Tu peso, tus medidas y hacia dónde vas.</p>
+      {!sinTitulo && <h1 className="font-serif text-4xl font-medium tracking-tight">Progreso</h1>}
+      {!sinTitulo && <p className="-mt-2 text-muted">Tu peso, tus medidas y hacia dónde vas.</p>}
 
       <Tarjeta>
         <div className="flex items-end justify-between">

@@ -63,7 +63,7 @@ export default function Recordatorios({ perfil }: { perfil: Perfil }) {
     if (res.ok) {
       await notificarLocal("¡Listo!", "Así te llegarán los avisos de Brío.", "prueba");
       setMsg(res.motivo === "sin-cuenta" ? "Activadas. Sin cuenta solo te avisamos mientras Brío esté abierta; crea tu cuenta para recibirlas con la app cerrada." : "Activadas. Te llegarán aunque la app esté cerrada.");
-      if (!r.pago && !r.despensa && !r.comidas && !r.entreno && !r.habitos) setRec({ ...r, despensa: { activo: true, hora: "19:00" }, entreno: { activo: true, antes: 60 }, habitos: { activo: true, hora: "21:00" } });
+      if (!r.pago && !r.despensa && !r.comidas && !r.entreno && !r.habitos) setRec({ ...r, despensa: { activo: true, hora: "19:00" }, entreno: { activo: true, antes: 60 }, habitos: { activo: true, hora: "21:00" }, resumen: { activo: true, hora: "20:00" } });
     } else setMsg(res.motivo === "denegado" ? "Las notificaciones están bloqueadas. Actívalas en los ajustes del navegador para este sitio." : res.motivo === "instalar" ? "" : res.motivo === "suscripcion" ? "Este navegador no pudo registrarse para recibir avisos. Prueba en Chrome, Edge o Safari (con Brío instalado)." : "No se pudieron activar. Intenta de nuevo.");
   };
 
@@ -119,6 +119,9 @@ export default function Recordatorios({ perfil }: { perfil: Perfil }) {
           <Campo label="Hora"><input type="time" className={`${inputCls} campo-fecha py-2`} value={r.habitos?.hora ?? "21:00"} onChange={(e) => cambiar("habitos", { ...r.habitos!, hora: e.target.value })} /></Campo>
         </Fila>
         <Fila titulo="Agua" desc="A las 11 am, 3 pm y 6 pm, solo si vas atrasado." on={!!r.agua?.activo} onCambio={(v) => cambiar("agua", { activo: v })} />
+        <Fila titulo="Resumen semanal" desc="El domingo en la noche, para ver tu semana y planear la siguiente." on={!!r.resumen?.activo} onCambio={(v) => cambiar("resumen", { hora: "20:00", ...r.resumen, activo: v })}>
+          <Campo label="Hora (domingo)"><input type="time" className={`${inputCls} campo-fecha py-2`} value={r.resumen?.hora ?? "20:00"} onChange={(e) => cambiar("resumen", { ...r.resumen!, hora: e.target.value })} /></Campo>
+        </Fila>
       </ul>
       <p className="mt-2 text-xs text-muted">Las horas de comida y gym se toman de tu horario en "Tu día".</p>
     </div>
