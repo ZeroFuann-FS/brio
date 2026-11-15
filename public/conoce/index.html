@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Brío · Comida, gym, hábitos y metas en una sola app</title>
+  <meta name="description" content="Brío es una app gratis para cuidar tu comida, entrenar en el gym, sostener tus hábitos y avanzar en tus metas. Recetas mexicanas, menú semanal, lista del súper, rutinas y avisos." />
+  <meta property="og:title" content="Brío · Ponle brío a tu vida" />
+  <meta property="og:description" content="Comida, gym, hábitos y metas en una sola app. Gratis y sin anuncios." />
+  <meta property="og:image" content="https://mi-brio.vercel.app/conoce/img/laptop-claro.webp" />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <meta name="theme-color" content="#f4f2ea" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0e0f11" media="(prefers-color-scheme: dark)" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=Sora:wght@800&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    try {
+      var t = localStorage.getItem("brio:tema");
+      var oscuro = t === "oscuro" || (t !== "claro" && matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.dataset.theme = oscuro ? "dark" : "light";
+    } catch (e) { document.documentElement.dataset.theme = "light"; }
+  </script>
+  <style>
+    :root, [data-theme="light"] {
+      --bg: #f4f2ea; --surface: #fbfaf5; --ink: #17191c; --muted: #6b6e66; --line: #dcd8cb;
+      --lime: #c6f432; --lime-ink: #3f6212; --on-lime: #17191c; --food: #eaf7b8; --habit: #d5f0e0; --water: #d9eaff;
+      --sombra: 0 30px 60px -30px rgba(23,25,28,.35); color-scheme: light;
+    }
+    [data-theme="dark"] {
+      --bg: #0e0f11; --surface: #16181b; --ink: #f2f3f0; --muted: #9a9ea6; --line: #262a2f;
+      --lime: #c6f432; --lime-ink: #c6f432; --on-lime: #17191c; --food: rgba(198,244,50,.09); --habit: rgba(52,211,153,.1); --water: rgba(59,143,240,.12);
+      --sombra: 0 30px 70px -30px rgba(0,0,0,.8); color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Inter Tight", system-ui, sans-serif; font-size: 17px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+    img, video { display: block; max-width: 100%; }
+    a { color: inherit; }
+    .envoltura { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+    .lab { font-family: "Barlow Condensed", sans-serif; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; font-size: 13px; color: var(--muted); }
+    h1, h2, h3 { font-family: Fraunces, serif; font-weight: 500; letter-spacing: -.01em; line-height: 1.08; margin: 0; }
+    h2 { font-size: clamp(32px, 5vw, 50px); }
+    h3 { font-size: 23px; }
+    p { margin: 0; }
+    .muted { color: var(--muted); }
+    .boton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 52px; padding: 0 26px; border-radius: 16px; font-family: "Barlow Condensed", sans-serif; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-size: 16px; text-decoration: none; border: 1px solid transparent; transition: transform .15s, background .2s; }
+    .boton:active { transform: scale(.97); }
+    .primario { background: var(--lime); color: var(--on-lime); }
+    .secundario { border-color: var(--line); background: var(--surface); }
+    .logo { font-family: Sora, sans-serif; font-weight: 800; letter-spacing: -.04em; text-decoration: none; }
+    .logo i { font-style: normal; color: var(--lime-ink); }
+    [data-theme="dark"] .logo i { color: var(--lime); }
+
+    /* Barra */
+    header { position: sticky; top: 0; z-index: 20; background: color-mix(in oklab, var(--bg) 88%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+    header .envoltura { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 16px; }
+    header .logo { font-size: 28px; }
+    header nav { display: flex; gap: 22px; }
+    header nav a { text-decoration: none; font-size: 15px; color: var(--muted); }
+    header nav a:hover { color: var(--ink); }
+    .acciones { display: flex; align-items: center; gap: 10px; }
+    .tema { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; display: grid; place-items: center; }
+    header .boton { height: 42px; padding: 0 18px; font-size: 14px; border-radius: 12px; }
+    @media (max-width: 860px) { header nav { display: none; } }
+
+    /* Portada */
+    .portada { padding: 56px 0 72px; position: relative; overflow: hidden; }
+    .portada::before { content: ""; position: absolute; inset: -20% -10% auto auto; width: 70vmax; height: 70vmax; background: radial-gradient(circle, rgba(198,244,50,.18), transparent 60%); pointer-events: none; }
+    .portada .envoltura { display: grid; grid-template-columns: 1.15fr .85fr; gap: 48px; align-items: center; position: relative; }
+    .portada h1 { font-size: clamp(46px, 8vw, 92px); line-height: .98; }
+    .portada h1 em { font-style: italic; font-weight: 400; }
+    .portada .bajada { font-size: clamp(18px, 2.2vw, 22px); color: var(--muted); margin-top: 18px; max-width: 560px; }
+    .portada .botones { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+    .sellos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; }
+    .sello { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 14px; font-size: 14px; }
+    .telefono { position: relative; width: min(320px, 78vw); margin: 0 auto; border-radius: 46px; padding: 12px; background: #0e0f11; box-shadow: var(--sombra), 0 0 0 1px rgba(255,255,255,.06) inset; }
+    .telefono video, .telefono img { border-radius: 34px; width: 100%; aspect-ratio: 9/16; object-fit: cover; background: #0e0f11; }
+    @media (max-width: 860px) { .portada .envoltura { grid-template-columns: 1fr; } .portada { padding-top: 36px; } }
+
+    /* Números */
+    .numeros { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: 22px; background: var(--surface); overflow: hidden; }
+    .numeros div { padding: 22px 20px; border-right: 1px solid var(--line); }
+    .numeros div:last-child { border-right: 0; }
+    .numeros b { display: block; font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: clamp(34px, 5vw, 52px); line-height: 1; }
+    @media (max-width: 700px) { .numeros { grid-template-columns: repeat(2, 1fr); } .numeros div:nth-child(2) { border-right: 0; } .numeros div:nth-child(-n+2) { border-bottom: 1px solid var(--line); } }
+
+    section { padding: 84px 0; }
+    .encabezado { max-width: 720px; margin-bottom: 40px; }
+    .encabezado p { margin-top: 14px; font-size: 19px; color: var(--muted); }
+
+    /* Por qué */
+    .porque { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .tarjeta { background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 28px; }
+    .definicion { font-family: Fraunces, serif; font-size: clamp(26px, 3.4vw, 36px); line-height: 1.2; margin-top: 10px; }
+    .definicion em { color: var(--lime-ink); font-style: italic; }
+    [data-theme="dark"] .definicion em { color: var(--lime); }
+    .pilares { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+    .pilares span { background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; font-weight: 500; }
+    @media (max-width: 760px) { .porque { grid-template-columns: 1fr; } }
+
+    /* Funciones */
+    .funcion { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; padding: 40px 0; border-top: 1px solid var(--line); }
+    .funcion:nth-child(even) .texto { order: 2; }
+    .funcion .texto h3 { font-size: clamp(28px, 3.6vw, 40px); margin-top: 8px; }
+    .funcion .texto p { margin-top: 14px; color: var(--muted); font-size: 18px; }
+    .funcion ul { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 10px; }
+    .funcion li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; }
+    .funcion li::before { content: "✓"; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 7px; background: var(--lime); color: var(--on-lime); font-size: 13px; font-weight: 800; margin-top: 2px; }
+    .capturas { display: flex; justify-content: center; gap: 16px; }
+    .capturas img { width: min(250px, 42%); border-radius: 26px; border: 1px solid var(--line); box-shadow: var(--sombra); }
+    .capturas img:nth-child(2) { margin-top: 48px; }
+    @media (max-width: 860px) { .funcion { grid-template-columns: 1fr; gap: 28px; } .funcion:nth-child(even) .texto { order: 0; } }
+
+    /* Videos */
+    .pestanas { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); margin-bottom: 24px; }
+    .pestanas button { border: 0; background: transparent; color: var(--muted); padding: 10px 18px; border-radius: 10px; font-family: "Barlow Condensed", sans-serif; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; font-size: 15px; cursor: pointer; }
+    .pestanas button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+    [data-theme="dark"] .pestanas button[aria-pressed="true"] { background: var(--lime); color: var(--on-lime); }
+    .marco-video { border-radius: 24px; overflow: hidden; border: 1px solid var(--line); box-shadow: var(--sombra); background: #0e0f11; }
+    .marco-video.celular { max-width: 380px; margin: 0 auto; border-radius: 34px; }
+    .marco-video video { width: 100%; }
+
+    /* México */
+    .rejilla { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .rejilla .tarjeta h3 { font-size: 22px; margin-top: 10px; }
+    .rejilla .tarjeta p { margin-top: 8px; color: var(--muted); }
+    .icono { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 18px; }
+    @media (max-width: 860px) { .rejilla { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 560px) { .rejilla { grid-template-columns: 1fr; } }
+
+    /* Claro/oscuro */
+    .modos { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .modos img { border-radius: 18px; border: 1px solid var(--line); box-shadow: var(--sombra); }
+    @media (max-width: 760px) { .modos { grid-template-columns: 1fr; } }
+
+    /* Instalar */
+    .pasos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .pasos ol { margin: 12px 0 0; padding-left: 20px; display: grid; gap: 8px; color: var(--muted); }
+    .pasos b { color: var(--ink); font-weight: 600; }
+    @media (max-width: 860px) { .pasos { grid-template-columns: 1fr; } }
+
+    /* Preguntas */
+    details { border-top: 1px solid var(--line); padding: 20px 0; }
+    details:last-child { border-bottom: 1px solid var(--line); }
+    summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 16px; font-family: Fraunces, serif; font-size: 22px; }
+    summary::-webkit-details-marker { display: none; }
+    summary::after { content: "+"; font-family: "Inter Tight", sans-serif; color: var(--muted); transition: transform .2s; }
+    details[open] summary::after { transform: rotate(45deg); }
+    details p { margin-top: 12px; color: var(--muted); max-width: 760px; }
+
+    /* Cierre */
+    .cta { text-align: center; background: #0e0f11; color: #f2f3f0; border-radius: 32px; padding: 64px 24px; position: relative; overflow: hidden; }
+    .cta::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 40%, rgba(198,244,50,.2), transparent 60%); }
+    .cta > * { position: relative; }
+    .cta .logo { font-size: clamp(72px, 12vw, 130px); color: #f2f3f0; }
+    .cta .logo i { color: #c6f432; }
+    .cta p { color: #a7aaa3; margin-top: 8px; font-family: Fraunces, serif; font-style: italic; font-size: 22px; }
+    .cta .boton { margin-top: 26px; }
+    footer { padding: 40px 0 56px; color: var(--muted); font-size: 14px; }
+    footer .envoltura { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; }
+    footer a { color: var(--muted); }
+
+    /* Aparecer al bajar */
+    .aparece { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s cubic-bezier(.22,1,.36,1); }
+    .aparece.visto { opacity: 1; transform: none; }
+    @media (prefers-reduced-motion: reduce) { .aparece { opacity: 1; transform: none; transition: none; } html { scroll-behavior: auto; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="envoltura">
+      <a class="logo" href="#inicio" aria-label="Brío, inicio">br<i>í</i>o</a>
+      <nav aria-label="Secciones">
+        <a href="#funciones">Funciones</a>
+        <a href="#videos">Videos</a>
+        <a href="#instalar">Instalar</a>
+        <a href="#preguntas">Preguntas</a>
+      </nav>
+      <div class="acciones">
+        <button class="tema" id="tema" aria-label="Cambiar modo claro u oscuro" title="Cambiar modo">◐</button>
+        <a class="boton primario" href="/">Abrir Brío</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="inicio">
+    <div class="portada">
+      <div class="envoltura">
+        <div class="aparece">
+          <p class="lab">Gratis · Sin anuncios · Celular y computadora</p>
+          <h1 style="margin-top:14px">Ponle <em>brío</em><br />a tu vida.</h1>
+          <p class="bajada">Tu comida, tu gym, tus hábitos y tus metas en una sola app. Con recetas mexicanas, menú semanal, lista del súper, rutinas y avisos que sí te sirven.</p>
+          <div class="botones">
+            <a class="boton primario" href="/">Empezar gratis</a>
+            <a class="boton secundario" href="#videos">Ver cómo funciona</a>
+          </div>
+          <div class="sellos">
+            <span class="sello">129 recetas</span><span class="sello">173 ejercicios</span><span class="sello">Modo claro y oscuro</span><span class="sello">Funciona sin internet</span>
+          </div>
+        </div>
+        <div class="telefono aparece">
+          <video src="video/brio-corto.mp4" poster="video/brio-corto.jpg" autoplay muted loop playsinline aria-label="Video corto de Brío en el celular"></video>
+        </div>
+      </div>
+    </div>
+
+    <div class="envoltura aparece">
+      <div class="numeros" id="numeros" aria-label="Brío en números">
+        <div><b data-k="usuarios" data-fijo="173">173</b><span class="lab" data-fijo-lab="Ejercicios con técnica">Ejercicios con técnica</span></div>
+        <div><b data-k="comidas_registradas" data-fijo="129">129</b><span class="lab" data-fijo-lab="Recetas mexicanas">Recetas mexicanas</span></div>
+        <div><b data-k="entrenos" data-fijo="9">9</b><span class="lab" data-fijo-lab="Rutinas listas">Rutinas listas</span></div>
+        <div><b>$0</b><span class="lab">Gratis, sin anuncios</span></div>
+      </div>
+    </div>
+
+    <section>
+      <div class="envoltura">
+        <div class="porque">
+          <div class="tarjeta aparece">
+            <p class="lab">¿Por qué “Brío”?</p>
+            <p class="definicion"><em>brío</em> (m.): pujanza, espíritu, valor, resolución.</p>
+            <p class="muted" style="margin-top:14px">No es motivación de un día. Es la constancia de hacer un poco cada día: comer mejor, moverte, aprender y avanzar. Brío te ayuda a sostenerlo.</p>
+          </div>
+          <div class="tarjeta aparece">
+            <p class="lab">Todo en un lugar</p>
+            <div class="pilares">
+              <span>Comida y recetas</span><span>Gym y rutinas</span><span>Hábitos y racha</span><span>Metas de vida</span><span>Tu día organizado</span><span>Avisos útiles</span>
+            </div>
+            <p class="muted" style="margin-top:14px">En lugar de tener una app para contar calorías, otra para el gym y otra para tus hábitos.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="funciones" style="padding-top:20px">
+      <div class="envoltura">
+        <div class="encabezado aparece">
+          <p class="lab">Funciones</p>
+          <h2 style="margin-top:10px">Pensada para tu día a día real.</h2>
+          <p>Desde lo que desayunas hasta tu rutina de pierna, pasando por la despensa y el pago del gym.</p>
+        </div>
+
+        <div class="funcion aparece">
+          <div class="texto">
+            <p class="lab">01 · Hoy</p>
+            <h3>Tu día de un vistazo</h3>
+            <p>Brío calcula tu meta de calorías y proteína según tu cuerpo y tu objetivo, y te muestra cuánto te queda.</p>
+            <ul><li>Calorías, proteína, carbos y grasa</li><li>Agua con un toque, sin tope</li><li>Hábitos que tú eliges y racha de días con brío</li><li>Cuenta regresiva a tu motivo (graduación, viaje, boda…)</li></ul>
+          </div>
+          <div class="capturas"><img src="img/hoy.webp" alt="Pantalla Hoy con calorías y agua" loading="lazy" /><img src="img/habitos.webp" alt="Hábitos y racha" loading="lazy" /></div>
+        </div>
+
+        <div class="funcion aparece">
+          <div class="texto">
+            <p class="lab">02 · Registrar</p>
+            <h3>Registra lo que comes, sin batallar</h3>
+            <p>Busca entre alimentos con foto, productos de marca o escanea el código de barras. Si algo no aparece, lo capturas y queda para toda la comunidad.</p>
+            <ul><li>Alimentos con foto y porciones mexicanas</li><li>Productos de marca y escáner de código</li><li>Recientes de un toque y “copiar ayer”</li><li>Se descuenta solo de tu despensa</li></ul>
+          </div>
+          <div class="capturas"><img src="img/buscar.webp" alt="Buscador de alimentos" loading="lazy" /><img src="img/receta.webp" alt="Detalle de una receta" loading="lazy" /></div>
+        </div>
+
+        <div class="funcion aparece">
+          <div class="texto">
+            <p class="lab">03 · Comida</p>
+            <h3>Menú semanal y lista del súper</h3>
+            <p>Eliges días, comidas, colaciones y quién cocina. Brío arma tu menú con tus gustos y tu meta, usa primero lo que tienes en casa y te da la lista del súper con precios aproximados.</p>
+            <ul><li>129 recetas mexicanas, económicas y con foto</li><li>Porciones ajustadas a tus calorías</li><li>“Como en casa” para los días que no cocinas tú</li><li>Lista del súper por kilos, piezas y paquetes</li></ul>
+          </div>
+          <div class="capturas"><img src="img/menu.webp" alt="Menú semanal" loading="lazy" /><img src="img/super.webp" alt="Lista del súper" loading="lazy" /></div>
+        </div>
+
+        <div class="funcion aparece">
+          <div class="texto">
+            <p class="lab">04 · Entreno</p>
+            <h3>Tu rutina de gym, serie por serie</h3>
+            <p>Contesta tres preguntas y elige tus días. Brío te dice qué te toca hoy, te muestra lo que levantaste la vez pasada y te avisa cuándo subir de peso.</p>
+            <ul><li>9 rutinas para gym completo, gym básico o casa</li><li>173 ejercicios con fotos, técnica y video</li><li>Temporizador de descanso y récords</li><li>Mapa de los músculos que trabajaste</li></ul>
+          </div>
+          <div class="capturas"><img src="img/entreno.webp" alt="Rutina de la semana" loading="lazy" /><img src="img/sesion.webp" alt="Registro de series con descanso" loading="lazy" /></div>
+        </div>
+
+        <div class="funcion aparece">
+          <div class="texto">
+            <p class="lab">05 · Progreso</p>
+            <h3>Tu semana, tus metas y tu cuerpo</h3>
+            <p>Cada semana ves cómo te fue y qué mejorar. Y no solo es el cuerpo: también tus metas de carrera, dinero y aprendizaje.</p>
+            <ul><li>Resumen semanal con logros y consejos</li><li>Metas por pasos, dinero o tiempo a la semana</li><li>Gráfica de peso con proyección a tu meta</li><li>Medidas y porcentaje de grasa aproximado</li></ul>
+          </div>
+          <div class="capturas"><img src="img/resumen.webp" alt="Resumen semanal" loading="lazy" /><img src="img/metas.webp" alt="Metas de crecimiento" loading="lazy" /></div>
+        </div>
+
+        <div class="funcion aparece">
+          <div class="texto">
+            <p class="lab">06 · Tu día y avisos</p>
+            <h3>Organiza tu día. Brío te recuerda lo importante.</h3>
+            <p>Pon tu horario de trabajo o escuela, tu hora de gym y tus comidas. Brío arma tu agenda, aparta tiempo para cocinar y te avisa si algo choca.</p>
+            <ul><li>Pago del gym: antes, el día y si se te pasa</li><li>Entreno, comidas, despensa, agua y hábitos</li><li>Resumen semanal cada domingo</li><li>Llegan aunque la app esté cerrada</li></ul>
+          </div>
+          <div class="capturas"><img src="img/mi-dia.webp" alt="Agenda del día" loading="lazy" /><img src="img/avisos.webp" alt="Configuración de avisos" loading="lazy" /></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="videos" style="padding-top:20px">
+      <div class="envoltura">
+        <div class="encabezado aparece">
+          <p class="lab">Videos</p>
+          <h2 style="margin-top:10px">Mírala en acción.</h2>
+          <p>Un recorrido por todo lo que hace Brío, en el celular y en la computadora.</p>
+        </div>
+        <div class="aparece">
+          <div class="pestanas" role="tablist" aria-label="Elegir video">
+            <button aria-pressed="true" data-video="celular">Celular</button>
+            <button aria-pressed="false" data-video="computadora">Computadora</button>
+          </div>
+          <div class="marco-video celular" id="marco">
+            <video id="video" controls playsinline preload="none" poster="video/brio-celular.jpg" src="video/brio-celular.mp4"></video>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="padding-top:20px">
+      <div class="envoltura">
+        <div class="encabezado aparece">
+          <p class="lab">Hecha para México</p>
+          <h2 style="margin-top:10px">Con lo que de verdad comes y compras.</h2>
+        </div>
+        <div class="rejilla">
+          <div class="tarjeta aparece"><span class="icono" style="background:var(--food)">01</span><h3>Recetas de aquí</h3><p>Tinga, enfrijoladas, caldo de res, tacos de carne asada, licuados… con calorías y costo calculados.</p></div>
+          <div class="tarjeta aparece"><span class="icono" style="background:var(--water)">02</span><h3>Como se vende</h3><p>Carne molida a secas, atún en lata, frijoles de olla, de bolsa o de lata, y tortillas de la tortillería.</p></div>
+          <div class="tarjeta aparece"><span class="icono" style="background:var(--habit)">03</span><h3>Precios reales</h3><p>La lista del súper estima lo que pagas en tiendas tipo 3B, Aurrera o el mercado.</p></div>
+          <div class="tarjeta aparece"><span class="icono" style="background:var(--food)">04</span><h3>Tu despensa</h3><p>Anota lo que tienes; el menú lo usa primero y te avisa cuando algo se está acabando.</p></div>
+          <div class="tarjeta aparece"><span class="icono" style="background:var(--water)">05</span><h3>¿Tienes nutriólogo?</h3><p>Captura su menú, tus equivalentes o tus metas, y Brío lo sigue en lugar de inventarte uno.</p></div>
+          <div class="tarjeta aparece"><span class="icono" style="background:var(--habit)">06</span><h3>Sin refri, sin problema</h3><p>Filtra recetas que no necesitan refrigerador y elige con qué cocinas: estufa, air fryer, microondas…</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section style="padding-top:20px">
+      <div class="envoltura">
+        <div class="encabezado aparece">
+          <p class="lab">Modo claro y oscuro</p>
+          <h2 style="margin-top:10px">Como más te guste.</h2>
+          <p>Cámbialo con un toque o deja que siga a tu teléfono. Prueba aquí arriba con el botón ◐.</p>
+        </div>
+        <div class="modos aparece">
+          <img src="img/laptop-claro.webp" alt="Brío en la computadora, modo claro" loading="lazy" />
+          <img src="img/laptop-oscuro.webp" alt="Brío en la computadora, modo oscuro" loading="lazy" />
+        </div>
+      </div>
+    </section>
+
+    <section id="instalar" style="padding-top:20px">
+      <div class="envoltura">
+        <div class="encabezado aparece">
+          <p class="lab">Instalar</p>
+          <h2 style="margin-top:10px">Tenla como una app más.</h2>
+          <p>Brío funciona desde el navegador y se instala en segundos, sin tienda de apps.</p>
+        </div>
+        <div class="pasos">
+          <div class="tarjeta aparece"><h3>iPhone</h3><ol><li>Abre <b>mi-brio.vercel.app</b> en <b>Safari</b>.</li><li>Toca <b>Compartir</b> (el cuadro con la flecha).</li><li>Elige <b>Agregar a pantalla de inicio</b>.</li><li>Ábrela desde el ícono y activa tus avisos.</li></ol></div>
+          <div class="tarjeta aparece"><h3>Android</h3><ol><li>Abre <b>mi-brio.vercel.app</b> en <b>Chrome</b>.</li><li>Toca los <b>tres puntos</b> del menú.</li><li>Elige <b>Instalar app</b> o <b>Agregar a pantalla principal</b>.</li><li>Listo: ábrela como cualquier app.</li></ol></div>
+          <div class="tarjeta aparece"><h3>Computadora</h3><ol><li>Abre <b>mi-brio.vercel.app</b> en Chrome o Edge.</li><li>Toca el ícono de <b>instalar</b> en la barra de dirección.</li><li>O úsala directo en el navegador.</li><li>Con tu cuenta, ves lo mismo en todos lados.</li></ol></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="preguntas" style="padding-top:20px">
+      <div class="envoltura">
+        <div class="encabezado aparece">
+          <p class="lab">Preguntas</p>
+          <h2 style="margin-top:10px">Lo que suelen preguntar.</h2>
+        </div>
+        <div class="aparece">
+          <details><summary>¿Cuesta algo?</summary><p>No. Brío es gratis y no tiene anuncios.</p></details>
+          <details><summary>¿Necesito crear una cuenta?</summary><p>No es obligatorio: puedes usarla y tus datos se guardan en tu dispositivo. Con cuenta (Google o correo) se respaldan en la nube, los ves en tu celular y tu computadora, y recibes avisos aunque la app esté cerrada.</p></details>
+          <details><summary>¿Funciona sin internet?</summary><p>Sí. Puedes registrar comidas, entrenos y hábitos sin conexión; con cuenta, se sincroniza cuando vuelve el internet.</p></details>
+          <details><summary>¿Qué pasa con mis datos?</summary><p>Son tuyos. Nadie más puede ver tu información y puedes borrar tu cuenta y todos tus datos desde la app cuando quieras. Lee la <a href="/privacidad.html">política de privacidad</a>.</p></details>
+          <details><summary>¿Sirve si ya tengo nutriólogo?</summary><p>Sí. Puedes capturar el menú que te dio, tus equivalentes o sus metas de calorías y proteína, y Brío los usa en lugar de los suyos.</p></details>
+          <details><summary>¿Usa inteligencia artificial?</summary><p>Todavía no. Las recetas, el menú y las rutinas funcionan con reglas, sin IA y sin costo. Más adelante habrá funciones con IA como registrar comidas escribiendo normal.</p></details>
+          <details><summary>¿Habrá app en la App Store o Google Play?</summary><p>Por ahora se instala desde el navegador (ver arriba) y funciona igual, con avisos incluidos. Las tiendas vendrán después.</p></details>
+          <details><summary>¿Cómo dejo una sugerencia?</summary><p>En la app, ve a Perfil → “Ayúdame a mejorar Brío”. Ideas, errores o lo que te guste: todo se lee.</p></details>
+        </div>
+      </div>
+    </section>
+
+    <section style="padding-top:20px">
+      <div class="envoltura">
+        <div class="cta aparece">
+          <span class="logo">br<i>í</i>o</span>
+          <p>Ponle brío a tu vida.</p>
+          <a class="boton primario" href="/">Empezar gratis</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="envoltura">
+      <span>Brío · Hecho con brío en México</span>
+      <span><a href="/privacidad.html">Privacidad</a> · <a href="/terminos.html">Términos</a> · Fotos: Wikimedia Commons, free-exercise-db y TheMealDB · Datos de productos: Open Food Facts</span>
+    </div>
+  </footer>
+
+  <script>
+    // Modo claro / oscuro (comparte la preferencia con la app)
+    document.getElementById("tema").addEventListener("click", function () {
+      var oscuro = document.documentElement.dataset.theme !== "dark";
+      document.documentElement.dataset.theme = oscuro ? "dark" : "light";
+      try { localStorage.setItem("brio:tema", oscuro ? "oscuro" : "claro"); } catch (e) {}
+    });
+    // Videos
+    var videos = { celular: { src: "video/brio-celular.mp4", poster: "video/brio-celular.jpg" }, computadora: { src: "video/brio-computadora.mp4", poster: "video/brio-computadora.jpg" } };
+    document.querySelectorAll(".pestanas button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        document.querySelectorAll(".pestanas button").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+        var v = videos[b.dataset.video], el = document.getElementById("video");
+        el.pause(); el.poster = v.poster; el.src = v.src;
+        document.getElementById("marco").className = "marco-video" + (b.dataset.video === "celular" ? " celular" : "");
+      });
+    });
+    // Aparecer al bajar
+    var io = "IntersectionObserver" in window ? new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("visto"); io.unobserve(e.target); } }); }, { threshold: 0.12 }) : null;
+    document.querySelectorAll(".aparece").forEach(function (el) { io ? io.observe(el) : el.classList.add("visto"); });
+    // Números en vivo (sin datos personales)
+    // Hasta que haya una comunidad grande se muestran datos fijos; después, los números en vivo.
+    var ETIQUETAS = { usuarios: "Personas usándola", comidas_registradas: "Comidas registradas", entrenos: "Entrenos registrados" };
+    fetch("https://vdvmeloqgguujnrjrdxi.supabase.co/functions/v1/estadisticas").then(function (r) { return r.json(); }).then(function (d) {
+      if (!(Number(d.usuarios) >= 50)) return;
+      document.querySelectorAll("#numeros [data-k]").forEach(function (el) {
+        el.nextElementSibling.textContent = ETIQUETAS[el.dataset.k];
+        var fin = Number(d[el.dataset.k] || 0), t0 = performance.now();
+        (function paso(t) { var k = Math.min(1, (t - t0) / 1200); el.textContent = Math.round(fin * (1 - Math.pow(1 - k, 3))).toLocaleString("es-MX"); if (k < 1) requestAnimationFrame(paso); })(t0);
+      });
+    }).catch(function () {});
+  </script>
+</body>
+</html>

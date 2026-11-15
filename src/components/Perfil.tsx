@@ -175,7 +175,7 @@ export default function Perfil({ perfil, metas, onEditar, onVerIntro, onVerTutor
         )}
       </Tarjeta>
       <p className="text-center text-xs text-muted">
-        Brío v0.4 · Ponle brío a tu vida. · <a href="/privacidad.html" className="underline">Privacidad</a> · <a href="/terminos.html" className="underline">Términos</a> · <button onClick={() => setCreditos(true)} className="underline">Créditos de fotos</button>
+        Brío v0.4 · Ponle brío a tu vida. · <a href="/conoce/" className="underline">Conoce Brío</a> · <a href="/privacidad.html" className="underline">Privacidad</a> · <a href="/terminos.html" className="underline">Términos</a> · <button onClick={() => setCreditos(true)} className="underline">Créditos de fotos</button>
       </p>
       <Hoja abierta={creditos} onClose={() => setCreditos(false)} titulo="Créditos de fotos">
         <p className="text-sm text-muted">Las fotos de platillos e ingredientes vienen de Wikimedia Commons con licencias libres, y algunas de TheMealDB. Datos de productos de Open Food Facts (ODbL). Gracias a sus autores.</p>
