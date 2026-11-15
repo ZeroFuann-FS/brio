@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { ejercicioPorId, type Ejercicio } from "../../data/ejercicios";
-import { uidE, type Rutina } from "../../lib/entreno";
+import { DIAS_SEMANA, SEMANA_LD, uidE, type Lugar, type Rutina } from "../../lib/entreno";
+import { SelectorSemana } from "./ElegirRutina";
 import { Hoja, btnPrimario, btnSecundario, inputCls } from "../ui";
 import Biblioteca, { DetalleEjercicio } from "./Biblioteca";
 import { FotoEjercicio } from "./MapaMuscular";
 
 const DESCANSOS = [45, 60, 90, 120, 150, 180];
 
-export default function EditorRutina({ inicial, onGuardar, onBorrar }: { inicial: Rutina; onGuardar: (r: Rutina) => void; onBorrar?: () => void }) {
+export default function EditorRutina({ inicial, onGuardar, onBorrar, lugar }: { inicial: Rutina; onGuardar: (r: Rutina) => void; onBorrar?: () => void; lugar?: Lugar }) {
   const [r, setR] = useState<Rutina>(inicial);
   const [di, setDi] = useState(0);
   const [agregar, setAgregar] = useState(false);
@@ -23,6 +24,9 @@ export default function EditorRutina({ inicial, onGuardar, onBorrar }: { inicial
     return { ...d, ejercicios: l };
   });
   const nuevoDia = () => { setR((x) => ({ ...x, dias: [...x.dias, { id: uidE(), nombre: `Día ${String.fromCharCode(65 + x.dias.length)}`, ejercicios: [] }] })); setDi(r.dias.length); };
+  /** Asigna días de la semana a este día de la rutina (y se los quita a los demás). */
+  const setSemana = (v: number[]) => setR((x) => ({ ...x, dias: x.dias.map((d, i) => (i === di ? { ...d, semana: v } : { ...d, semana: (d.semana ?? []).filter((w) => !v.includes(w)) })) }));
+  const etiqueta = (d: Rutina["dias"][number]) => (d.semana?.length ? SEMANA_LD.filter((w) => d.semana!.includes(w)).map((w) => DIAS_SEMANA[w].slice(0, 3)).join(", ") : "Sin día");
   const borrarDia = () => { if (r.dias.length <= 1) return; setR((x) => ({ ...x, dias: x.dias.filter((_, i) => i !== di) })); setDi(0); };
 
   return (
@@ -36,7 +40,8 @@ export default function EditorRutina({ inicial, onGuardar, onBorrar }: { inicial
       <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
         {r.dias.map((d, i) => (
           <button key={d.id} onClick={() => setDi(i)} aria-pressed={i === di}
-            className={`shrink-0 rounded-full border px-3.5 py-1.5 text-sm ${i === di ? "border-lime bg-lime text-on-lime" : "border-line bg-surface text-muted"}`}>{d.nombre || `Día ${i + 1}`}</button>
+            className={`shrink-0 rounded-[12px] border px-3 py-1.5 text-left text-sm ${i === di ? "border-lime bg-lime text-on-lime" : "border-line bg-surface text-muted"}`}>
+            <span className="block font-medium">{d.nombre || `Día ${i + 1}`}</span><span className="lab block !text-[10px] !text-current opacity-80">{etiqueta(d)}</span></button>
         ))}
         <button onClick={nuevoDia} className="shrink-0 rounded-full border border-dashed border-line px-3.5 py-1.5 text-sm text-muted">+ Día</button>
       </div>
@@ -47,7 +52,9 @@ export default function EditorRutina({ inicial, onGuardar, onBorrar }: { inicial
             <input className={`${inputCls} py-2`} value={dia.nombre} maxLength={24} aria-label="Nombre del día" onChange={(e) => editarDia((d) => ({ ...d, nombre: e.target.value }))} />
             {r.dias.length > 1 && <button onClick={borrarDia} className="shrink-0 rounded-[12px] border border-line px-3 text-sm text-ember">Borrar día</button>}
           </div>
-          <ul className="mt-2">
+          <p className="lab mb-1.5 mt-3">¿Qué días de la semana?</p>
+          <SelectorSemana valor={dia.semana ?? []} onCambio={setSemana} />
+          <ul className="mt-3">
             {dia.ejercicios.map((e, ei) => {
               const info = ejercicioPorId(e.ej);
               if (!info) return null;
@@ -87,7 +94,7 @@ export default function EditorRutina({ inicial, onGuardar, onBorrar }: { inicial
       </div>
 
       <Hoja abierta={agregar} onClose={() => setAgregar(false)} titulo="Agregar ejercicio" ancha>
-        <Biblioteca onVer={setVer} onElegir={(e) => { editarDia((d) => ({ ...d, ejercicios: [...d.ejercicios, { ej: e.id, series: e.cardio ? 1 : 3, reps: e.cardio ? "20 min" : "10-12", descanso: e.cardio ? 60 : 90 }] })); setAgregar(false); }} />
+        <Biblioteca onVer={setVer} lugar={lugar} yaAgregados={dia?.ejercicios.map((x) => x.ej)} onElegir={(l) => { editarDia((d) => ({ ...d, ejercicios: [...d.ejercicios, ...l.map((e) => ({ ej: e.id, series: e.cardio ? 1 : 3, reps: e.cardio ? "20 min" : "10-12", descanso: e.cardio ? 60 : 90 }))] })); setAgregar(false); }} />
       </Hoja>
       <Hoja abierta={!!ver} onClose={() => setVer(null)} titulo="Ejercicio" ancha>
         {ver && <DetalleEjercicio e={ver} />}

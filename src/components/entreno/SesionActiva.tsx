@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ejercicioPorId, type Ejercicio } from "../../data/ejercicios";
-import { duracionMin, serieInicial, seriesHechas, ultimaVez, volumen, type Sesion } from "../../lib/entreno";
+import { duracionMin, serieInicial, seriesHechas, tocaSubir, ultimaVez, volumen, type Sesion } from "../../lib/entreno";
 import { useBrio } from "../../lib/store";
 import { Hoja, Tarjeta, btnPrimario, btnSecundario } from "../ui";
 import Biblioteca, { DetalleEjercicio } from "./Biblioteca";
@@ -60,7 +60,8 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
   const sumarSerie = (ei: number) => editarSesion((s) => ({ ...s, ejercicios: s.ejercicios.map((e, i) => i !== ei ? e : { ...e, series: [...e.series, { ...(e.series[e.series.length - 1] ?? { kg: 0, reps: 10 }), hecha: false }] }) }));
   const quitarSerie = (ei: number) => editarSesion((s) => ({ ...s, ejercicios: s.ejercicios.map((e, i) => i !== ei || e.series.length <= 1 ? e : { ...e, series: e.series.slice(0, -1) }) }));
   const quitarEjercicio = (ei: number) => editarSesion((s) => ({ ...s, ejercicios: s.ejercicios.filter((_, i) => i !== ei) }));
-  const agregarEj = (e: Ejercicio) => { editarSesion((s) => ({ ...s, ejercicios: [...s.ejercicios, serieInicial(sesiones, e.id, e.cardio ? 1 : 3, e.cardio ? "20 min" : "10", e.cardio ? 0 : 90)] })); setAgregar(false); };
+  const agregarEj = (l: Ejercicio[]) => { editarSesion((s) => ({ ...s, ejercicios: [...s.ejercicios, ...l.map((e) => serieInicial(sesiones, e.id, e.cardio ? 1 : 3, e.cardio ? "20 min" : "10", e.cardio ? 0 : 90))] })); setAgregar(false); };
+  const lugar = useBrio((s) => s.perfil?.entreno?.lugar);
 
   const hechas = seriesHechas(sesion);
   const transcurrido = (Date.now() - sesion.inicio) / 1000;
@@ -81,6 +82,7 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
           const info = ejercicioPorId(e.ej);
           if (!info) return null;
           const prev = ultimaVez(sesiones, e.ej);
+          const subir = tocaSubir(sesiones, e.ej, e.reps);
           return (
             <Tarjeta key={`${e.ej}-${ei}`} className="!p-4">
               <div className="flex items-center gap-3">
@@ -91,6 +93,11 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
                 </div>
                 <button onClick={() => quitarEjercicio(ei)} aria-label={`Quitar ${info.n}`} className="text-lg text-muted hover:text-ember">×</button>
               </div>
+              {subir && !e.series.some((x) => x.hecha) && (
+                <button onClick={() => e.series.forEach((_, si) => editarSerie(ei, si, { kg: subir }))} className="mt-2 w-full rounded-[10px] bg-lime/20 px-3 py-1.5 text-left text-xs">
+                  ↑ La vez pasada llegaste al tope de reps en todas. <b>Prueba con {subir} kg</b> (toca para ponerlo).
+                </button>
+              )}
               <div className={`mt-3 grid items-center gap-x-2 gap-y-1.5 text-center ${info.cardio ? "grid-cols-[28px_1fr_1fr_40px]" : "grid-cols-[28px_1fr_1fr_1fr_40px]"}`}>
                 <span className="lab">#</span><span className="lab">Anterior</span>
                 {info.cardio ? <span className="lab">Minutos</span> : <><span className="lab">Kg</span><span className="lab">Reps</span></>}
@@ -145,7 +152,7 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
       </AnimatePresence>
 
       <Hoja abierta={agregar} onClose={() => setAgregar(false)} titulo="Agregar ejercicio" ancha>
-        <Biblioteca onElegir={agregarEj} onVer={setVer} />
+        <Biblioteca onElegir={agregarEj} onVer={setVer} lugar={lugar} yaAgregados={sesion.ejercicios.map((x) => x.ej)} />
       </Hoja>
       <Hoja abierta={!!ver} onClose={() => setVer(null)} titulo="Ejercicio" ancha>
         {ver && <DetalleEjercicio e={ver} />}

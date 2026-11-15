@@ -3,7 +3,8 @@ import { ejercicioPorId, type Musculo } from "../data/ejercicios";
 import { hoyISO, sumarDias } from "./calc";
 
 export interface EjRutina { ej: string; series: number; reps: string; descanso: number }
-export interface DiaRutina { id: string; nombre: string; ejercicios: EjRutina[] }
+/** semana: días de la semana en que toca (0 = domingo … 6 = sábado). */
+export interface DiaRutina { id: string; nombre: string; ejercicios: EjRutina[]; semana?: number[] }
 export interface Rutina { id: string; nombre: string; dias: DiaRutina[]; plantilla?: string }
 export interface Serie { kg: number; reps: number; min?: number; hecha: boolean }
 export interface EjSesion { ej: string; reps: string; descanso: number; series: Serie[] }
@@ -11,7 +12,8 @@ export interface Sesion {
   id: string; fecha: string; inicio: number; fin?: number; nombre: string;
   rutinaId?: string; diaId?: string; ejercicios: EjSesion[]; records?: string[];
 }
-export interface PrefsEntreno { rutinas: Rutina[]; activa?: string }
+export type Lugar = "gym" | "basico" | "casa";
+export interface PrefsEntreno { rutinas: Rutina[]; activa?: string; lugar?: Lugar }
 
 export const uidE = () => Math.random().toString(36).slice(2, 10);
 
@@ -102,3 +104,73 @@ export function entrenosSemana(sesiones: Sesion[]) {
   const desde = sumarDias(hoyISO(), -6);
   return sesiones.filter((s) => s.fecha >= desde).length;
 }
+
+export const DIAS_SEMANA = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+export const DIAS_CORTOS = ["D", "L", "M", "M", "J", "V", "S"];
+/** Orden lunes → domingo. */
+export const SEMANA_LD = [1, 2, 3, 4, 5, 6, 0];
+
+/** Días de la semana sugeridos según cuántos días entrena. */
+export function semanaSugerida(n: number): number[] {
+  return ({ 1: [3], 2: [1, 4], 3: [1, 3, 5], 4: [1, 2, 4, 5], 5: [1, 2, 3, 4, 5], 6: [1, 2, 3, 4, 5, 6], 7: [0, 1, 2, 3, 4, 5, 6] } as Record<number, number[]>)[Math.min(7, Math.max(1, n))];
+}
+
+/** Reparte los días de la rutina en los días de la semana elegidos (en ciclo). */
+export function asignarSemana(r: Rutina, dias: number[]): Rutina {
+  const orden = SEMANA_LD.filter((d) => dias.includes(d));
+  const asign: Record<string, number[]> = {};
+  orden.forEach((wd, i) => { const d = r.dias[i % r.dias.length]; (asign[d.id] ??= []).push(wd); });
+  return { ...r, dias: r.dias.map((d) => ({ ...d, semana: asign[d.id] ?? [] })) };
+}
+
+export const tieneSemana = (r: Rutina) => r.dias.some((d) => d.semana?.length);
+export const diaDeSemana = (r: Rutina, wd: number) => r.dias.find((d) => d.semana?.includes(wd));
+
+/** Lunes de la semana de una fecha ISO. */
+export function lunesDe(fecha: string): string {
+  const d = new Date(`${fecha}T12:00:00`);
+  const wd = d.getDay();
+  d.setDate(d.getDate() - ((wd + 6) % 7));
+  return d.toISOString().slice(0, 10);
+}
+
+/** Qué toca hoy según la rutina con días de la semana. */
+export function planHoy(r: Rutina, sesiones: Sesion[], hoy: string) {
+  const wd = new Date(`${hoy}T12:00:00`).getDay();
+  const hechoHoy = sesiones.some((s) => s.fecha === hoy);
+  const deHoy = diaDeSemana(r, wd);
+  let proximo: { wd: number; dia: DiaRutina } | undefined;
+  for (let k = 1; k <= 7; k++) {
+    const w = (wd + k) % 7, d = diaDeSemana(r, w);
+    if (d) { proximo = { wd: w, dia: d }; break; }
+  }
+  return { wd, deHoy, hechoHoy, proximo };
+}
+
+/** Número superior del rango de reps ("8-12" → 12). */
+export const repsTope = (reps: string) => Number((reps.match(/\d+/g) ?? []).slice(-1)[0]) || 0;
+
+/** ¿Le toca subir peso? Si la última vez llegó al tope de reps en todas las series. */
+export function tocaSubir(sesiones: Sesion[], ej: string, reps: string): number | null {
+  if (/s|min/i.test(reps)) return null;
+  const tope = repsTope(reps);
+  const prev = ultimaVez(sesiones, ej);
+  if (!tope || !prev?.length || prev.length < 2 || !prev.every((x) => x.reps >= tope && x.kg > 0)) return null;
+  const kg = Math.max(...prev.map((x) => x.kg));
+  return Math.round((kg + (kg >= 40 ? 2.5 : 1)) * 2) / 2;
+}
+
+/** Historial de 1RM estimado por fecha (para la gráfica de progreso). */
+export function progreso(sesiones: Sesion[], ej: string): { fecha: string; v: number }[] {
+  const out: { fecha: string; v: number }[] = [];
+  for (const s of sesiones) {
+    const e = s.ejercicios.find((x) => x.ej === ej);
+    if (!e) continue;
+    const v = Math.max(0, ...e.series.filter((x) => x.hecha).map((x) => e1rm(x.kg, x.reps)));
+    if (v > 0) out.push({ fecha: s.fecha, v: Math.round(v * 10) / 10 });
+  }
+  return out;
+}
+
+/** Minutos aproximados de un día de rutina. */
+export const minutosDia = (d: Pick<DiaRutina, "ejercicios">) => Math.round(d.ejercicios.reduce((a, e) => a + e.series * (0.75 + e.descanso / 60), 0) + 5);

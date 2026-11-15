@@ -1,10 +1,14 @@
 import { useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { ejercicioPorId, type Ejercicio } from "../data/ejercicios";
-import { PLANTILLAS, rutinaDePlantilla } from "../data/plantillas";
-import { duracionMin, entrenosSemana, mejorMarca, nuevaSesion, seriesHechas, seriesPorMusculo, siguienteDia, uidE, volumen, type Rutina, type Sesion } from "../lib/entreno";
+import { hoyISO, sumarDias } from "../lib/calc";
+import {
+  DIAS_CORTOS, DIAS_SEMANA, SEMANA_LD, duracionMin, lunesDe, mejorMarca, minutosDia, nuevaSesion, planHoy,
+  seriesHechas, seriesPorMusculo, siguienteDia, tieneSemana, volumen, type Lugar, type Rutina, type Sesion,
+} from "../lib/entreno";
 import { useBrio } from "../lib/store";
 import EditorRutina from "./entreno/EditorRutina";
+import ElegirRutina from "./entreno/ElegirRutina";
 import Biblioteca, { DetalleEjercicio } from "./entreno/Biblioteca";
 import MapaMuscular, { FotoEjercicio } from "./entreno/MapaMuscular";
 import SesionActiva from "./entreno/SesionActiva";
@@ -12,6 +16,12 @@ import { Hoja, Tarjeta, Toast, btnPrimario, btnSecundario, ease, useToast } from
 
 const SIN_RUTINAS: Rutina[] = [];
 const fechaCorta = (f: string) => new Date(`${f}T12:00:00`).toLocaleDateString("es-MX", { weekday: "short", day: "numeric", month: "short" });
+/** Etiqueta corta para la semana: "Cuerpo completo A" → "A", "Torso A" → "TA", "Empuje" → "Empu". */
+const iniciales = (n: string) => {
+  const w = n.trim().split(/\s+/), ult = w[w.length - 1];
+  if (w.length > 1 && ult.length === 1) return (w.length > 2 || /casa/i.test(n) ? "" : w[0][0].toUpperCase()) + ult.toUpperCase();
+  return w[0].slice(0, 4);
+};
 
 function Resumen({ s }: { s: Sesion }) {
   return (
@@ -33,15 +43,18 @@ function Resumen({ s }: { s: Sesion }) {
           </ul>
         </div>
       )}
-      <ul className="mt-3">
-        {s.ejercicios.map((e, i) => (
-          <li key={i} className="flex items-center gap-3 border-b border-line py-2 last:border-b-0">
-            <FotoEjercicio id={e.ej} size={40} />
-            <span className="min-w-0 flex-1 truncate text-sm">{ejercicioPorId(e.ej)?.n}</span>
-            <span className="num text-sm text-muted">{e.series.map((x) => (x.min ? `${x.min}′` : `${x.kg}×${x.reps}`)).join(" · ")}</span>
-          </li>
-        ))}
-      </ul>
+      <div className="mt-3 grid grid-cols-[1fr_96px] items-center gap-3">
+        <ul>
+          {s.ejercicios.map((e, i) => (
+            <li key={i} className="flex items-center gap-3 border-b border-line py-2 last:border-b-0">
+              <FotoEjercicio id={e.ej} size={40} />
+              <span className="min-w-0 flex-1"><span className="block truncate text-sm">{ejercicioPorId(e.ej)?.n}</span>
+                <span className="num text-xs text-muted">{e.series.map((x) => (x.min ? `${x.min}′` : `${x.kg}×${x.reps}`)).join(" · ")}</span></span>
+            </li>
+          ))}
+        </ul>
+        <MapaMuscular zonas={seriesPorMusculo([s], 9999)} mini />
+      </div>
     </div>
   );
 }
@@ -55,26 +68,34 @@ export default function Entreno() {
   const rutina = rutinas.find((r) => r.id === perfil?.entreno?.activa) ?? rutinas[0];
   const [toast, setToast] = useToast();
   const [editando, setEditando] = useState<Rutina | null>(null);
-  const [plantillas, setPlantillas] = useState(false);
+  const [asistente, setAsistente] = useState(false);
+  const [lugarNuevo, setLugarNuevo] = useState<Lugar | undefined>(perfil?.entreno?.lugar);
   const [biblioteca, setBiblioteca] = useState(false);
   const [ver, setVer] = useState<Ejercicio | null>(null);
   const [resumen, setResumen] = useState<Sesion | null>(null);
   const [diaElegido, setDiaElegido] = useState<string | null>(null);
 
   const zonas = useMemo(() => seriesPorMusculo(sesiones), [sesiones]);
-  const siguiente = rutina ? siguienteDia(rutina, sesiones) : undefined;
-  const dia = rutina?.dias.find((d) => d.id === diaElegido) ?? siguiente;
-  const semana = entrenosSemana(sesiones);
+  const hoy = hoyISO();
+  const conSemana = !!rutina && tieneSemana(rutina);
+  const ph = rutina && conSemana ? planHoy(rutina, sesiones, hoy) : null;
+  const sugerido = ph ? (ph.deHoy && !ph.hechoHoy ? ph.deHoy : ph.proximo?.dia) : rutina ? siguienteDia(rutina, sesiones) : undefined;
+  const dia = rutina?.dias.find((d) => d.id === diaElegido) ?? sugerido;
+  const fechasSemana = SEMANA_LD.map((wd, i) => ({ wd, fecha: sumarDias(lunesDe(hoy), i) }));
+  const hechasSemana = fechasSemana.filter((f) => sesiones.some((s) => s.fecha === f.fecha)).length;
+  const metaSemana = rutina && conSemana ? rutina.dias.reduce((a, d) => a + (d.semana?.length ?? 0), 0) : perfil?.diasEntreno || 3;
+  const lugar = perfil?.entreno?.lugar;
 
+  const elegirListo = (r: Rutina, l: Lugar) => { setLugarNuevo(l); setAsistente(false); setEditando(r); };
   const guardarRutina = (r: Rutina) => {
     const existe = rutinas.some((x) => x.id === r.id);
-    setEntreno({ rutinas: existe ? rutinas.map((x) => (x.id === r.id ? r : x)) : [...rutinas, r], activa: existe ? perfil?.entreno?.activa ?? r.id : r.id });
-    setEditando(null);
+    setEntreno({ rutinas: existe ? rutinas.map((x) => (x.id === r.id ? r : x)) : [...rutinas, r], activa: existe ? perfil?.entreno?.activa ?? r.id : r.id, lugar: lugarNuevo ?? lugar });
+    setEditando(null); setDiaElegido(null);
     setToast("Rutina guardada");
   };
   const borrarRutina = (id: string) => {
     const resto = rutinas.filter((x) => x.id !== id);
-    setEntreno({ rutinas: resto, activa: resto[0]?.id });
+    setEntreno({ ...perfil?.entreno, rutinas: resto, activa: resto[0]?.id });
     setEditando(null);
   };
   const empezar = (r?: Rutina, d?: Rutina["dias"][number]) => iniciarSesion(nuevaSesion(sesiones, r, d));
@@ -83,6 +104,7 @@ export default function Entreno() {
 
   const recientes = [...sesiones].reverse().slice(0, 8);
   const records = [...new Set([...sesiones].reverse().flatMap((s) => s.records ?? []))].slice(0, 6);
+  const titulo = !dia ? "" : diaElegido ? dia.nombre : ph ? (ph.hechoHoy ? "Hoy ya entrenaste" : ph.deHoy ? `Hoy: ${ph.deHoy.nombre}` : "Hoy descansas") : `Te toca: ${dia.nombre}`;
 
   return (
     <div>
@@ -95,17 +117,34 @@ export default function Entreno() {
           {rutina && dia ? (
             <>
               <div className="flex items-baseline justify-between gap-2">
-                <p className="lab truncate">{rutina.nombre}</p>
+                <p className="lab truncate">{rutina.nombre} · {hechasSemana} de {metaSemana} esta semana</p>
                 <button onClick={() => setEditando(rutina)} className="lab shrink-0 !text-lime-ink hover:underline">Editar</button>
               </div>
-              <h2 className="mt-1 font-serif text-2xl font-medium">{dia.id === siguiente?.id ? "Te toca: " : ""}{dia.nombre}</h2>
-              <div className="-mx-1 mt-3 flex gap-1.5 overflow-x-auto px-1 pb-1">
-                {rutina.dias.map((d) => (
-                  <button key={d.id} onClick={() => setDiaElegido(d.id)} aria-pressed={d.id === dia.id}
-                    className={`shrink-0 rounded-full border px-3.5 py-1.5 text-sm ${d.id === dia.id ? "border-ink bg-ink text-bg dark:border-lime dark:bg-lime dark:text-on-lime" : "border-line bg-surface text-muted"}`}>{d.nombre}</button>
-                ))}
-              </div>
-              <ul className="mt-2">
+              {conSemana && (
+                <div className="mt-3 grid grid-cols-7 gap-1.5">
+                  {fechasSemana.map(({ wd, fecha }) => {
+                    const d = rutina.dias.find((x) => x.semana?.includes(wd));
+                    const hecho = sesiones.some((x) => x.fecha === fecha);
+                    const esHoy = fecha === hoy;
+                    const sel = !!d && d.id === dia.id && (diaElegido ? true : esHoy || wd === ph?.proximo?.wd);
+                    return (
+                      <button key={wd} onClick={() => d && setDiaElegido(d.id)} disabled={!d && !hecho} aria-label={`${DIAS_SEMANA[wd]}: ${d ? d.nombre : "descanso"}${hecho ? ", entrenaste" : ""}`}
+                        className={`relative flex h-[58px] flex-col items-center justify-center gap-1 rounded-[12px] border transition ${hecho ? "border-lime bg-lime text-on-lime" : sel ? "border-ink bg-ink text-bg dark:border-lime dark:bg-transparent dark:text-ink" : d ? "border-line bg-surface" : "border-dashed border-line/70 text-muted/70"}`}>
+                        <span className="num text-[15px] uppercase leading-none">{DIAS_CORTOS[wd]}</span>
+                        <span className="text-[10px] font-semibold leading-none">{hecho ? "✓" : d ? iniciales(d.nombre) : "desc."}</span>
+                        {esHoy && <i className="absolute -bottom-1 h-1.5 w-1.5 rounded-full bg-lime ring-2 ring-[var(--color-t-habit)]" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              <h2 className="mt-4 font-serif text-2xl font-medium">{titulo}</h2>
+              {!diaElegido && ph && (ph.hechoHoy || !ph.deHoy) && ph.proximo && (
+                <p className="text-sm text-muted">Próximo: {DIAS_SEMANA[ph.proximo.wd].toLowerCase()} · {ph.proximo.dia.nombre}. {ph.hechoHoy ? "Descansar también es parte del progreso." : "Si quieres, puedes adelantarlo."}</p>
+              )}
+              {(diaElegido || !ph || (ph.deHoy && !ph.hechoHoy)) ? null : <p className="lab mt-3">Así se ve {DIAS_SEMANA[ph.proximo?.wd ?? 0].toLowerCase()}</p>}
+              <p className="lab mt-1">{dia.ejercicios.length} ejercicios · ~{minutosDia(dia)} min</p>
+              <ul className="mt-1">
                 {dia.ejercicios.map((e, i) => {
                   const info = ejercicioPorId(e.ej);
                   if (!info) return null;
@@ -121,29 +160,19 @@ export default function Entreno() {
                   );
                 })}
               </ul>
-              <button onClick={() => empezar(rutina, dia)} className={`${btnPrimario} mt-4 w-full`}>Empezar entreno</button>
-              <button onClick={() => empezar()} className="mt-2 w-full text-center text-sm text-muted hover:text-ink">o entreno libre</button>
+              <button onClick={() => empezar(rutina, dia)} className={`${btnPrimario} mt-4 w-full`}>{ph && !diaElegido && (!ph.deHoy || ph.hechoHoy) ? "Entrenar de todos modos" : "Empezar entreno"}</button>
+              <div className="mt-2 flex justify-center gap-5 text-sm text-muted">
+                {diaElegido && <button onClick={() => setDiaElegido(null)} className="hover:text-ink">Volver a hoy</button>}
+                <button onClick={() => empezar()} className="hover:text-ink">Entreno libre</button>
+              </div>
             </>
           ) : (
             <>
               <p className="lab">Empieza aquí</p>
-              <h2 className="mt-1 font-serif text-2xl font-medium">Elige una rutina</h2>
-              <p className="mt-1 text-sm text-muted">Usa una plantilla (la puedes cambiar a tu gusto) o arma la tuya desde cero.</p>
-              <ul className="mt-3 space-y-2">
-                {PLANTILLAS.map((p) => (
-                  <li key={p.id}>
-                    <button onClick={() => setEditando(rutinaDePlantilla(p, uidE))} className="w-full rounded-[16px] border border-line bg-surface p-3.5 text-left hover:border-line-strong">
-                      <span className="flex items-baseline justify-between gap-2"><b className="font-medium">{p.nombre}</b><span className="lab shrink-0">{p.nivel}</span></span>
-                      <span className="mt-0.5 block text-sm text-muted">{p.desc}</span>
-                      <span className="lab mt-1.5 block !tracking-[0.05em]">{p.lugar} · {p.dias.map((d) => d.nombre).join(" / ")}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-3 flex gap-2">
-                <button onClick={() => setEditando({ id: uidE(), nombre: "Mi rutina", dias: [{ id: uidE(), nombre: "Día A", ejercicios: [] }] })} className={`${btnSecundario} flex-1`}>Crear la mía</button>
-                <button onClick={() => empezar()} className={`${btnSecundario} flex-1`}>Entreno libre</button>
-              </div>
+              <h2 className="mt-1 font-serif text-2xl font-medium">Encuentra tu rutina</h2>
+              <p className="mb-4 mt-1 text-sm text-muted">Contesta 3 preguntas y elige qué días entrenas. Después la puedes cambiar a tu gusto.</p>
+              <ElegirRutina diasIniciales={perfil?.diasEntreno ?? 3} lugarInicial={lugar} onListo={elegirListo} />
+              <button onClick={() => empezar()} className="mt-3 w-full text-center text-sm text-muted hover:text-ink">o haz un entreno libre</button>
             </>
           )}
         </Tarjeta>
@@ -151,8 +180,8 @@ export default function Entreno() {
         {/* Semana y mapa muscular */}
         <Tarjeta delay={0.05} className="min-w-0 md:col-span-5">
           <div className="flex items-baseline justify-between">
-            <h2 className="font-serif text-xl font-medium">Tu semana</h2>
-            <span className="lab">{semana} {semana === 1 ? "entreno" : "entrenos"} · 7 días</span>
+            <h2 className="font-serif text-xl font-medium">Músculos de la semana</h2>
+            <span className="lab">7 días</span>
           </div>
           <div className="mt-3"><MapaMuscular zonas={zonas} /></div>
         </Tarjeta>
@@ -174,10 +203,9 @@ export default function Entreno() {
                 </li>
               ))}
             </ul>
-          ) : <p className="mt-2 text-sm text-muted">Tus entrenos aparecerán aquí. Cada vez que repitas un ejercicio, Brío te muestra lo que hiciste la vez anterior.</p>}
+          ) : <p className="mt-2 text-sm text-muted">Tus entrenos aparecerán aquí. Cada vez que repitas un ejercicio, Brío te muestra lo que hiciste la vez anterior y te avisa cuándo subir de peso.</p>}
         </Tarjeta>
 
-        {/* Rutinas y biblioteca */}
         <div className="min-w-0 space-y-3 md:col-span-5">
           {records.length > 0 && (
             <Tarjeta delay={0.12}>
@@ -194,13 +222,14 @@ export default function Entreno() {
             <Tarjeta delay={0.14}>
               <div className="flex items-baseline justify-between">
                 <h2 className="font-serif text-xl font-medium">Mis rutinas</h2>
-                <button onClick={() => setPlantillas(true)} className="lab !text-lime-ink hover:underline">+ Nueva</button>
+                <button onClick={() => setAsistente(true)} className="lab !text-lime-ink hover:underline">+ Nueva</button>
               </div>
               <ul className="mt-2">
                 {rutinas.map((r) => (
                   <li key={r.id} className="flex items-center gap-2 border-b border-line py-2.5 last:border-b-0">
-                    <span className="min-w-0 flex-1"><b className="block truncate font-medium">{r.nombre}</b><span className="lab !tracking-[0.05em]">{r.dias.length} días · {r.dias.map((d) => d.nombre).join(" / ")}</span></span>
-                    {r.id === rutina?.id ? <span className="lab !text-lime-ink">En uso</span> : <button onClick={() => setEntreno({ rutinas, activa: r.id })} className="rounded-full border border-line px-3 py-1 text-xs text-muted hover:text-ink">Usar</button>}
+                    <span className="min-w-0 flex-1"><b className="block truncate font-medium">{r.nombre}</b>
+                      <span className="lab !tracking-[0.05em]">{tieneSemana(r) ? SEMANA_LD.filter((w) => r.dias.some((d) => d.semana?.includes(w))).map((w) => DIAS_SEMANA[w].slice(0, 3)).join(" · ") : `${r.dias.length} días`}</span></span>
+                    {r.id === rutina?.id ? <span className="lab !text-lime-ink">En uso</span> : <button onClick={() => setEntreno({ ...perfil?.entreno, rutinas, activa: r.id })} className="rounded-full border border-line px-3 py-1 text-xs text-muted hover:text-ink">Usar</button>}
                     <button onClick={() => setEditando(r)} className="rounded-full border border-line px-3 py-1 text-xs text-muted hover:text-ink">Editar</button>
                   </li>
                 ))}
@@ -208,32 +237,27 @@ export default function Entreno() {
             </Tarjeta>
           )}
           <Tarjeta delay={0.16}>
-            <h2 className="font-serif text-xl font-medium">Ejercicios</h2>
-            <p className="mt-1 text-sm text-muted">Cómo se hace cada uno, con animación y los músculos que trabaja.</p>
-            <button onClick={() => setBiblioteca(true)} className={`${btnSecundario} mt-3 w-full`}>Ver los ejercicios</button>
+            <h2 className="font-serif text-xl font-medium">Catálogo de ejercicios</h2>
+            <p className="mt-1 text-sm text-muted">Más de 160 ejercicios con animación, técnica, músculos y video.</p>
+            <div className="mt-3 flex -space-x-2">{["press-banca", "sentadilla", "dominadas", "hip-thrust", "curl-mancuernas", "plancha"].map((id) => <FotoEjercicio key={id} id={id} size={40} />)}</div>
+            <button onClick={() => setBiblioteca(true)} className={`${btnSecundario} mt-3 w-full`}>Ver el catálogo</button>
           </Tarjeta>
         </div>
       </div>
 
-      <Hoja abierta={!!editando} onClose={() => setEditando(null)} titulo={editando && rutinas.some((x) => x.id === editando.id) ? "Editar rutina" : "Nueva rutina"} ancha>
-        {editando && <div className="md:max-w-2xl"><EditorRutina key={editando.id} inicial={editando} onGuardar={guardarRutina} onBorrar={rutinas.some((x) => x.id === editando.id) ? () => borrarRutina(editando.id) : undefined} /></div>}
+      <Hoja abierta={!!editando} onClose={() => setEditando(null)} titulo={editando && rutinas.some((x) => x.id === editando.id) ? "Editar rutina" : "Revisa tu rutina"} ancha>
+        {editando && <div className="md:max-w-2xl"><EditorRutina key={editando.id} inicial={editando} lugar={lugarNuevo ?? lugar} onGuardar={guardarRutina} onBorrar={rutinas.some((x) => x.id === editando.id) ? () => borrarRutina(editando.id) : undefined} /></div>}
       </Hoja>
-      <Hoja abierta={plantillas} onClose={() => setPlantillas(false)} titulo="Nueva rutina">
-        <ul className="space-y-2">
-          {PLANTILLAS.map((p) => (
-            <li key={p.id}><button onClick={() => { setPlantillas(false); setEditando(rutinaDePlantilla(p, uidE)); }} className="w-full rounded-[14px] border border-line bg-surface p-3 text-left">
-              <b className="font-medium">{p.nombre}</b><span className="block text-xs text-muted">{p.lugar} · {p.nivel}</span></button></li>
-          ))}
-          <li><button onClick={() => { setPlantillas(false); setEditando({ id: uidE(), nombre: "Mi rutina", dias: [{ id: uidE(), nombre: "Día A", ejercicios: [] }] }); }} className="w-full rounded-[14px] border border-dashed border-line p-3 text-left text-sm">Desde cero</button></li>
-        </ul>
+      <Hoja abierta={asistente} onClose={() => setAsistente(false)} titulo="Nueva rutina" ancha>
+        {asistente && <ElegirRutina diasIniciales={perfil?.diasEntreno ?? 3} lugarInicial={lugar} onListo={elegirListo} />}
       </Hoja>
-      <Hoja abierta={biblioteca} onClose={() => setBiblioteca(false)} titulo="Ejercicios" ancha>
-        <Biblioteca onVer={setVer} />
+      <Hoja abierta={biblioteca} onClose={() => setBiblioteca(false)} titulo="Catálogo de ejercicios" ancha>
+        <Biblioteca onVer={setVer} lugar={lugar} />
       </Hoja>
       <Hoja abierta={!!ver} onClose={() => setVer(null)} titulo="Ejercicio" ancha>
         {ver && <DetalleEjercicio e={ver} />}
       </Hoja>
-      <Hoja abierta={!!resumen} onClose={() => setResumen(null)} titulo={resumen && sesiones[sesiones.length - 1]?.id === resumen.id && Date.now() - (resumen.fin ?? 0) < 60000 ? "¡Entreno terminado!" : resumen?.nombre ?? ""}>
+      <Hoja abierta={!!resumen} onClose={() => setResumen(null)} titulo={resumen && Date.now() - (resumen.fin ?? 0) < 60000 ? "¡Entreno terminado!" : resumen?.nombre ?? ""}>
         {resumen && (
           <>
             <Resumen s={resumen} />

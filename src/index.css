@@ -21,6 +21,9 @@
   --t-streak: #c6f432;
   --water: #3b8ff0;
   --track: #e4e0d3;
+  --mm-piel: #ebe7da;
+  --mm-vacio: #d9d4c4;
+  --mm-linea: #f7f5ee;
   --ember: #d9531e;
   --fat: #e9b521;
   color-scheme: light;
@@ -42,6 +45,9 @@
   --t-streak: rgba(198, 244, 50, 0.16);
   --water: #4f9ff0;
   --track: #26292e;
+  --mm-piel: #1f2226;
+  --mm-vacio: #33373d;
+  --mm-linea: #0f1113;
   --ember: #ff8a3d;
   --fat: #f5c542;
   color-scheme: dark;
