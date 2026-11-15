@@ -72,9 +72,9 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
   if (!iaEst.disponible) {
     return (
       <Tarjeta tono="food">
-        <p className="lab">Menú semanal con IA</p>
+        <p className="lab">Próximamente</p>
         <h2 className="mt-1 font-serif text-xl font-medium">Tu menú de la semana</h2>
-        <p className="mt-1.5 text-sm text-muted">Conecta tu propia IA de Claude en Perfil y Brío armará tu menú usando primero lo que tienes en tu despensa, dentro de tu presupuesto, con recetas y tu lista del súper.</p>
+        <p className="mt-1.5 text-sm text-muted">Brío armará tu menú usando primero lo que tienes en tu despensa, dentro de tu presupuesto, con recetas y tu lista del súper.</p>
       </Tarjeta>
     );
   }

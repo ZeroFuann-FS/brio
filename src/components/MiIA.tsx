@@ -3,7 +3,25 @@ import { MODELOS, probarKey, useMiIA, type ModeloId } from "../lib/miIA";
 import { Tarjeta, btnPrimario, btnSecundario, inputCls } from "./ui";
 
 /** "Trae tu propia IA": el usuario conecta su API key de Claude; se queda solo en este dispositivo. */
+/** Mientras tanto se muestra como "Próximamente" (el código queda listo para activarlo). */
+const IA_CONFIGURABLE = import.meta.env.VITE_IA_PROPIA === "1";
+
 export default function MiIA() {
+  if (!IA_CONFIGURABLE) {
+    return (
+      <Tarjeta delay={0.13}>
+        <div className="flex items-baseline justify-between">
+          <h2 className="font-serif text-xl font-medium">Tu IA</h2>
+          <span className="lab">Próximamente</span>
+        </div>
+        <p className="mt-1 text-sm text-muted">Calcular comidas escribiendo normal y armar menús con inteligencia artificial. Lo activaremos más adelante.</p>
+      </Tarjeta>
+    );
+  }
+  return <MiIAConfig />;
+}
+
+function MiIAConfig() {
   const { key, modelo, guardar, borrar } = useMiIA();
   const [abierto, setAbierto] = useState(false);
   const [nueva, setNueva] = useState("");

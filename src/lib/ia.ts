@@ -6,7 +6,8 @@ export const iaServidor = import.meta.env.VITE_IA_ACTIVA === "1";
 
 /** ¿Hay IA disponible? Con la key propia del usuario, o la del servidor (esta requiere cuenta). */
 export function useIA() {
-  const key = useMiIA((s) => s.key);
+  const guardada = useMiIA((s) => s.key);
+  const key = import.meta.env.VITE_IA_PROPIA === "1" ? guardada : null;
   return { disponible: !!key || iaServidor, propia: !!key, requiereCuenta: !key && iaServidor };
 }
 
