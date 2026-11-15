@@ -45,6 +45,8 @@ export interface Perfil {
   prefsComida?: PrefsComida;
   plan?: PlanNutriologo;
   entreno?: import("./entreno").PrefsEntreno;
+  agenda?: import("./agenda").Agenda;
+  recordatorios?: import("./agenda").Recordatorios;
   creado: string;
 }
 

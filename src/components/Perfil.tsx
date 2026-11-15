@@ -8,6 +8,7 @@ import { Hoja, Tarjeta, btnSecundario } from "./ui";
 import { CREDITOS } from "../data/creditos";
 import Logo from "./Logo";
 import MiIA from "./MiIA";
+import Recordatorios from "./dia/Recordatorios";
 
 const TEXTO_SYNC: Record<string, string> = {
   ok: "Todo guardado en la nube",
@@ -77,6 +78,14 @@ export default function Perfil({ perfil, metas, onEditar, onVerIntro, email, est
         </div>
         <p className="mt-2 text-xs text-muted">Automático usa el modo de tu teléfono o compu.</p>
       </Tarjeta>
+
+      {perfil && (
+        <Tarjeta delay={0.13}>
+          <h2 className="font-serif text-xl font-medium">Avisos</h2>
+          <p className="mt-1 mb-3 text-sm text-muted">Pago del gym, despensa, comidas, entreno, hábitos y agua.</p>
+          <Recordatorios perfil={perfil} />
+        </Tarjeta>
+      )}
 
       <MiIA />
 

@@ -15,6 +15,7 @@ import Logo from "./components/Logo";
 import { nubeDisponible, supabase } from "./lib/supabase";
 import { iniciarSync, useSync } from "./lib/sync";
 import { aplicarPlan, calcularMetas } from "./lib/calc";
+import { useAvisosLocales } from "./lib/avisosLocales";
 import { habitosDe, pesoActual, racha, useBrio } from "./lib/store";
 
 const KEY = "brio:intro-visto-v3";
@@ -41,7 +42,11 @@ export default function App() {
   const [intro, setIntro] = useState(!introVisto());
   const [splash, setSplash] = useState(introVisto()); // la animación del logo sale siempre al entrar
   const [editando, setEditando] = useState(false);
-  const [tab, setTab] = useState<Tab>("hoy");
+  const [tab, setTab] = useState<Tab>(() => {
+    // Las notificaciones abren la app en la sección que corresponde (?tab=comida)
+    try { const t = new URLSearchParams(location.search).get("tab"); if (t && ["hoy", "comida", "entreno", "progreso", "perfil"].includes(t)) { history.replaceState(null, "", "/"); return t as Tab; } } catch { /* sin URL */ }
+    return "hoy";
+  });
   const [session, setSession] = useState<Session | null>(null);
   const [authListo, setAuthListo] = useState(!nubeDisponible);
   const [syncListo, setSyncListo] = useState(true);
@@ -50,6 +55,7 @@ export default function App() {
   const estadoSync = useSync((s) => s.estado);
   const dias = useBrio((s) => s.dias);
   const { oscuro, alternar } = useTema();
+  useAvisosLocales(!session);
 
   useEffect(() => {
     if (!nubeDisponible) return;

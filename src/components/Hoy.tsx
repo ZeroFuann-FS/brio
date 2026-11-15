@@ -4,6 +4,7 @@ import { habitosDe, minBrio, puntosDia, seAcaban, useBrio } from "../lib/store";
 import { Barra, Numero, Segmentos, Tarjeta, Toast, ease, useToast } from "./ui";
 import ComidasDia from "./ComidasDia";
 import { TarjetaPlan } from "./PlanNutriologo";
+import TuDia, { AvisoPago } from "./dia/TuDia";
 
 const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
@@ -110,6 +111,7 @@ export default function Hoy({ perfil, metas, onIrComida }: { perfil: Perfil; met
           <p className="lab mt-3">Toca un vaso para sumar 250 ml</p>
         </Tarjeta>
 
+        <AvisoPago perfil={perfil} className="md:col-span-12" />
         <TarjetaPlan perfil={perfil} metas={metas} delay={0.08} className="md:col-span-12" />
         <ComidasDia delay={0.1} className="md:col-span-7" />
 
@@ -139,6 +141,8 @@ export default function Hoy({ perfil, metas, onIrComida }: { perfil: Perfil; met
           </ul>
           <p className="lab mt-2.5">{puntos >= MIN ? "Día con brío · tu racha sigue" : `Cumple ${MIN - puntos} más para sumar a tu racha`}</p>
         </Tarjeta>
+
+        <TuDia perfil={perfil} delay={0.18} className="md:col-span-12" />
 
         {perfil.motivo && faltaMotivo !== null && faltaMotivo >= 0 && (
           <p className="border-t border-line-strong px-1 pt-4 font-serif text-[22px] italic leading-snug md:col-span-12">

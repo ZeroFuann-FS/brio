@@ -92,6 +92,8 @@ interface Estado {
   setPrefsComida: (p: PrefsComida) => void;
   setPerfil: (p: Perfil) => void;
   setPlan: (p: PlanNutriologo) => void;
+  setAgenda: (a: import("./agenda").Agenda) => void;
+  setRecordatorios: (r: import("./agenda").Recordatorios) => void;
   sesiones: Sesion[];
   sesionActiva: Sesion | null;
   setEntreno: (e: PrefsEntreno) => void;
@@ -160,6 +162,8 @@ export const useBrio = create<Estado>()(
         },
         descartarSesion: () => set({ sesionActiva: null }),
         borrarSesion: (id) => set((s) => ({ sesiones: s.sesiones.filter((x) => x.id !== id) })),
+        setAgenda: (agenda) => set((s) => (s.perfil ? { perfil: { ...s.perfil, agenda } } : {})),
+        setRecordatorios: (recordatorios) => set((s) => (s.perfil ? { perfil: { ...s.perfil, recordatorios } } : {})),
         setPlan: (plan) => set((s) => (s.perfil ? { perfil: { ...s.perfil, plan } } : {})),
         ajustarEq: (fecha, g, delta) => editarDia(fecha, (d) => {
           const eq = { ...(d.extra?.eq ?? {}) };
