@@ -1,7 +1,14 @@
 import { supabase } from "./supabase";
+import { useMiIA, type ModeloId } from "./miIA";
 
-/** La IA solo se muestra si está activada (requiere API key de Claude en Supabase). */
-export const iaActiva = import.meta.env.VITE_IA_ACTIVA === "1";
+/** IA del servidor: solo si Brío tiene su propia API key configurada en Supabase. */
+export const iaServidor = import.meta.env.VITE_IA_ACTIVA === "1";
+
+/** ¿Hay IA disponible? Con la key propia del usuario, o la del servidor (esta requiere cuenta). */
+export function useIA() {
+  const key = useMiIA((s) => s.key);
+  return { disponible: !!key || iaServidor, propia: !!key, requiereCuenta: !key && iaServidor };
+}
 
 export interface AlimentoIA { nombre: string; cantidad: string; kcal: number; proteina: number; carbos: number; grasa: number }
 export interface AnalisisIA { alimentos: AlimentoIA[]; nombre_comida: string; confianza: "alta" | "media" | "baja"; nota: string }
@@ -34,6 +41,33 @@ async function llamar<T>(body: Record<string, unknown>): Promise<T> {
   return data as T;
 }
 
-export const analizarComida = (texto: string) => llamar<AnalisisIA>({ accion: "analizar", texto });
+type ModCliente = typeof import("./iaCliente");
 
-export const generarMenu = (contexto: Record<string, unknown>) => llamar<MenuIA>({ accion: "menu", contexto });
+async function conKeyPropia<T>(fn: (m: ModCliente, key: string, modelo: ModeloId) => Promise<T>): Promise<T> {
+  const { key, modelo } = useMiIA.getState();
+  const m = await import("./iaCliente");
+  try { return await fn(m, key as string, modelo); }
+  catch (e) { throw new ErrorIA(e instanceof m.ErrorIACliente ? e.message : "Algo salió mal con la IA."); }
+}
+
+export const analizarComida = (texto: string): Promise<AnalisisIA> =>
+  useMiIA.getState().key
+    ? conKeyPropia((m, key, modelo) => m.pedirCliente(key, modelo, m.Analisis, m.SYSTEM_ANALIZAR, texto.slice(0, 500), "low", 4000))
+    : llamar<AnalisisIA>({ accion: "analizar", texto });
+
+function promptMenu(c: Record<string, unknown>) {
+  return [
+    `Arma mi menú de ${Number(c.dias) || 7} días (empezando el ${String(c.inicio ?? "lunes")}).`,
+    `Meta diaria: ${Number(c.kcal)} kcal, ${Number(c.proteina)} g de proteína.`,
+    `Comidas al día: ${String(c.comidas ?? "desayuno, comida y cena")}.`,
+    `Presupuesto semanal para el súper: ${Number(c.presupuesto) || 500} pesos MXN.`,
+    `Equipo de cocina: ${String(c.equipo ?? "estufa")}.`,
+    `Preferencias o alimentos que no como: ${String(c.preferencias ?? "ninguna").slice(0, 300)}.`,
+    `Mi despensa (lo que ya tengo): ${String(c.despensa ?? "nada").slice(0, 800)}.`,
+  ].join("\n");
+}
+
+export const generarMenu = (contexto: Record<string, unknown>): Promise<MenuIA> =>
+  useMiIA.getState().key
+    ? conKeyPropia((m, key, modelo) => m.pedirCliente(key, modelo, m.Menu, m.SYSTEM_MENU, promptMenu(contexto), "medium", 16000))
+    : llamar<MenuIA>({ accion: "menu", contexto });

@@ -6,6 +6,7 @@ import type { Metas, Perfil as TPerfil } from "../lib/calc";
 import { useBrio } from "../lib/store";
 import { Tarjeta, btnSecundario } from "./ui";
 import Logo from "./Logo";
+import MiIA from "./MiIA";
 
 const TEXTO_SYNC: Record<string, string> = {
   ok: "Todo guardado en la nube",
@@ -74,6 +75,8 @@ export default function Perfil({ perfil, metas, onEditar, onVerIntro, email, est
         </div>
         <p className="mt-2 text-xs text-muted">Automático usa el modo de tu teléfono o compu.</p>
       </Tarjeta>
+
+      <MiIA />
 
       {nubeDisponible && (
         <Tarjeta delay={0.15}>

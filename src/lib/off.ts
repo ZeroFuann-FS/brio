@@ -12,6 +12,7 @@ interface ProductoOFF {
   serving_quantity?: number | string;
   serving_size?: string;
   nutriments?: Record<string, number | string | undefined>;
+  image_front_small_url?: string;
 }
 
 const marcaDe = (b?: string | string[]) => (Array.isArray(b) ? b[0] : b?.split(",")[0])?.trim() ?? "";
@@ -35,10 +36,13 @@ function aAlimento(p: ProductoOFF): Alimento | null {
     c: Math.round((num(n.carbohydrates_100g) || 0) * 10) / 10,
     g: Math.round((num(n.fat_100g) || 0) * 10) / 10,
     por,
+    img: p.image_front_small_url,
+    codigo: p.code,
+    fuente: "marca",
   };
 }
 
-const CAMPOS = "code,product_name,product_name_es,brands,serving_quantity,serving_size,nutriments";
+const CAMPOS = "code,product_name,product_name_es,brands,serving_quantity,serving_size,nutriments,image_front_small_url";
 
 export async function buscarOFF(q: string, signal?: AbortSignal): Promise<Alimento[]> {
   // Pasa por nuestra función de Supabase (el buscador de OFF no permite llamadas directas del navegador)

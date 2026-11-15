@@ -2,7 +2,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { hoyISO, sumarDias } from "../lib/calc";
 import { coincidenciaDespensa, frecuentes, useBrio, type TipoComida } from "../lib/store";
-import { analizarComida, ErrorIA, iaActiva, type AnalisisIA } from "../lib/ia";
+import { analizarComida, ErrorIA, useIA, type AnalisisIA } from "../lib/ia";
 import { useSync } from "../lib/sync";
 import BuscarAlimento, { calcular as calcularSel, type Seleccion } from "./BuscarAlimento";
 import { Hoja, Tarjeta, Toast, btnPrimario, btnSecundario, inputCls, useToast } from "./ui";
@@ -37,6 +37,7 @@ export default function ComidasDia({ delay = 0, className = "" }: { delay?: numb
   const recientes = frecuentes(dias);
   const comidasAyer = dias[ayer]?.comidas.length ?? 0;
   const conCuenta = useSync((s) => s.estado) !== "sin-cuenta";
+  const iaEst = useIA();
   const [toast, setToast] = useToast();
 
   const [hoja, setHoja] = useState(false);
@@ -94,7 +95,7 @@ export default function ComidasDia({ delay = 0, className = "" }: { delay?: numb
 
   const MODOS: { id: Modo; t: string }[] = [
     { id: "buscar", t: "Buscar" },
-    ...(iaActiva ? [{ id: "ia" as Modo, t: "Con IA" }] : []),
+    ...(iaEst.disponible ? [{ id: "ia" as Modo, t: "Con IA" }] : []),
     { id: "mano", t: "A mano" },
   ];
 
@@ -197,7 +198,7 @@ export default function ComidasDia({ delay = 0, className = "" }: { delay?: numb
           )}
 
           {modo === "ia" && (
-            conCuenta ? (
+            conCuenta || !iaEst.requiereCuenta ? (
               <div>
                 <textarea className={`${inputCls} min-h-[84px] resize-none`} placeholder="Ej. 4 tacos de bistec con doble tortilla y un refresco chico" value={texto} maxLength={500}
                   onChange={(e) => { setTexto(e.target.value); if (ia.estado !== "pensando") setIa({ estado: "idle" }); }} />

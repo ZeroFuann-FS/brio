@@ -5,7 +5,7 @@ const cors = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
 };
-const CAMPOS = "code,product_name,product_name_es,brands,serving_quantity,serving_size,nutriments";
+const CAMPOS = "code,product_name,product_name_es,brands,serving_quantity,serving_size,nutriments,image_front_small_url";
 
 async function buscar(q: string) {
   const url = `https://search.openfoodfacts.org/search?q=${encodeURIComponent(q)}&page_size=24&fields=${CAMPOS}`;

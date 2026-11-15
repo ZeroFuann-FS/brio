@@ -11,6 +11,9 @@ export interface Alimento {
   kcal: number; p: number; c: number; g: number; // por 100 g
   por: Porcion[];     // porciones comunes
   alias?: string;     // palabras extra para la búsqueda
+  img?: string;       // foto del producto (marcas)
+  codigo?: string;    // código de barras
+  fuente?: "base" | "marca" | "comunidad";
 }
 
 const A = (id: string, n: string, cat: string, kcal: number, p: number, c: number, g: number, por: Porcion[], alias?: string): Alimento =>
@@ -156,7 +159,8 @@ const normalizar = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-
 
 /** Búsqueda local: todas las palabras deben aparecer en el nombre o los alias. */
 export function buscarLocal(q: string, max = 30): Alimento[] {
-  const palabras = normalizar(q).split(/\s+/).filter(Boolean);
+  // plurales: "tostadas" encuentra "tostada"
+  const palabras = normalizar(q).split(/\s+/).filter(Boolean).map((w) => (w.length > 4 && w.endsWith("s") ? w.slice(0, -1) : w));
   if (!palabras.length) return [];
   return ALIMENTOS
     .map((a) => {

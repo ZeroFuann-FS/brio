@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { hoyISO, type Metas, type Perfil, type PrefsComida } from "../lib/calc";
 import { useBrio } from "../lib/store";
 import { useSync } from "../lib/sync";
-import { generarMenu, ErrorIA, iaActiva } from "../lib/ia";
+import { generarMenu, ErrorIA, useIA } from "../lib/ia";
 import { Tarjeta, Toast, btnPrimario, btnSecundario, ease, inputCls, useToast } from "./ui";
 
 const EQUIPO = ["Estufa", "Microondas", "Air fryer", "Horno", "Refrigerador", "Licuadora"];
@@ -25,6 +25,7 @@ function Chip({ on, children, onClick }: { on: boolean; children: string; onClic
 export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: Metas }) {
   const { menu, setMenu, marcarComprado, setPrefsComida, despensa, addComida, addItem } = useBrio();
   const conCuenta = useSync((s) => s.estado) !== "sin-cuenta";
+  const iaEst = useIA();
   const [prefs, setPrefs] = useState<PrefsComida>(perfil.prefsComida ?? PREFS_BASE);
   const [editando, setEditando] = useState(!menu);
   const [estado, setEstado] = useState<"idle" | "pensando" | "error">("idle");
@@ -68,17 +69,17 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
     setToast(n ? `${n} productos agregados a tu despensa` : "Marca primero lo que compraste");
   };
 
-  if (!iaActiva) {
+  if (!iaEst.disponible) {
     return (
       <Tarjeta tono="food">
-        <p className="lab">Próximamente</p>
+        <p className="lab">Menú semanal con IA</p>
         <h2 className="mt-1 font-serif text-xl font-medium">Tu menú de la semana</h2>
-        <p className="mt-1.5 text-sm text-muted">Brío armará tu menú usando primero lo que tienes en tu despensa, dentro de tu presupuesto, con recetas y tu lista del súper.</p>
+        <p className="mt-1.5 text-sm text-muted">Conecta tu propia IA de Claude en Perfil y Brío armará tu menú usando primero lo que tienes en tu despensa, dentro de tu presupuesto, con recetas y tu lista del súper.</p>
       </Tarjeta>
     );
   }
 
-  if (!conCuenta) {
+  if (iaEst.requiereCuenta && !conCuenta) {
     return (
       <Tarjeta tono="food">
         <p className="lab">Menú semanal con IA</p>
