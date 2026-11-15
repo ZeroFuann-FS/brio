@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ejercicioPorId, type Ejercicio } from "../../data/ejercicios";
-import { duracionMin, serieInicial, seriesHechas, tocaSubir, ultimaVez, volumen, type Sesion } from "../../lib/entreno";
+import { duracionMin, serieInicial, seriesHechas, textoSerie, tocaSubir, ultimaVez, volumen, type Sesion } from "../../lib/entreno";
 import { useBrio } from "../../lib/store";
 import { Hoja, Tarjeta, btnPrimario, btnSecundario } from "../ui";
 import Biblioteca, { DetalleEjercicio } from "./Biblioteca";
@@ -38,7 +38,7 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
   }, [descanso, restante]);
 
   /** Cambia una serie; el peso o las reps nuevas se copian a las siguientes series que aún no haces y tenían el valor anterior. */
-  const editarSerie = (ei: number, si: number, cambio: Partial<{ kg: number; reps: number; min: number; hecha: boolean }>) =>
+  const editarSerie = (ei: number, si: number, cambio: Partial<{ kg: number; reps: number; min: number; km: number; hecha: boolean }>) =>
     editarSesion((s) => ({ ...s, ejercicios: s.ejercicios.map((e, i) => {
       if (i !== ei) return e;
       const antes = e.series[si];
@@ -98,18 +98,18 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
                   ↑ La vez pasada llegaste al tope de reps en todas. <b>Prueba con {subir} kg</b> (toca para ponerlo).
                 </button>
               )}
-              <div className={`mt-3 grid items-center gap-x-2 gap-y-1.5 text-center ${info.cardio ? "grid-cols-[28px_1fr_1fr_40px]" : "grid-cols-[28px_1fr_1fr_1fr_40px]"}`}>
+              <div className={`mt-3 grid items-center gap-x-2 gap-y-1.5 text-center ${info.cardio ? "grid-cols-[28px_1fr_1fr_1fr_40px]" : "grid-cols-[28px_1fr_1fr_1fr_40px]"}`}>
                 <span className="lab">#</span><span className="lab">Anterior</span>
-                {info.cardio ? <span className="lab">Minutos</span> : <><span className="lab">Kg</span><span className="lab">Reps</span></>}
+                {info.cardio ? <><span className="lab">Min</span><span className="lab">Km</span></> : <><span className="lab">Kg</span><span className="lab">Reps</span></>}
                 <span />
                 {e.series.map((x, si) => {
                   const p = prev?.[si];
                   return (
                     <div key={si} className="contents">
                       <span className="num text-muted">{si + 1}</span>
-                      <span className="num truncate text-sm text-muted">{p ? (info.cardio ? `${p.min ?? 0} min` : `${p.kg}×${p.reps}`) : "—"}</span>
+                      <span className="num truncate text-sm text-muted">{p ? textoSerie(p) : "—"}</span>
                       {info.cardio
-                        ? <Campo label={`Minutos serie ${si + 1}`} valor={x.min ?? 0} onCambio={(n) => editarSerie(ei, si, { min: n })} />
+                        ? <><Campo label={`Minutos serie ${si + 1}`} valor={x.min ?? 0} onCambio={(n) => editarSerie(ei, si, { min: n })} /><Campo label={`Km serie ${si + 1}`} valor={x.km ?? 0} decimal onCambio={(n) => editarSerie(ei, si, { km: n })} /></>
                         : <>
                           <Campo label={`Kg serie ${si + 1}`} valor={x.kg} decimal onCambio={(n) => editarSerie(ei, si, { kg: n })} />
                           <Campo label={`Reps serie ${si + 1}`} valor={x.reps} onCambio={(n) => editarSerie(ei, si, { reps: n })} />

@@ -4,7 +4,7 @@ import { ejercicioPorId, type Ejercicio } from "../data/ejercicios";
 import { hoyISO, sumarDias } from "../lib/calc";
 import {
   DIAS_CORTOS, DIAS_SEMANA, SEMANA_LD, duracionMin, lunesDe, mejorMarca, minutosDia, nuevaSesion, planHoy,
-  seriesHechas, seriesPorMusculo, siguienteDia, tieneSemana, volumen, type Lugar, type Rutina, type Sesion,
+  seriesHechas, seriesPorMusculo, siguienteDia, textoSerie, tieneSemana, volumen, type Lugar, type Rutina, type Sesion,
 } from "../lib/entreno";
 import { useBrio } from "../lib/store";
 import EditorRutina from "./entreno/EditorRutina";
@@ -49,7 +49,7 @@ function Resumen({ s }: { s: Sesion }) {
             <li key={i} className="flex items-center gap-3 border-b border-line py-2 last:border-b-0">
               <FotoEjercicio id={e.ej} size={40} />
               <span className="min-w-0 flex-1"><span className="block truncate text-sm">{ejercicioPorId(e.ej)?.n}</span>
-                <span className="num text-xs text-muted">{e.series.map((x) => (x.min ? `${x.min}′` : `${x.kg}×${x.reps}`)).join(" · ")}</span></span>
+                <span className="num text-xs text-muted">{e.series.map(textoSerie).join(" · ")}</span></span>
             </li>
           ))}
         </ul>

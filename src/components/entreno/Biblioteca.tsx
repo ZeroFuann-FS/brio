@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { EJERCICIOS, NOMBRE_MUSCULO, type Ejercicio, type Musculo } from "../../data/ejercicios";
-import { mejorMarca, progreso, ultimaVez, type Lugar } from "../../lib/entreno";
+import { mejorMarca, progreso, textoSerie, ultimaVez, type Lugar } from "../../lib/entreno";
 import { useBrio } from "../../lib/store";
 import { btnPrimario, inputCls } from "../ui";
 import MapaMuscular, { FotoEjercicio, InicioFin } from "./MapaMuscular";
@@ -91,7 +91,7 @@ export function DetalleEjercicio({ e }: { e: Ejercicio }) {
         {!e.cardio && (marca || ultima) && (
           <div className="mt-3 rounded-[16px] border border-line bg-surface p-3">
             {marca && <p className="text-sm">Tu récord: <b className="num text-lg">{marca.kg} kg × {marca.reps}</b> <span className="text-xs text-muted">({marca.fecha})</span></p>}
-            {ultima && <p className="text-xs text-muted">Última vez: {ultima.map((x) => `${x.kg}×${x.reps}`).join(" · ")}</p>}
+            {ultima && <p className="text-xs text-muted">Última vez: {ultima.map(textoSerie).join(" · ")}</p>}
             {hist.length >= 2 && <><p className="lab mt-2">Tu fuerza estimada (1RM)</p><Grafica datos={hist.slice(-12)} /></>}
           </div>
         )}

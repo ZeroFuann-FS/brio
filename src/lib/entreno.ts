@@ -6,7 +6,7 @@ export interface EjRutina { ej: string; series: number; reps: string; descanso: 
 /** semana: días de la semana en que toca (0 = domingo … 6 = sábado). */
 export interface DiaRutina { id: string; nombre: string; ejercicios: EjRutina[]; semana?: number[] }
 export interface Rutina { id: string; nombre: string; dias: DiaRutina[]; plantilla?: string }
-export interface Serie { kg: number; reps: number; min?: number; hecha: boolean }
+export interface Serie { kg: number; reps: number; min?: number; km?: number; hecha: boolean }
 export interface EjSesion { ej: string; reps: string; descanso: number; series: Serie[] }
 export interface Sesion {
   id: string; fecha: string; inicio: number; fin?: number; nombre: string;
@@ -16,6 +16,9 @@ export type Lugar = "gym" | "basico" | "casa";
 export interface PrefsEntreno { rutinas: Rutina[]; activa?: string; lugar?: Lugar }
 
 export const uidE = () => Math.random().toString(36).slice(2, 10);
+
+/** Texto corto de una serie: "40×12", "15 reps" (sin peso) o "25′ · 3.2 km" (cardio). */
+export const textoSerie = (x: Serie) => (x.min || x.km ? [x.min ? `${x.min}′` : "", x.km ? `${x.km} km` : ""].filter(Boolean).join(" · ") : x.kg ? `${x.kg}×${x.reps}` : `${x.reps} reps`);
 
 /** 1RM estimado (Epley). */
 export const e1rm = (kg: number, reps: number) => (reps <= 0 || kg <= 0 ? 0 : reps === 1 ? kg : kg * (1 + reps / 30));
