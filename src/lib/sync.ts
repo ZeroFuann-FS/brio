@@ -11,6 +11,7 @@ import { create } from "zustand";
 import { supabase } from "./supabase";
 import { useBrio, type Dia, type ItemDespensa, type MenuGuardado, type RegistroMedidas } from "./store";
 import type { Perfil } from "./calc";
+import type { Sesion } from "./entreno";
 
 type Estado = "sin-cuenta" | "sincronizando" | "ok" | "pendiente" | "error";
 export const useSync = create<{ estado: Estado; ultima: number | null }>(() => ({ estado: "sin-cuenta", ultima: null }));
@@ -36,6 +37,7 @@ function snapshot(s = useBrio.getState()): Snap {
   for (const p of s.pesos) m.set(`peso:${p.fecha}`, p.kg);
   for (const r of s.medidas) m.set(`medida:${r.fecha}`, r);
   for (const i of s.despensa) m.set(`despensa:${i.id}`, i);
+  for (const x of s.sesiones ?? []) m.set(`sesion:${x.id}`, x);
   return m;
 }
 
@@ -44,6 +46,7 @@ function aplicar(m: Snap) {
   const pesos: { fecha: string; kg: number }[] = [];
   const medidas: RegistroMedidas[] = [];
   const despensa: ItemDespensa[] = [];
+  const sesiones: Sesion[] = [];
   let perfil: Perfil | null = null;
   let menu: MenuGuardado | null = null;
   for (const [k, v] of m) {
@@ -54,24 +57,27 @@ function aplicar(m: Snap) {
     else if (tipo === "peso") pesos.push({ fecha: id, kg: v as number });
     else if (tipo === "medida") medidas.push(v as RegistroMedidas);
     else if (tipo === "despensa") despensa.push(v as ItemDespensa);
+    else if (tipo === "sesion") sesiones.push(v as Sesion);
   }
+  sesiones.sort((a, b) => a.inicio - b.inicio);
   pesos.sort((a, b) => a.fecha.localeCompare(b.fecha));
   medidas.sort((a, b) => a.fecha.localeCompare(b.fecha));
   aplicandoRemoto = true;
-  useBrio.setState({ perfil, dias, pesos, medidas, despensa, menu });
+  useBrio.setState({ perfil, dias, pesos, medidas, despensa, menu, sesiones });
   aplicandoRemoto = false;
 }
 
 async function bajar(): Promise<Snap> {
-  const [pf, ds, ps, ms, de, mn] = await Promise.all([
+  const [pf, ds, ps, ms, de, mn, en] = await Promise.all([
     supabase.from("perfiles").select("datos"),
     supabase.from("dias").select("fecha, comidas, agua_ml, habitos, extra"),
     supabase.from("pesos").select("fecha, kg"),
     supabase.from("medidas").select("fecha, valores"),
     supabase.from("despensa").select("id, nombre, cantidad, unidad, minimo"),
     supabase.from("menus").select("datos"),
+    supabase.from("entrenos").select("id, datos"),
   ]);
-  const err = pf.error ?? ds.error ?? ps.error ?? ms.error ?? de.error ?? mn.error;
+  const err = pf.error ?? ds.error ?? ps.error ?? ms.error ?? de.error ?? mn.error ?? en.error;
   if (err) throw err;
   const m: Snap = new Map();
   if (pf.data?.[0]) m.set("perfil", pf.data[0].datos);
@@ -80,6 +86,7 @@ async function bajar(): Promise<Snap> {
   for (const p of ps.data ?? []) m.set(`peso:${p.fecha}`, Number(p.kg));
   for (const r of ms.data ?? []) m.set(`medida:${r.fecha}`, { fecha: r.fecha, ...(r.valores as object) });
   for (const i of de.data ?? []) m.set(`despensa:${i.id}`, { id: i.id, nombre: i.nombre, cantidad: Number(i.cantidad), unidad: i.unidad, ...(i.minimo != null ? { minimo: Number(i.minimo) } : {}) });
+  for (const e of en.data ?? []) m.set(`sesion:${e.id}`, e.datos);
   return m;
 }
 
@@ -88,8 +95,8 @@ async function subir(uid: string) {
   const lote = [...pendientes];
   const local = snapshot();
   const ahora = new Date().toISOString();
-  const up: Record<string, object[]> = { perfiles: [], dias: [], pesos: [], medidas: [], despensa: [], menus: [] };
-  const del: Record<string, string[]> = { perfiles: [], dias: [], pesos: [], medidas: [], despensa: [], menus: [] };
+  const up: Record<string, object[]> = { perfiles: [], dias: [], pesos: [], medidas: [], despensa: [], menus: [], entrenos: [] };
+  const del: Record<string, string[]> = { perfiles: [], dias: [], pesos: [], medidas: [], despensa: [], menus: [], entrenos: [] };
 
   for (const k of lote) {
     const v = local.get(k);
@@ -107,16 +114,20 @@ async function subir(uid: string) {
     } else if (tipo === "despensa") {
       const i = v as ItemDespensa | undefined;
       i ? up.despensa.push({ user_id: uid, id, nombre: i.nombre, cantidad: i.cantidad, unidad: i.unidad, minimo: i.minimo ?? null, actualizado: ahora }) : del.despensa.push(id);
+    } else if (tipo === "sesion") {
+      const x = v as Sesion | undefined;
+      x ? up.entrenos.push({ user_id: uid, id, fecha: x.fecha, datos: x, actualizado: ahora }) : del.entrenos.push(id);
     }
   }
 
   const ops: PromiseLike<{ error: unknown }>[] = [];
-  const pk: Record<string, string> = { menus: "user_id", perfiles: "user_id", dias: "user_id,fecha", pesos: "user_id,fecha", medidas: "user_id,fecha", despensa: "user_id,id" };
+  const pk: Record<string, string> = { menus: "user_id", perfiles: "user_id", dias: "user_id,fecha", pesos: "user_id,fecha", medidas: "user_id,fecha", despensa: "user_id,id", entrenos: "user_id,id" };
   for (const t of Object.keys(up)) if (up[t].length) ops.push(supabase.from(t).upsert(up[t], { onConflict: pk[t] }));
   if (del.perfiles.length) ops.push(supabase.from("perfiles").delete().eq("user_id", uid));
   if (del.menus.length) ops.push(supabase.from("menus").delete().eq("user_id", uid));
   for (const t of ["dias", "pesos", "medidas"]) if (del[t].length) ops.push(supabase.from(t).delete().eq("user_id", uid).in("fecha", del[t]));
   if (del.despensa.length) ops.push(supabase.from("despensa").delete().eq("user_id", uid).in("id", del.despensa));
+  if (del.entrenos.length) ops.push(supabase.from("entrenos").delete().eq("user_id", uid).in("id", del.entrenos));
 
   const res = await Promise.all(ops);
   const fallo = res.find((r) => r.error);

@@ -44,6 +44,7 @@ export interface Perfil {
   habitos?: Habito[];
   prefsComida?: PrefsComida;
   plan?: PlanNutriologo;
+  entreno?: import("./entreno").PrefsEntreno;
   creado: string;
 }
 
