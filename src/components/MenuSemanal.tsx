@@ -21,6 +21,14 @@ const CELDA: Record<QuienCocina, { t: string; cls: string }> = {
   no: { t: "—", cls: "border-line bg-surface text-muted" },
 };
 const dinero = (n: number) => `$${Math.round(n).toLocaleString("es-MX")}`;
+const cant = (n: number) => n.toLocaleString("es-MX", { maximumFractionDigits: 2 });
+/** Qué tomar con cada comida para que no sea solo el plato (bebidas sin azúcar, casi sin calorías). */
+const BEBIDA: Record<TipoReceta, string | null> = {
+  desayuno: "Acompaña con café o té sin azúcar (o con canela).",
+  comida: "Acompaña con agua natural, de jamaica o de limón sin azúcar.",
+  cena: "Acompaña con un té de manzanilla, canela o hierbabuena.",
+  colacion: null,
+};
 
 function Chip({ on, children, onClick }: { on: boolean; children: string; onClick: () => void }) {
   return (
@@ -238,6 +246,7 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
                       <span className="lab !tracking-[0.06em]">{n.kcal} kcal · {n.proteina} g prot</span>
                     </span>
                   </button>
+                  {BEBIDA[c.tipo] && <p className="mt-1 pl-[56px] text-xs text-muted">{BEBIDA[c.tipo]}</p>}
                   <div className="mt-2 flex gap-2 pl-[56px]">
                     <button onClick={() => setCambio({ ci, n: 8 })} className="rounded-full border border-line px-3 py-1 text-xs text-muted hover:text-ink">Cambiar</button>
                     <button onClick={() => { const k = registrar(r, c.factor, c.tipo === "colacion" ? "snack" : c.tipo); setToast(k ? "Registrado y descontado de tu despensa" : "Registrado hoy"); }}
@@ -270,14 +279,14 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
               <li key={it.nombre} className="border-b border-line last:border-b-0">
                 <button onClick={() => marcarComprado(it.nombre)} className="grid w-full grid-cols-[22px_1fr_auto] items-center gap-3 py-2.5 text-left">
                   <span className={`grid h-[22px] w-[22px] place-items-center rounded-[7px] border-[1.5px] text-[13px] font-extrabold ${ok ? "border-lime bg-lime text-on-lime" : "border-line-strong"}`}>{ok ? "✓" : ""}</span>
-                  <span className={ok ? "text-muted line-through" : ""}>{it.nombre}<span className="lab mt-0.5 block !tracking-[0.06em]">{it.unidad.startsWith("kg") ? `${it.unidades.toLocaleString("es-MX")} kg${it.unidad.slice(2)}` : `${it.unidades} ${it.unidad}`}{it.enCasa > 0 ? " · ya tienes una parte" : ""}</span></span>
+                  <span className={ok ? "text-muted line-through" : ""}>{it.nombre}<span className="lab mt-0.5 block !tracking-[0.06em]">{it.unidad.startsWith("kg") ? `${it.unidades.toLocaleString("es-MX")} kg${it.unidad.slice(2)}` : `${it.unidades} ${it.unidad}`}{it.enCasa > 0 ? ` · necesitas ${cant(it.necesitaU)}, ya tienes ${cant(it.enCasaU)}` : ""}</span></span>
                   <span className="num text-[17px]">{dinero(it.costo)}</span>
                 </button>
               </li>
             );
           })}
         </ul>
-        {yaTienes.length > 0 && <p className="mt-2 text-xs text-muted">Ya lo tienes en tu despensa: {yaTienes.map((i) => i.nombre.toLowerCase()).join(", ")}.</p>}
+        {yaTienes.length > 0 && <p className="mt-2 text-xs text-muted">Ya lo tienes en tu despensa, no lo compres: {yaTienes.map((i) => i.nombre.toLowerCase()).join(", ")}.</p>}
         <button onClick={pasarADespensa} className={`${btnSecundario} mt-3 w-full`}>Pasar lo comprado a mi despensa</button>
         <p className="mt-2 text-xs text-muted">Precios aproximados de tiendas como 3B, Aurrera y mercados; pueden variar.</p>
       </Tarjeta>

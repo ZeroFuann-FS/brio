@@ -36,16 +36,15 @@ function puedeHacerse(r: Receta, equipo: string[]) {
   return r.equipo.some((e) => tengo.has(e));
 }
 
-/** Producto de la despensa que corresponde a un alimento (por la primera palabra). */
+const igual = (p: string, w: string) => p === w || p === `${w}s` || `${p}s` === w;   // palabra completa ("pan" no es "panela")
+/** Producto de la despensa que corresponde a un alimento: primero por la primera palabra, luego por cualquier palabra o marca. */
 export function enDespensa(d: ItemDespensa[], alimentoId: string): ItemDespensa | undefined {
   const a = POR_ID.get(alimentoId);
   if (!a) return undefined;
-  const palabras = norm(a.n).split(/[\s,()]+/);
-  return d.find((i) => {
-    if (i.cantidad <= 0) return false;
-    const w = norm(i.nombre).split(/\s+/)[0];
-    return palabras.some((p) => p === w || p === `${w}s` || `${p}s` === w);   // palabra completa ("pan" no es "panela")
-  });
+  const palabras = norm(`${a.n} ${a.alias ?? ""} ${COMPRAS[alimentoId]?.nombre ?? ""}`).split(/[\s,()]+/).filter((p) => p.length >= 3);
+  const conAlgo = d.filter((i) => i.cantidad > 0);
+  return conAlgo.find((i) => palabras.some((p) => igual(p, norm(i.nombre).split(/\s+/)[0])))
+    ?? conAlgo.find((i) => norm(i.nombre).split(/\s+/).some((w) => w.length >= 4 && palabras.some((p) => igual(p, w))));
 }
 
 const limpiarNombre = (n: string) => n.replace(/ \(.*\)| cocid[oa]s?| entero|, cocid[oa]/g, "");
@@ -228,7 +227,7 @@ export function totalesDia(comidas: ComidaMenu[]) {
 }
 
 /* ---------- Lista del súper ---------- */
-export interface ItemSuper { id: string; nombre: string; unidades: number; unidad: string; costo: number; necesita: number; enCasa: number }
+export interface ItemSuper { id: string; nombre: string; unidades: number; unidad: string; costo: number; necesita: number; enCasa: number; necesitaU: number; enCasaU: number }
 
 function gramosEnCasa(i: ItemDespensa, alimentoId: string) {
   const a = POR_ID.get(alimentoId);
@@ -236,7 +235,8 @@ function gramosEnCasa(i: ItemDespensa, alimentoId: string) {
   if (i.unidad === "g") return i.cantidad;
   if (i.unidad === "kg") return i.cantidad * 1000;
   if (i.unidad === "L") return i.cantidad * 1030;
-  return 0;
+  // paquete, frasco, bolsa…: una unidad de compra completa (ej. paquete de 30 tostadas)
+  return i.cantidad * (COMPRAS[alimentoId]?.g ?? 0);
 }
 
 export function listaSuper(m: MenuGuardado, despensa: ItemDespensa[]): { items: ItemSuper[]; total: number; usado: number } {
@@ -263,13 +263,17 @@ export function listaSuper(m: MenuGuardado, despensa: ItemDespensa[]): { items: 
     const falta = Math.max(0, g - enCasa);
     // Lo que se vende por peso (kg) se compra por cuartos de kilo; lo demás por pieza o paquete completo
     const porPeso = k.unidad.startsWith("kg");
-    const unidades = falta <= 0 ? 0 : porPeso
+    // Si lo que falta es muy poquito (menos del 15% de un paquete o pieza), alcanza con lo que tienes
+    const unidades = falta <= 0 || (!porPeso && enCasa > 0 && falta < k.g * 0.15) ? 0 : porPeso
       ? Math.max(0.25, Math.ceil((falta / k.g) * 4) / 4)
       : Math.max(1, Math.ceil(falta / k.g - 0.15));
     items.push({
       id, nombre: k.nombre ?? limpiarNombre(POR_ID.get(id)?.n ?? id), unidades,
       unidad: porPeso ? k.unidad.replace(/^kg/, "kg") : k.unidad, costo: Math.round(unidades * k.precio),
       necesita: Math.round(g), enCasa: Math.round(Math.min(g, enCasa)),
+      // en unidades de compra (latas, kg, paquetes) para mostrar "tienes 3 de 10"
+      necesitaU: porPeso ? Math.round((g / k.g) * 4) / 4 : Math.round((g / k.g) * 10) / 10,
+      enCasaU: porPeso ? Math.round((Math.min(g, enCasa) / k.g) * 4) / 4 : Math.round((Math.min(g, enCasa) / k.g) * 10) / 10,
     });
   }
   items.sort((a, b) => (b.unidades > 0 ? 1 : 0) - (a.unidades > 0 ? 1 : 0) || a.nombre.localeCompare(b.nombre));
