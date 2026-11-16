@@ -70,16 +70,35 @@ export function Tarjeta({ children, className = "", delay = 0, tono = "base", to
   );
 }
 
+/* Bloquea el scroll de la página mientras hay una hoja abierta (también en iPhone). */
+let hojasAbiertas = 0;
+let scrollGuardado = 0;
+function bloquearScroll() {
+  if (hojasAbiertas++ === 0) {
+    scrollGuardado = window.scrollY;
+    const b = document.body.style;
+    b.position = "fixed"; b.top = `-${scrollGuardado}px`; b.left = "0"; b.right = "0"; b.overflow = "hidden";
+  }
+  return () => {
+    if (--hojasAbiertas === 0) {
+      const b = document.body.style;
+      b.position = ""; b.top = ""; b.left = ""; b.right = ""; b.overflow = "";
+      window.scrollTo(0, scrollGuardado);
+    }
+  };
+}
+
 export function Hoja({ abierta, onClose, titulo, children, ancha = false }: { abierta: boolean; onClose: () => void; titulo: string; children: ReactNode; ancha?: boolean }) {
+  useEffect(() => (abierta ? bloquearScroll() : undefined), [abierta]);
   return (
     <AnimatePresence>
       {abierta && (
         <motion.div className="fixed inset-0 z-50 flex items-end justify-center md:items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+          <div className="absolute inset-0 touch-none bg-black/60 backdrop-blur-sm" onClick={onClose} />
           <motion.div
             role="dialog"
             aria-label={titulo}
-            className={`relative max-h-[92vh] w-full overflow-y-auto ${ancha ? "max-w-md md:max-w-4xl" : "max-w-md"} rounded-t-[24px] border border-line bg-bg p-5 pb-[max(env(safe-area-inset-bottom),1.25rem)] md:mb-[4vh] md:rounded-[24px]`}
+            className={`relative max-h-[92dvh] w-full overflow-y-auto overscroll-contain ${ancha ? "max-w-md md:max-w-4xl" : "max-w-md"} rounded-t-[24px] border border-line bg-bg p-5 pb-[max(env(safe-area-inset-bottom),1.25rem)] md:mb-[4vh] md:rounded-[24px]`}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}

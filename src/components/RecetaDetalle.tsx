@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ALIMENTOS } from "../data/alimentos";
 import { fotoDe, fotoReceta } from "../data/fotos";
 import { equivalentesDe } from "../data/equivalentes";
-import { costo, etiquetas, necesitaRefri, nutricion, type Receta, type TipoReceta } from "../data/recetas";
+import { costo, etiquetas, llevaCarneFresca, necesitaRefri, nutricion, type Receta, type TipoReceta } from "../data/recetas";
 import { hoyISO } from "../lib/calc";
 import { coincidenciaDespensa, useBrio, type TipoComida } from "../lib/store";
 import { tipoPorHora } from "./ComidasDia";
@@ -87,7 +87,7 @@ export default function RecetaDetalle({ r, factorInicial = 1, onRegistrado }: { 
         <h3 className="mt-1 font-serif text-2xl font-medium leading-tight md:text-3xl">{r.nombre}</h3>
         <div className="mt-2 flex flex-wrap gap-1.5">
           {etiquetas(r).map((e) => <span key={e} className="rounded-full bg-t-habit px-2.5 py-0.5 text-xs">{e}</span>)}
-          {necesitaRefri(r) && <span className="rounded-full bg-t-water px-2.5 py-0.5 text-xs">Sin refri: compra lo perecedero el mismo día</span>}
+          {(necesitaRefri(r) || llevaCarneFresca(r)) && <span className="rounded-full bg-t-water px-2.5 py-0.5 text-xs">Sin refri: compra {necesitaRefri(r) ? "los lácteos" : "la carne"} el mismo día</span>}
         </div>
 
         <div className="mt-4 grid grid-cols-4 gap-2 rounded-[14px] border border-line bg-surface p-3">

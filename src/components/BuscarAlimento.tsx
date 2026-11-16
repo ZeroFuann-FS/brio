@@ -18,7 +18,9 @@ export const calcular = (s: Seleccion) => {
   return { gramos, kcal: s.a.kcal * f, proteina: s.a.p * f, carbos: s.a.c * f, grasa: s.a.g * f };
 };
 
-const POPULARES = ["huevo", "tortilla", "pollo", "frijoles", "atún", "pan integral", "plátano", "aguacate"];
+const POPULARES = ["huevo", "tortilla", "pollo", "frijoles", "atún", "albóndigas", "plátano", "cerveza"];
+/** Marcas propias de supermercado (Walmart, Bodega Aurrera, Sam's, Soriana): están en productos de marca. */
+const MARCAS = ["Great Value", "Aurrera", "Member's Mark", "Soriana"];
 const GRAMOS: Porcion = { t: "gramos", g: 1 };
 const COLOR_CAT: Record<string, string> = {
   "Huevo y lácteos": "bg-[#fdf0c4] text-[#7a5b00]", "Carnes y pescado": "bg-[#ffd9cc] text-[#8a2d0b]",
@@ -41,7 +43,7 @@ function Miniatura({ a }: { a: Alimento }) {
 type Vista = "buscar" | "escanear" | "crear";
 
 /** Buscador tipo Fitia: base genérica + capturados en Brío + productos de marca (Open Food Facts) + escáner. */
-export default function BuscarAlimento({ onAgregar }: { onAgregar: (s: Seleccion) => void }) {
+export default function BuscarAlimento({ onAgregar, onBuscando }: { onAgregar: (s: Seleccion) => void; onBuscando?: (ocupado: boolean) => void }) {
   const conCuenta = useSync((s) => s.estado) !== "sin-cuenta";
   const [vista, setVista] = useState<Vista>("buscar");
   const [codigo, setCodigo] = useState<string | undefined>();
@@ -55,12 +57,18 @@ export default function BuscarAlimento({ onAgregar }: { onAgregar: (s: Seleccion
   const abort = useRef<AbortController | null>(null);
 
   const locales = q.trim().length >= 2 ? buscarLocal(q) : [];
+  const ocupado = q.trim().length > 0 || !!sel || vista !== "buscar";
+  useEffect(() => { onBuscando?.(ocupado); }, [ocupado, onBuscando]);
 
   useEffect(() => {
     setMarca({ estado: "idle", items: [] }); abort.current?.abort();
     if (q.trim().length < 2) { setComunidad([]); return; }
     const t = setTimeout(() => { buscarComunidad(q).then(setComunidad).catch(() => setComunidad([])); }, 300);
-    return () => clearTimeout(t);
+    // Pocos resultados genéricos (o se escribió una marca): busca solo en productos de marca
+    const pocos = q.trim().length >= 3 && buscarLocal(q).length < 3;
+    const tm = pocos ? setTimeout(() => { buscarMarca(); }, 800) : undefined;
+    return () => { clearTimeout(t); if (tm) clearTimeout(tm); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
 
   const buscarMarca = async () => {
@@ -161,7 +169,7 @@ export default function BuscarAlimento({ onAgregar }: { onAgregar: (s: Seleccion
   return (
     <div>
       <div className="flex gap-2">
-        <input className={inputCls} placeholder="Busca: huevo, tortilla, atún Dolores…" value={q} onChange={(e) => setQ(e.target.value)} autoFocus />
+        <input className={inputCls} placeholder="Busca: huevo, albóndigas, avena Great Value…" value={q} onChange={(e) => setQ(e.target.value)} autoFocus />
         <button onClick={() => setVista("escanear")} aria-label="Escanear código de barras" title="Escanear código de barras"
           className="grid h-[50px] w-[50px] shrink-0 place-items-center rounded-[14px] border border-line bg-surface">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13 8v8M17 8v8" /></svg>
@@ -173,6 +181,9 @@ export default function BuscarAlimento({ onAgregar }: { onAgregar: (s: Seleccion
         <div className="mt-3 flex flex-wrap gap-2">
           {POPULARES.map((p) => <button key={p} onClick={() => setQ(p)} className="rounded-full border border-line bg-surface px-3 py-1.5 text-sm text-muted hover:text-ink">{p}</button>)}
         </div>
+      )}
+      {!hayTexto && (
+        <p className="mt-3 text-xs text-muted">¿Compras en Walmart, Aurrera o Sam's? Escribe el producto con su marca ({MARCAS.join(", ")}) o escanea el código de barras.</p>
       )}
 
       {hayTexto && (

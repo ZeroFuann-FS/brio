@@ -46,13 +46,15 @@ export default function ComidasDia({ delay = 0, className = "", tour }: { delay?
   const [tipo, setTipo] = useState<TipoComida>(tipoPorHora());
   const [plato, setPlato] = useState<ItemPlato[]>([]);
   const [usarDespensa, setUsarDespensa] = useState(true);
+  const [buscando, setBuscando] = useState(false);
+  const [verPlato, setVerPlato] = useState(false);
   const vacio = { nombre: "", kcal: "", proteina: "", carbos: "", grasa: "" };
   const [f, setF] = useState(vacio);
   const [texto, setTexto] = useState("");
   const [ia, setIa] = useState<{ estado: "idle" | "pensando" | "listo" | "error"; r?: AnalisisIA; error?: string }>({ estado: "idle" });
 
   const abrir = () => { setTipo(tipoPorHora()); setModo("buscar"); setHoja(true); };
-  const cerrar = (msg?: string) => { setHoja(false); setPlato([]); setF(vacio); setTexto(""); setIa({ estado: "idle" }); if (msg) setToast(msg); };
+  const cerrar = (msg?: string) => { setHoja(false); setPlato([]); setVerPlato(false); setF(vacio); setTexto(""); setIa({ estado: "idle" }); if (msg) setToast(msg); };
 
   /* ----- Plato (alimentos buscados) ----- */
   const totPlato = plato.reduce((a, it) => {
@@ -140,21 +142,6 @@ export default function ComidasDia({ delay = 0, className = "", tour }: { delay?
           ))}
         </div>
 
-        {/* Recientes */}
-        {recientes.length > 0 && !plato.length && (
-          <div className="mt-4">
-            <p className="lab mb-2">Recientes · un toque y listo</p>
-            <div className="flex flex-wrap gap-2">
-              {recientes.map((r) => (
-                <button key={r.nombre} onClick={() => { addComida(hoy, { ...r, tipo }); cerrar(`${r.nombre} registrado`); }}
-                  className="rounded-full border border-line bg-surface px-3 py-1.5 text-sm hover:border-line-strong">
-                  {r.nombre} <span className="num text-muted">· {r.kcal}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Modos */}
         <div className="mt-4 grid gap-1 rounded-[14px] border border-line bg-surface p-1" style={{ gridTemplateColumns: `repeat(${MODOS.length}, 1fr)` }}>
           {MODOS.map((m) => (
@@ -165,37 +152,55 @@ export default function ComidasDia({ delay = 0, className = "", tour }: { delay?
           ))}
         </div>
 
+        {/* Recientes: una sola fila deslizable; se esconde al buscar */}
+        {modo === "buscar" && recientes.length > 0 && !plato.length && !buscando && (
+          <div className="mt-3">
+            <p className="lab mb-1.5">Recientes · un toque y listo</p>
+            <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none]">
+              {recientes.map((r) => (
+                <button key={r.nombre} onClick={() => { addComida(hoy, { ...r, tipo }); cerrar(`${r.nombre} registrado`); }}
+                  className="max-w-[200px] shrink-0 truncate rounded-full border border-line bg-surface px-3 py-1.5 text-sm hover:border-line-strong">
+                  {r.nombre} <span className="num text-muted">· {r.kcal}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="mt-4">
           {modo === "buscar" && (
             <>
+              <BuscarAlimento onBuscando={setBuscando} onAgregar={(s) => setPlato((p) => [...p, { ...s, id: Math.random().toString(36).slice(2, 9) }])} />
+              <p className="mt-4 text-[11px] leading-relaxed text-muted">Base genérica con valores de referencia de USDA FoodData Central (dominio público). Productos de marca de Open Food Facts (ODbL).</p>
+
+              {/* Tu plato: barra fija abajo; se abre para ver el detalle */}
               {plato.length > 0 && (
-                <div className="mb-4 rounded-[16px] border border-line bg-t-food p-3.5">
-                  <p className="lab">Tu plato</p>
-                  <ul className="mt-1">
-                    {plato.map((it) => (
-                      <li key={it.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-2 border-b border-line py-2 text-sm last:border-b-0">
-                        <span className="min-w-0 truncate">{it.a.n.split(" · ")[0]} <span className="text-muted">· {it.cantidad} {it.porcion.t === "gramos" ? "g" : it.porcion.t}</span></span>
-                        <span className="num text-base">{Math.round(calcularSel(it).kcal)}</span>
-                        <button onClick={() => setPlato((p) => p.filter((x) => x.id !== it.id))} className="px-1 text-muted hover:text-ember" aria-label="Quitar">✕</button>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-2 grid grid-cols-4 gap-2 border-t border-line-strong pt-2">
-                    {[["kcal", totPlato.kcal], ["Prot", totPlato.proteina], ["Carb", totPlato.carbos], ["Grasa", totPlato.grasa]].map(([l, v]) => (
-                      <div key={l as string}><p className="lab">{l}</p><p className="num text-xl">{Math.round(v as number)}</p></div>
-                    ))}
-                  </div>
+                <div className="sticky bottom-0 z-10 -mx-5 mt-4 border-t border-line-strong bg-bg px-5 pt-3 shadow-[0_-8px_24px_rgba(0,0,0,0.12)]">
+                  <button onClick={() => setVerPlato((v) => !v)} className="flex w-full items-center justify-between text-left" aria-expanded={verPlato}>
+                    <span><span className="lab block">Tu plato · {plato.length} {plato.length === 1 ? "alimento" : "alimentos"}</span>
+                      <span className="num text-xl">{Math.round(totPlato.kcal)} kcal <small className="text-sm text-muted">· {Math.round(totPlato.proteina)} g prot</small></span></span>
+                    <span className="lab">{verPlato ? "Ocultar" : "Ver detalle"}</span>
+                  </button>
+                  {verPlato && (
+                    <ul className="mt-1 max-h-[30dvh] overflow-y-auto">
+                      {plato.map((it) => (
+                        <li key={it.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-2 border-b border-line py-2 text-sm last:border-b-0">
+                          <span className="min-w-0 truncate">{it.a.n.split(" · ")[0]} <span className="text-muted">· {it.cantidad} {it.porcion.t === "gramos" ? "g" : it.porcion.t}</span></span>
+                          <span className="num text-base">{Math.round(calcularSel(it).kcal)}</span>
+                          <button onClick={() => setPlato((p) => p.filter((x) => x.id !== it.id))} className="px-1 text-muted hover:text-ember" aria-label="Quitar">✕</button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   {descuentos.length > 0 && (
-                    <label className="mt-3 flex items-start gap-2.5 text-sm">
+                    <label className="mt-2 flex items-start gap-2.5 text-xs">
                       <input type="checkbox" checked={usarDespensa} onChange={(e) => setUsarDespensa(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--lime)]" />
                       <span>Descontar de mi despensa: {descuentos.map((d) => `${d.cuanto} ${d.item.unidad} de ${d.item.nombre.toLowerCase()}`).join(", ")}</span>
                     </label>
                   )}
-                  <button onClick={registrarPlato} className={`${btnPrimario} mt-3 w-full`}>Registrar plato</button>
+                  <button onClick={registrarPlato} className={`${btnPrimario} mt-2 w-full`}>Registrar plato</button>
                 </div>
               )}
-              <BuscarAlimento onAgregar={(s) => setPlato((p) => [...p, { ...s, id: Math.random().toString(36).slice(2, 9) }])} />
-              <p className="mt-4 text-[11px] leading-relaxed text-muted">Base genérica con valores de referencia de USDA FoodData Central (dominio público). Productos de marca de Open Food Facts (ODbL).</p>
             </>
           )}
 

@@ -4,7 +4,7 @@
  * Ingrediente: [id de alimento, gramos, texto]. Id vacío = "al gusto" (no suma calorías).
  */
 import { ALIMENTOS } from "./alimentos";
-import { COMPRAS, PERECEDEROS } from "./compras";
+import { CARNE_FRESCA, COMPRAS, PERECEDEROS } from "./compras";
 
 export type TipoReceta = "desayuno" | "comida" | "cena" | "colacion";
 export type Equipo = "estufa" | "air fryer" | "microondas" | "licuadora" | "horno" | "ninguno";
@@ -24,7 +24,7 @@ const R = (id: string, nombre: string, tipos: TipoReceta[], min: number, equipo:
   ({ id, nombre, tipos, min, equipo, ing, pasos });
 const SAL: Ingrediente = ["", 0, "Sal y pimienta al gusto"];
 
-export const RECETAS: Receta[] = [
+const BASE: Receta[] = [
   /* ===================== DESAYUNOS ===================== */
   R("huevos-mexicana", "Huevos a la mexicana con tortillas", ["desayuno"], 12, ["estufa"], [
     ["huevo", 150, "3 huevos"], ["jitomate", 60, "½ jitomate picado"], ["cebolla", 20, "Un trozo de cebolla"], ["serrano", 6, "1 chile serrano"],
@@ -545,6 +545,36 @@ export function costo(r: Receta, factor = 1): number {
 }
 
 export const necesitaRefri = (r: Receta) => r.ing.some(([id]) => PERECEDEROS.has(id));
+/** Lleva carne o pollo crudo: sin refri se puede, pero comprándolo el mismo día. */
+export const llevaCarneFresca = (r: Receta) => r.ing.some(([id]) => CARNE_FRESCA.has(id));
+
+/* ---------- Sin aceite ---------- */
+const SIN_ACEITE_TXT = "Sin aceite: sartén antiadherente o un chorrito de agua";
+const quitarAceite = (t: string) => t
+  .replace(/ en el aceite/g, " en sartén antiadherente")
+  .replace(/ con unas gotas de aceite/g, " antiadherente, sin aceite")
+  .replace(/, aceite( de oliva)? y /g, " y ")
+  .replace(/ con aceite y /g, " con ")
+  .replace(/ con aceite, /g, " con ")
+  .replace(/aceite( de oliva)?, /g, "");
+function sinAceite(r: Receta): Receta {
+  if (!r.ing.some(([id, , t]) => id === "aceite" || (!id && /aceite/i.test(t)))) return r;
+  return {
+    ...r,
+    ing: r.ing.map(([id, g, t]) => (id === "aceite" ? ["", 0, SIN_ACEITE_TXT] : !id ? [id, g, quitarAceite(t)] : [id, g, t]) as Ingrediente),
+    pasos: r.pasos.map(quitarAceite),
+  };
+}
+
+/** Recetario activo (cambia si la persona no cocina con aceite). */
+export let RECETAS: Receta[] = BASE;
+let sinAceiteActivo = false;
+export function configurarRecetas(o: { sinAceite?: boolean }) {
+  const v = !!o.sinAceite;
+  if (v === sinAceiteActivo) return;
+  sinAceiteActivo = v;
+  RECETAS = v ? BASE.map(sinAceite) : BASE;
+}
 
 export function etiquetas(r: Receta): string[] {
   const n = nutricion(r);
@@ -552,7 +582,7 @@ export function etiquetas(r: Receta): string[] {
   if (n.proteina >= 25 || (n.kcal > 0 && (n.proteina * 4) / n.kcal >= 0.3)) e.push("Alta en proteína");
   if (costo(r) <= 35) e.push("Económica");
   if (r.min <= 10) e.push("Rápida");
-  if (!necesitaRefri(r)) e.push("Sin refri");
+  if (!necesitaRefri(r) && !llevaCarneFresca(r)) e.push("Sin refri");
   return e;
 }
 

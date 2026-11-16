@@ -4,7 +4,7 @@
  */
 import { ALIMENTOS } from "../data/alimentos";
 import { COMPRAS } from "../data/compras";
-import { RECETAS, costo, necesitaRefri, nutricion, recetaPorId, type Equipo, type Receta, type TipoReceta } from "../data/recetas";
+import { RECETAS, costo, llevaCarneFresca, necesitaRefri, nutricion, recetaPorId, type Equipo, type Receta, type TipoReceta } from "../data/recetas";
 import type { ComidaMenu, ItemDespensa, MenuGuardado } from "./store";
 import { hoyISO, type QuienCocina } from "./calc";
 import { expandirGustos } from "../data/gustos";
@@ -62,13 +62,31 @@ export function principal(r: Receta): string {
   return mejor;
 }
 
-interface Contexto { usos: Map<string, number>; hoy: Set<string>; principalesHoy: Map<string, number>; ingSemana: Map<string, number> }
+interface Contexto { usos: Map<string, number>; hoy: Set<string>; principalesHoy: Map<string, number>; ingSemana: Map<string, number>; polloHoy?: number }
+
+/* ---------- Pollo de pollería ---------- */
+/** En la pollería se compra por ½ pechuga (~190 g ya cocida); no venden 1/8. */
+export const MEDIA_PECHUGA = 190;
+const POLLO = new Set(["pechuga-cocida", "pechuga-cruda"]);
+const gramosPollo = (r: Receta, factor = 1) => r.ing.reduce((t, [id, g]) => t + (POLLO.has(id) ? (id === "pechuga-cruda" ? g * 0.7 : g) * factor : 0), 0);
+/** Lo que sobra de la última ½ pechuga comprada. */
+const sobraPollo = (g: number) => (g > 0 ? Math.ceil(g / MEDIA_PECHUGA - 0.1) * MEDIA_PECHUGA - g : 0);
+
+export function polloDelDia(comidas: ComidaMenu[]): { gramos: number; medias: number; sobra: number } | null {
+  const gramos = Math.round(comidas.reduce((t, c) => { const r = recetaPorId(c.receta); return r ? t + gramosPollo(r, c.factor) : t; }, 0));
+  if (!gramos) return null;
+  const medias = Math.max(1, Math.ceil(gramos / MEDIA_PECHUGA - 0.1));
+  return { gramos, medias, sobra: Math.max(0, medias * MEDIA_PECHUGA - gramos) };
+}
+export const textoPechugas = (medias: number) => medias === 1 ? "½ pechuga" : medias % 2 === 0 ? `${medias / 2} pechuga${medias > 2 ? "s" : ""} entera${medias > 2 ? "s" : ""}` : `${Math.floor(medias / 2)}½ pechugas`;
 
 function puntaje(r: Receta, o: OpcionesMenu, ctx: Contexto, pesoCosto: number) {
   const { usos, hoy } = ctx;
   const ids = r.ing.map(([id]) => id).filter(Boolean);
   let p = Math.random() * 1.5;
-  p -= (ctx.principalesHoy.get(principal(r)) ?? 0) * 7;                      // no repetir proteína el mismo día
+  const gPollo = gramosPollo(r);
+  if (gPollo && (ctx.polloHoy ?? 0) > 0 && sobraPollo(ctx.polloHoy!) >= 50) p += 9;  // usar el pollo que sobró de la ½ pechuga
+  else p -= (ctx.principalesHoy.get(principal(r)) ?? 0) * 7;                 // no repetir proteína el mismo día
   p -= Math.max(0, (ctx.ingSemana.get(principal(r)) ?? 0) - 5) * 1.5;         // ni abusar en la semana
   p += ids.filter((id) => (ctx.ingSemana.get(id) ?? 0) > 0).length * 0.6 * pesoCosto; // reusar ingredientes = comprar menos
   const gustos = expandirGustos(o.gustos);
@@ -78,7 +96,7 @@ function puntaje(r: Receta, o: OpcionesMenu, ctx: Contexto, pesoCosto: number) {
   const n = nutricion(r);
   p += n.kcal ? ((n.proteina * 4) / n.kcal) * 8 : 0;          // premia la proteína
   p -= (costo(r) / 10) * pesoCosto;
-  if (!o.equipo.includes("Refrigerador") && necesitaRefri(r)) p -= 4;
+  if (!o.equipo.includes("Refrigerador") && llevaCarneFresca(r)) p -= 1.5;  // sin refri se compra el mismo día
   if (hoy.has(r.id)) p -= 20;
   p -= (usos.get(r.id) ?? 0) * 4;
   return p;
@@ -86,7 +104,11 @@ function puntaje(r: Receta, o: OpcionesMenu, ctx: Contexto, pesoCosto: number) {
 
 function candidatos(tipo: TipoReceta, o: OpcionesMenu) {
   const evitar = expandirGustos(o.evitar);
-  return RECETAS.filter((r) => r.tipos.includes(tipo) && puedeHacerse(r, o.equipo) && !r.ing.some(([id]) => evitar.includes(id)));
+  const base = RECETAS.filter((r) => r.tipos.includes(tipo) && puedeHacerse(r, o.equipo) && !r.ing.some(([id]) => evitar.includes(id)));
+  if (o.equipo.includes("Refrigerador")) return base;
+  // Sin refri: nada de lácteos ni embutidos que se echan a perder (si no queda nada, se permiten)
+  const sinRefri = base.filter((r) => !necesitaRefri(r));
+  return sinRefri.length >= 3 ? sinRefri : base;
 }
 
 function elegir(tipo: TipoReceta, o: OpcionesMenu, ctx: Contexto, pesoCosto: number, excluir?: string): Receta | undefined {
@@ -102,6 +124,7 @@ function anotar(ctx: Contexto, r: Receta) {
   const pr = principal(r);
   ctx.principalesHoy.set(pr, (ctx.principalesHoy.get(pr) ?? 0) + 1);
   for (const [id] of r.ing) if (id) ctx.ingSemana.set(id, (ctx.ingSemana.get(id) ?? 0) + 1);
+  ctx.polloHoy = (ctx.polloHoy ?? 0) + gramosPollo(r);
 }
 
 /** Ajusta las porciones del día para acercarse a la meta de calorías. */
@@ -155,25 +178,40 @@ export function generarMenuReglas(o: OpcionesMenu): MenuGuardado {
   return mejor!;
 }
 
-/** Cambia una comida por otra receta del mismo tipo. */
 /** kcal sugeridas para una comida en casa. */
 export const kcalCasa = (c: ComidaMenu) => (c.casa ? c.factor : 0);
 
-export function cambiarComida(m: MenuGuardado, di: number, ci: number, o: OpcionesMenu): MenuGuardado {
-  const ctx: Contexto = { usos: new Map(), hoy: new Set(), principalesHoy: new Map(), ingSemana: new Map() };
+function contextoSin(m: MenuGuardado, di: number, ci: number): Contexto {
+  const ctx: Contexto = { usos: new Map(), hoy: new Set(), principalesHoy: new Map(), ingSemana: new Map(), polloHoy: 0 };
   m.dias.forEach((d, i) => d.comidas.forEach((c, j) => {
     const rr = recetaPorId(c.receta);
     if (!rr || (i === di && j === ci)) return;
     ctx.usos.set(rr.id, (ctx.usos.get(rr.id) ?? 0) + 1);
     for (const [id] of rr.ing) if (id) ctx.ingSemana.set(id, (ctx.ingSemana.get(id) ?? 0) + 1);
-    if (i === di) { ctx.hoy.add(rr.id); const pr = principal(rr); ctx.principalesHoy.set(pr, (ctx.principalesHoy.get(pr) ?? 0) + 1); }
+    if (i === di) { ctx.hoy.add(rr.id); const pr = principal(rr); ctx.principalesHoy.set(pr, (ctx.principalesHoy.get(pr) ?? 0) + 1); ctx.polloHoy! += gramosPollo(rr, c.factor); }
   }));
+  return ctx;
+}
+
+/** Opciones para cambiar una comida: todas las recetas posibles de ese tipo, las que mejor encajan primero. */
+export function alternativas(m: MenuGuardado, di: number, ci: number, o: OpcionesMenu): Receta[] {
   const actual = m.dias[di].comidas[ci];
-  if (actual.casa) return m;
-  const r = elegir(actual.tipo, o, ctx, 1, actual.receta);
+  const ctx = contextoSin(m, di, ci);
+  return candidatos(actual.tipo, o)
+    .filter((r) => r.id !== actual.receta)
+    .map((r) => ({ r, s: puntaje(r, o, ctx, 1) }))
+    .sort((a, b) => b.s - a.s)
+    .map((x) => x.r);
+}
+
+/** Pone una receta elegida en lugar de otra, con una porción de calorías parecidas. */
+export function reemplazarComida(m: MenuGuardado, di: number, ci: number, recetaId: string, kcalMeta?: number): MenuGuardado {
+  const actual = m.dias[di].comidas[ci];
+  const r = recetaPorId(recetaId);
   if (!r) return m;
   const k = nutricion(r).kcal || 1;
-  const kActual = nutricion(recetaPorId(actual.receta)!, actual.factor).kcal;
+  const prev = recetaPorId(actual.receta);
+  const kActual = actual.casa ? actual.factor : prev ? nutricion(prev, actual.factor).kcal : (kcalMeta ?? k);
   const factor = Math.min(1.6, Math.max(0.6, Math.round((kActual / k) * 10) / 10));
   const dias = m.dias.map((d, i) => i !== di ? d : { ...d, comidas: d.comidas.map((c, j) => j !== ci ? c : { tipo: c.tipo, receta: r.id, factor }) });
   return { ...m, dias };
@@ -244,6 +282,7 @@ export function listaSuper(m: MenuGuardado, despensa: ItemDespensa[]): { items: 
 /** Unidad de despensa equivalente a una unidad de compra. */
 export function unidadDespensa(i: ItemSuper): { cantidad: number; unidad: string } {
   const u = i.unidad;
+  if (u === "medias pechugas") return { cantidad: i.unidades * 280, unidad: "g" };
   if (u.startsWith("pzas")) return { cantidad: i.unidades, unidad: "pzas" };
   if (u === "latas") return { cantidad: i.unidades, unidad: "latas" };
   if (u.startsWith("kg")) return { cantidad: i.unidades, unidad: "kg" };

@@ -19,8 +19,9 @@ export const COMPRAS: Record<string, Compra> = {
   requeson: { unidad: "bote 450 g", g: 450, precio: 45, nombre: "Requesón" },
   "queso-chihuahua": { unidad: "paquete 400 g", g: 400, precio: 85, nombre: "Queso manchego" },
   crema: { unidad: "bote 200 ml", g: 200, precio: 22 },
-  "pechuga-cocida": { unidad: "kg (cruda)", g: 750, precio: 130, nombre: "Pechuga de pollo" },
-  "pechuga-cruda": { unidad: "kg", g: 1000, precio: 130, nombre: "Pechuga de pollo" },
+  // En pollerías se vende por ½ pechuga (~300 g cruda, ~190 g cocida) o pechuga entera
+  "pechuga-cocida": { unidad: "medias pechugas", g: 190, precio: 42, nombre: "Pechuga de pollo" },
+  "pechuga-cruda": { unidad: "medias pechugas", g: 280, precio: 42, nombre: "Pechuga de pollo" },
   muslo: { unidad: "kg", g: 650, precio: 75, nombre: "Pierna y muslo de pollo" },
   bistec: { unidad: "kg (crudo)", g: 700, precio: 185, nombre: "Bistec de res" },
   "molida-90": { unidad: "kg (cruda)", g: 750, precio: 150, nombre: "Carne molida de res" },
@@ -116,6 +117,10 @@ export const COMPRAS: Record<string, Compra> = {
 };
 
 /** Ingredientes que se echan a perder rápido sin refrigerador. */
+/** Carne y pescado crudos: sin refri hay que comprarlos el mismo día que se cocinan. */
+export const CARNE_FRESCA = new Set([
+  "pechuga-cocida", "pechuga-cruda", "muslo", "bistec", "molida-90", "molida-80", "chuleta",
+]);
 export const PERECEDEROS = new Set([
   "leche-entera", "leche-light", "yogur", "yogur-griego", "queso-panela", "queso-fresco", "queso-oaxaca", "queso-chihuahua", "requeson", "crema",
   "jamon-pavo", "salchicha-pavo", "tilapia", "camaron", "carne-asar", "milanesa-res", "milanesa-pollo",

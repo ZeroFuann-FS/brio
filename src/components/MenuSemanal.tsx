@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { tienePlanMenu, type Metas, type Perfil, type PrefsComida, type QuienCocina } from "../lib/calc";
-import { nutricion, recetaPorId, type Receta, type TipoReceta } from "../data/recetas";
-import { cambiarComida, generarMenuReglas, kcalCasa, listaSuper, quienCocina, totalesDia, unidadDespensa, type OpcionesMenu } from "../lib/menu";
+import { configurarRecetas, etiquetas, nutricion, recetaPorId, type Receta, type TipoReceta } from "../data/recetas";
+import { alternativas, generarMenuReglas, kcalCasa, listaSuper, polloDelDia, quienCocina, reemplazarComida, textoPechugas, totalesDia, unidadDespensa, type OpcionesMenu } from "../lib/menu";
 import { useBrio } from "../lib/store";
 import Gustos from "./Gustos";
 import RecetaDetalle, { MiniReceta, useRegistrarReceta } from "./RecetaDetalle";
@@ -13,7 +13,7 @@ const CORTO: Record<string, string> = { Lunes: "Lun", Martes: "Mar", Miércoles:
 const COMIDAS: { id: TipoReceta; t: string }[] = [{ id: "desayuno", t: "Desayuno" }, { id: "comida", t: "Comida" }, { id: "cena", t: "Cena" }];
 const EQUIPO = ["Estufa", "Microondas", "Air fryer", "Horno", "Licuadora", "Refrigerador"];
 const NOMBRE_TIPO: Record<TipoReceta, string> = { desayuno: "Desayuno", comida: "Comida", cena: "Cena", colacion: "Colación" };
-const BASE: PrefsComida = { presupuesto: 500, comidas: ["desayuno", "comida", "cena"], equipo: ["Estufa", "Microondas"], preferencias: "", colaciones: 1, dias: DIAS.slice(0, 7), gustos: [], evitar: [] };
+const BASE: PrefsComida = { presupuesto: 500, comidas: ["desayuno", "comida", "cena"], equipo: ["Estufa", "Microondas", "Refrigerador"], preferencias: "", colaciones: 1, dias: DIAS.slice(0, 7), gustos: [], evitar: [] };
 const SIGUIENTE: Record<QuienCocina, QuienCocina> = { yo: "casa", casa: "no", no: "yo" };
 const CELDA: Record<QuienCocina, { t: string; cls: string }> = {
   yo: { t: "Yo", cls: "border-lime bg-lime text-on-lime" },
@@ -41,6 +41,7 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
   const [gustosAbierto, setGustosAbierto] = useState(false);
   const [dia, setDia] = useState(0);
   const [receta, setReceta] = useState<{ r: Receta; factor: number } | null>(null);
+  const [cambio, setCambio] = useState<{ ci: number; n: number } | null>(null);
   const [toast, setToast] = useToast();
   const registrar = useRegistrarReceta();
 
@@ -60,6 +61,7 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
 
   const generar = () => {
     setPrefsComida({ ...p, favoritas: perfil.prefsComida?.favoritas });
+    configurarRecetas({ sinAceite: p.sinAceite });
     setMenu(generarMenuReglas(opciones()));
     setDia(0); setEditando(false);
   };
@@ -122,6 +124,13 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
             <div>
               <p className="lab mb-2">¿Con qué cocinas?</p>
               <div className="flex flex-wrap gap-2">{EQUIPO.map((c) => <Chip key={c} on={p.equipo.includes(c)} onClick={() => toggle("equipo", c)}>{c}</Chip>)}</div>
+              {!p.equipo.includes("Refrigerador") && <p className="mt-2 text-xs text-muted">Sin refri: Brío evita lácteos y embutidos, y te avisa cuándo comprar la carne el mismo día.</p>}
+            </div>
+            <div>
+              <p className="lab mb-2">¿Cómo cocinas?</p>
+              <div className="flex flex-wrap gap-2">
+                <Chip on={!!p.sinAceite} onClick={() => setP((x) => ({ ...x, sinAceite: !x.sinAceite }))}>No cocino con aceite</Chip>
+              </div>
             </div>
             <label className="block">
               <span className="lab mb-1.5 block">Presupuesto para el súper</span>
@@ -156,6 +165,8 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
   const d = m.dias[Math.min(dia, m.dias.length - 1)];
   const tot = totalesDia(d.comidas);
   const enCasa = d.comidas.reduce((a, c) => a + kcalCasa(c), 0);
+  const pollo = polloDelDia(d.comidas);
+  const opcionesCambio = cambio ? alternativas(m, dia, cambio.ci, opciones()) : [];
   const lista = listaSuper(m, despensa);
   const porComprar = lista.items.filter((i) => i.unidades > 0);
   const yaTienes = lista.items.filter((i) => i.unidades === 0);
@@ -228,7 +239,7 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
                     </span>
                   </button>
                   <div className="mt-2 flex gap-2 pl-[56px]">
-                    <button onClick={() => setMenu(cambiarComida(m, dia, ci, opciones()))} className="rounded-full border border-line px-3 py-1 text-xs text-muted hover:text-ink">Cambiar</button>
+                    <button onClick={() => setCambio({ ci, n: 8 })} className="rounded-full border border-line px-3 py-1 text-xs text-muted hover:text-ink">Cambiar</button>
                     <button onClick={() => { const k = registrar(r, c.factor, c.tipo === "colacion" ? "snack" : c.tipo); setToast(k ? "Registrado y descontado de tu despensa" : "Registrado hoy"); }}
                       className="rounded-full border border-line px-3 py-1 text-xs text-muted hover:text-ink">Registrar hoy</button>
                   </div>
@@ -237,6 +248,12 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
             })}
           </motion.ul>
         </AnimatePresence>
+        {pollo && (
+          <p className="mt-2 rounded-[10px] bg-surface px-3 py-2 text-xs leading-relaxed text-muted">
+            <b className="text-ink">Pollo del día: ~{pollo.gramos} g.</b> En la pollería pide {textoPechugas(pollo.medias)}
+            {pollo.sobra >= 40 ? `; te sobran ~${pollo.sobra} g: agrégalos a otra comida de hoy${p.equipo.includes("Refrigerador") ? " o guárdalos en el refri" : ", sin refri no duran para mañana"}.` : ", te alcanza justo."}
+          </p>
+        )}
       </Tarjeta>
 
       <Tarjeta delay={0.05}>
@@ -267,6 +284,33 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
 
       <Hoja abierta={!!receta} onClose={() => setReceta(null)} titulo="Receta">
         {receta && <RecetaDetalle r={receta.r} factorInicial={receta.factor} onRegistrado={(msg) => { setReceta(null); setToast(msg); }} />}
+      </Hoja>
+      <Hoja abierta={!!cambio} onClose={() => setCambio(null)} titulo="Cambiar por…">
+        {cambio && (
+          <>
+            <p className="mb-2 text-xs text-muted">{opcionesCambio.length} opciones de {NOMBRE_TIPO[d.comidas[cambio.ci]?.tipo ?? "comida"].toLowerCase()}. Arriba las que mejor van con tu día y tus gustos; la porción se ajusta a tus calorías.</p>
+            <ul>
+              {opcionesCambio.slice(0, cambio.n).map((r) => {
+                const n = nutricion(r);
+                return (
+                  <li key={r.id} className="border-b border-line last:border-b-0">
+                    <button onClick={() => { setMenu(reemplazarComida(m, dia, cambio.ci, r.id)); setCambio(null); setToast(`Cambiado por ${r.nombre}`); }}
+                      className="flex w-full min-w-0 items-center gap-3 py-2.5 text-left">
+                      <MiniReceta r={r} size={44} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-medium">{r.nombre}</span>
+                        <span className="lab !tracking-[0.06em]">{n.kcal} kcal · {n.proteina} g prot · {r.min} min{etiquetas(r).includes("Sin refri") ? " · sin refri" : ""}</span>
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            {opcionesCambio.length > cambio.n && (
+              <button onClick={() => setCambio({ ...cambio, n: cambio.n + 12 })} className={`${btnSecundario} mt-3 w-full`}>Ver más opciones</button>
+            )}
+          </>
+        )}
       </Hoja>
       <Toast texto={toast} />
     </>

@@ -9,6 +9,7 @@ export interface PrefsComida {
   gustos?: string[];        // ids de alimentos que le gustan
   evitar?: string[];        // ids de alimentos que no come
   favoritas?: string[];     // ids de recetas favoritas
+  sinAceite?: boolean;      // no cocina con aceite
   /** Quién cocina cada comida: por día y tipo ("yo" por defecto, "casa" = se come lo que hay en casa o fuera, "no" = no se hace). */
   horario?: Record<string, Partial<Record<string, QuienCocina>>>;
 }

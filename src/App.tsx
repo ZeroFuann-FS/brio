@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { configurarRecetas } from "./data/recetas";
 import type { Session } from "@supabase/supabase-js";
 import { AnimatePresence, motion } from "motion/react";
 import Intro from "./components/Intro";
@@ -38,6 +39,7 @@ type Tab = (typeof TABS)[number]["id"];
 
 export default function App() {
   const perfil = useBrio((s) => s.perfil);
+  configurarRecetas({ sinAceite: perfil?.prefsComida?.sinAceite });   // antes de pintar recetas y menú
   const pesos = useBrio((s) => s.pesos);
   const setPerfil = useBrio((s) => s.setPerfil);
   const [intro, setIntro] = useState(!introVisto());
