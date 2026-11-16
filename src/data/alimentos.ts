@@ -189,6 +189,35 @@ export const ALIMENTOS: Alimento[] = [
   A("sope", "Sope con frijol y queso", "Platillos", 230, 7, 28, 10, [{ t: "pieza", g: 110 }]),
   A("gordita", "Gordita rellena", "Platillos", 240, 9, 27, 11, [{ t: "pieza", g: 130 }]),
   A("frijoles-charros", "Frijoles charros", "Platillos", 110, 6, 11, 4.5, [{ t: "taza", g: 250 }]),
+  // Antojitos, comida de la calle y postres (estimados)
+  A("empanada-queso", "Empanada de queso (frita)", "Platillos", 330, 9, 30, 19, [{ t: "pieza", g: 90 }], "empanadas quesillo"),
+  A("empanada-carne", "Empanada de carne, pollo o picadillo (frita)", "Platillos", 300, 10, 28, 16, [{ t: "pieza", g: 100 }], "empanadas tinga"),
+  A("empanada-horneada", "Empanada horneada (queso, pollo o carne)", "Platillos", 280, 9, 33, 12, [{ t: "pieza", g: 100 }], "empanadas al horno"),
+  A("picada", "Picada veracruzana", "Platillos", 200, 6, 27, 8, [{ t: "pieza", g: 90 }], "picadas veracruz"),
+  A("garnacha", "Garnacha", "Platillos", 230, 8, 22, 12, [{ t: "pieza", g: 70 }], "garnachas veracruz orizaba"),
+  A("memela", "Memela", "Platillos", 220, 7, 28, 9, [{ t: "pieza", g: 120 }], "memelas tlacoyo"),
+  A("molote", "Molote", "Platillos", 300, 8, 30, 16, [{ t: "pieza", g: 80 }], "molotes"),
+  A("tamal-elote", "Tamal de elote", "Platillos", 220, 4, 32, 9, [{ t: "pieza", g: 120 }], "uchepo"),
+  A("pambazo", "Pambazo", "Platillos", 250, 9, 25, 13, [{ t: "pieza", g: 200 }]),
+  A("tlayuda", "Tlayuda", "Platillos", 240, 11, 27, 10, [{ t: "pieza", g: 350 }]),
+  A("taco-canasta", "Taco de canasta", "Platillos", 220, 7, 24, 11, [{ t: "taco", g: 60 }], "tacos sudados"),
+  A("burrito", "Burrito", "Platillos", 210, 10, 24, 8, [{ t: "pieza", g: 250 }]),
+  A("hot-dog", "Hot dog", "Platillos", 250, 9, 24, 13, [{ t: "pieza", g: 130 }], "jocho salchicha"),
+  A("sincronizada", "Sincronizada", "Platillos", 260, 13, 22, 13, [{ t: "pieza", g: 140 }]),
+  A("torta-milanesa", "Torta de milanesa", "Platillos", 240, 12, 26, 10, [{ t: "pieza", g: 330 }], "tortas"),
+  A("elote-preparado", "Elote preparado (mayonesa, queso y chile)", "Platillos", 180, 4, 22, 9, [{ t: "pieza", g: 200 }]),
+  A("esquite", "Esquite", "Platillos", 140, 3.5, 18, 6.5, [{ t: "vaso", g: 250 }], "esquites elote en vaso"),
+  A("hot-cakes", "Hot cakes", "Platillos", 230, 6, 32, 9, [{ t: "pieza", g: 70 }], "panqueques hotcakes"),
+  A("alitas", "Alitas (BBQ o búfalo)", "Platillos", 260, 20, 6, 17, [{ t: "pieza", g: 40 }, { t: "orden (10)", g: 400 }], "alas"),
+  A("boneless", "Boneless", "Platillos", 280, 15, 18, 16, [{ t: "orden", g: 200 }]),
+  A("sushi", "Sushi (rollo empanizado o natural)", "Platillos", 180, 6, 28, 5, [{ t: "rollo (8 piezas)", g: 250 }], "rollo"),
+  A("concha", "Concha", "Grasas y otros", 380, 7, 55, 15, [{ t: "pieza", g: 80 }], "pan dulce"),
+  A("dona", "Dona glaseada", "Grasas y otros", 420, 5, 50, 22, [{ t: "pieza", g: 60 }], "donas"),
+  A("pastel", "Pastel con betún", "Grasas y otros", 370, 4.5, 52, 16, [{ t: "rebanada", g: 100 }], "cumpleaños"),
+  A("flan", "Flan", "Grasas y otros", 150, 4, 24, 4.5, [{ t: "rebanada", g: 100 }]),
+  A("gelatina", "Gelatina de agua", "Grasas y otros", 60, 1.2, 14, 0, [{ t: "vaso", g: 150 }]),
+  A("arroz-leche", "Arroz con leche", "Grasas y otros", 130, 3.5, 22, 3, [{ t: "taza", g: 200 }]),
+  A("atole", "Atole", "Bebidas", 85, 2, 16, 1.5, [{ t: "vaso", g: 250 }], "champurrado"),
   A("tamal", "Tamal", "Platillos", 200, 6, 25, 9, [{ t: "pieza", g: 150 }]),
   A("torta-jamon", "Torta de jamón", "Platillos", 220, 10, 28, 8, [{ t: "pieza", g: 250 }]),
   A("pozole", "Pozole", "Platillos", 95, 6, 9, 4, [{ t: "plato", g: 400 }]),
@@ -200,22 +229,24 @@ export const ALIMENTOS: Alimento[] = [
 
 const normalizar = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
-/** Búsqueda local: todas las palabras deben aparecer en el nombre o los alias. */
+const VACIAS = new Set(["de", "del", "con", "sin", "la", "el", "los", "las", "y", "en", "a", "al", "un", "una"]);
+
+/** Búsqueda local: primero lo que tenga todas las palabras; si no hay, lo más parecido. */
 export function buscarLocal(q: string, max = 30): Alimento[] {
   // plurales: "tostadas" encuentra "tostada"
-  const palabras = normalizar(q).split(/\s+/).filter(Boolean).map((w) => (w.length > 4 && w.endsWith("s") ? w.slice(0, -1) : w));
+  // Sin palabras de relleno: "empanadas de queso" busca "empanada" y "queso"
+  const palabras = normalizar(q).split(/\s+/).filter((w) => w && !VACIAS.has(w)).map((w) => (w.length > 4 && w.endsWith("s") ? w.slice(0, -1) : w));
   if (!palabras.length) return [];
-  return ALIMENTOS
-    .map((a) => {
-      const texto = normalizar(`${a.n} ${a.alias ?? ""}`);
-      if (!palabras.every((w) => texto.includes(w))) return null;
-      const inicio = normalizar(a.n).startsWith(palabras[0]) ? 0 : 1;
-      return { a, inicio };
-    })
-    .filter((x): x is { a: Alimento; inicio: number } => !!x)
-    .sort((x, y) => x.inicio - y.inicio || x.a.n.length - y.a.n.length)
-    .slice(0, max)
-    .map((x) => x.a);
+  const puntuados = ALIMENTOS.map((a) => {
+    const texto = normalizar(`${a.n} ${a.alias ?? ""}`);
+    const n = palabras.filter((w) => texto.includes(w)).length;
+    return { a, n, inicio: normalizar(a.n).startsWith(palabras[0]) ? 0 : 1 };
+  });
+  const orden = (x: { a: Alimento; n: number; inicio: number }, y: typeof x) => y.n - x.n || x.inicio - y.inicio || x.a.n.length - y.a.n.length;
+  const todas = puntuados.filter((x) => x.n === palabras.length);
+  // Si nada tiene todas las palabras, muestra lo que tenga alguna (lo más parecido primero)
+  const lista = todas.length ? todas : puntuados.filter((x) => x.n > 0);
+  return lista.sort(orden).slice(0, max).map((x) => x.a);
 }
 
 export { normalizar };
