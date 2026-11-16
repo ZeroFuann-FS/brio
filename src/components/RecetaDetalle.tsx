@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { escalarTexto } from "../lib/porciones";
 import { ALIMENTOS } from "../data/alimentos";
 import { fotoDe, fotoReceta } from "../data/fotos";
 import { equivalentesDe } from "../data/equivalentes";
@@ -113,14 +114,14 @@ export default function RecetaDetalle({ r, factorInicial = 1, onRegistrado }: { 
 
       {/* Columna 2: ingredientes y pasos */}
       <div>
-        <p className="lab mb-1 mt-5 md:mt-0">Ingredientes</p>
+        <p className="lab mb-1 mt-5 md:mt-0">Ingredientes{factor !== 1 ? ` · para tu porción ×${factor.toFixed(1)}` : ""}</p>
         <ul>
           {r.ing.map(([id, g, t], i) => {
             const f = id ? fotoDe(id) : undefined;
             return (
               <li key={i} className="flex items-center gap-3 border-b border-line py-2 text-sm last:border-b-0">
                 {f ? <img src={f} alt="" loading="lazy" className="h-9 w-9 shrink-0 rounded-[8px] bg-white object-cover" /> : <span className="h-9 w-9 shrink-0" />}
-                <span className="flex-1">{t}</span>
+                <span className="flex-1">{escalarTexto(t, factor, g)}</span>
                 {g > 0 && <span className="num text-muted">{Math.round(g * factor)} g</span>}
               </li>
             );
