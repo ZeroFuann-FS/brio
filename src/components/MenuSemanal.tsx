@@ -9,6 +9,14 @@ import RecetaDetalle, { MiniReceta, useRegistrarReceta } from "./RecetaDetalle";
 import { Hoja, Tarjeta, Toast, btnPrimario, btnSecundario, ease, inputCls, useToast } from "./ui";
 
 const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+/** Nombre del día de hoy en el formato del menú ("Miércoles"). */
+const hoyNombre = () => DIAS[(new Date().getDay() + 6) % 7];
+/** Índice del día de hoy en el menú; si hoy no tiene menú, el siguiente que sí. */
+const indiceHoy = (dias: { dia: string }[]) => {
+  const h = DIAS.indexOf(hoyNombre());
+  for (let k = 0; k < 7; k++) { const i = dias.findIndex((x) => x.dia === DIAS[(h + k) % 7]); if (i !== -1) return i; }
+  return 0;
+};
 const CORTO: Record<string, string> = { Lunes: "Lun", Martes: "Mar", Miércoles: "Mié", Jueves: "Jue", Viernes: "Vie", Sábado: "Sáb", Domingo: "Dom" };
 const COMIDAS: { id: TipoReceta; t: string }[] = [{ id: "desayuno", t: "Desayuno" }, { id: "comida", t: "Comida" }, { id: "cena", t: "Cena" }];
 const EQUIPO = ["Estufa", "Microondas", "Air fryer", "Horno", "Licuadora", "Refrigerador"];
@@ -47,7 +55,7 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
   const menuValido = menu && Array.isArray(menu.dias) ? menu : null;
   const [editando, setEditando] = useState(!menuValido);
   const [gustosAbierto, setGustosAbierto] = useState(false);
-  const [dia, setDia] = useState(0);
+  const [dia, setDia] = useState(() => (menuValido ? indiceHoy(menuValido.dias) : 0));
   const [receta, setReceta] = useState<{ r: Receta; factor: number } | null>(null);
   const [cambio, setCambio] = useState<{ ci: number; n: number } | null>(null);
   const [toast, setToast] = useToast();
@@ -70,8 +78,9 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
   const generar = () => {
     setPrefsComida({ ...p, favoritas: perfil.prefsComida?.favoritas });
     configurarRecetas({ sinAceite: p.sinAceite });
-    setMenu(generarMenuReglas(opciones()));
-    setDia(0); setEditando(false);
+    const nuevo = generarMenuReglas(opciones());
+    setMenu(nuevo);
+    setDia(indiceHoy(nuevo.dias)); setEditando(false);
   };
 
   /* ---------- Configuración ---------- */
@@ -201,13 +210,14 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
         <div className="mt-3 grid gap-1.5" style={{ gridTemplateColumns: `repeat(${Math.min(7, m.dias.length)}, 1fr)` }}>
           {m.dias.map((x, i) => (
             <button key={x.dia} onClick={() => setDia(i)} aria-pressed={i === dia}
-              className={`num h-11 rounded-[10px] border text-[15px] uppercase transition ${i === dia ? "border-ink bg-ink text-bg dark:border-lime dark:bg-lime dark:text-on-lime" : "border-line bg-surface text-muted"}`}>
+              className={`num relative h-11 rounded-[10px] border text-[15px] uppercase transition ${i === dia ? "border-ink bg-ink text-bg dark:border-lime dark:bg-lime dark:text-on-lime" : "border-line bg-surface text-muted"}`}>
               {CORTO[x.dia] ?? x.dia.slice(0, 3)}
+              {x.dia === hoyNombre() && <i aria-label="hoy" className="absolute -bottom-1 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-lime ring-2 ring-[var(--color-t-food)]" />}
             </button>
           ))}
         </div>
         <div className="mt-3 flex justify-between">
-          <span className="lab">{d.dia}</span>
+          <span className="lab">{d.dia}{d.dia === hoyNombre() ? " · hoy" : ""}</span>
           <span className="lab">{(tot.kcal + enCasa).toLocaleString("es-MX")} / {metas.kcal.toLocaleString("es-MX")} kcal{enCasa ? ` · ~${enCasa.toLocaleString("es-MX")} en casa` : ` · ${tot.proteina} g prot`}</span>
         </div>
 

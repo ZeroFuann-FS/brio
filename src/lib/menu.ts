@@ -4,7 +4,7 @@
  */
 import { ALIMENTOS } from "../data/alimentos";
 import { COMPRAS } from "../data/compras";
-import { RECETAS, costo, llevaCarneFresca, necesitaRefri, nutricion, recetaPorId, type Equipo, type Receta, type TipoReceta } from "../data/recetas";
+import { RECETAS, costo, gramosIng, llevaCarneFresca, necesitaRefri, nutricion, recetaPorId, type Equipo, type Receta, type TipoReceta } from "../data/recetas";
 import type { ComidaMenu, ItemDespensa, MenuGuardado } from "./store";
 import { hoyISO, type QuienCocina } from "./calc";
 import { expandirGustos } from "../data/gustos";
@@ -244,7 +244,7 @@ export function listaSuper(m: MenuGuardado, despensa: ItemDespensa[]): { items: 
   for (const d of m.dias) for (const c of d.comidas) {
     const r = recetaPorId(c.receta);
     if (!r) continue;
-    for (const [id, g] of r.ing) if (id && g) gramos.set(id, (gramos.get(id) ?? 0) + g * c.factor);
+    for (const ing of r.ing) if (ing[0] && ing[1]) gramos.set(ing[0], (gramos.get(ing[0]) ?? 0) + gramosIng(ing, c.factor));
   }
   // Agrupa ingredientes que se compran igual (pechuga cocida y cruda, arroz blanco y rojo…)
   const porCompra = new Map<string, { id: string; g: number }>();

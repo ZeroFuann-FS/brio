@@ -4,6 +4,7 @@
  * Ingrediente: [id de alimento, gramos, texto]. Id vacío = "al gusto" (no suma calorías).
  */
 import { ALIMENTOS } from "./alimentos";
+import { escalarIngrediente } from "../lib/porciones";
 import { CARNE_FRESCA, COMPRAS, PERECEDEROS } from "./compras";
 
 export type TipoReceta = "desayuno" | "comida" | "cena" | "colacion";
@@ -523,12 +524,15 @@ const POR_ID = new Map(ALIMENTOS.map((a) => [a.id, a]));
 
 export interface Nutricion { kcal: number; proteina: number; carbos: number; grasa: number }
 
+/** Gramos de un ingrediente para la porción (las piezas se redondean a enteras: 1 o 2 panes, no 1½). */
+export const gramosIng = ([, g, t]: Ingrediente, factor = 1) => (g ? escalarIngrediente(g, t, factor).g : 0);
+
 export function nutricion(r: Receta, factor = 1): Nutricion {
   const t = { kcal: 0, proteina: 0, carbos: 0, grasa: 0 };
-  for (const [id, g] of r.ing) {
-    const a = POR_ID.get(id);
-    if (!a || !g) continue;
-    const f = (g * factor) / 100;
+  for (const ing of r.ing) {
+    const a = POR_ID.get(ing[0]);
+    if (!a || !ing[1]) continue;
+    const f = gramosIng(ing, factor) / 100;
     t.kcal += a.kcal * f; t.proteina += a.p * f; t.carbos += a.c * f; t.grasa += a.g * f;
   }
   return { kcal: Math.round(t.kcal), proteina: Math.round(t.proteina), carbos: Math.round(t.carbos), grasa: Math.round(t.grasa) };
@@ -537,9 +541,9 @@ export function nutricion(r: Receta, factor = 1): Nutricion {
 /** Costo aproximado de una porción (MXN). */
 export function costo(r: Receta, factor = 1): number {
   let c = 0;
-  for (const [id, g] of r.ing) {
-    const k = COMPRAS[id];
-    if (k && g) c += (g * factor / k.g) * k.precio;
+  for (const ing of r.ing) {
+    const k = COMPRAS[ing[0]];
+    if (k && ing[1]) c += (gramosIng(ing, factor) / k.g) * k.precio;
   }
   return Math.round(c);
 }

@@ -3,7 +3,7 @@ import { motion } from "motion/react";
 import { ejercicioPorId, type Ejercicio } from "../data/ejercicios";
 import { hoyISO, sumarDias } from "../lib/calc";
 import {
-  DIAS_CORTOS, DIAS_SEMANA, SEMANA_LD, duracionMin, lunesDe, mejorMarca, minutosDia, nuevaSesion, planHoy,
+  DIAS_CORTOS, DIAS_SEMANA, SEMANA_LD, duracionMin, faltantesRutina, formatoMin, lunesDe, mejorMarca, minutosDia, nuevaSesion, planHoy,
   seriesHechas, seriesPorMusculo, siguienteDia, textoSerie, tieneSemana, volumen, type Lugar, type Rutina, type Sesion,
 } from "../lib/entreno";
 import { useBrio } from "../lib/store";
@@ -23,11 +23,18 @@ const iniciales = (n: string) => {
   return w[0].slice(0, 4);
 };
 
+/** "45 min" o "1 h 15 min" con los números grandes. */
+function Duracion({ min }: { min: number }) {
+  const u = (t: string) => <small className="text-sm text-muted"> {t} </small>;
+  if (min < 60) return <>{min}{u("min")}</>;
+  return <>{Math.floor(min / 60)}{u("h")}{min % 60 ? <>{min % 60}{u("min")}</> : null}</>;
+}
+
 function Resumen({ s }: { s: Sesion }) {
   return (
     <div>
       <div className="grid grid-cols-3 gap-2 rounded-[16px] border border-line bg-surface p-3 text-center">
-        <div><p className="lab">Tiempo</p><p className="num text-3xl">{duracionMin(s)}<small className="text-sm text-muted"> min</small></p></div>
+        <div><p className="lab">Tiempo</p><p className="num text-3xl"><Duracion min={duracionMin(s)} /></p></div>
         <div><p className="lab">Series</p><p className="num text-3xl">{seriesHechas(s)}</p></div>
         <div><p className="lab">Volumen</p><p className="num text-3xl">{volumen(s).toLocaleString("es-MX")}<small className="text-sm text-muted"> kg</small></p></div>
       </div>
@@ -85,6 +92,7 @@ export default function Entreno() {
   const hechasSemana = fechasSemana.filter((f) => sesiones.some((s) => s.fecha === f.fecha)).length;
   const metaSemana = rutina && conSemana ? rutina.dias.reduce((a, d) => a + (d.semana?.length ?? 0), 0) : perfil?.diasEntreno || 3;
   const lugar = perfil?.entreno?.lugar;
+  const faltan = useMemo(() => (rutina ? faltantesRutina(rutina, lugar) : []), [rutina, lugar]);
 
   const elegirListo = (r: Rutina, l: Lugar) => { setLugarNuevo(l); setAsistente(false); setEditando(r); };
   const guardarRutina = (r: Rutina) => {
@@ -143,7 +151,7 @@ export default function Entreno() {
                 <p className="text-sm text-muted">Próximo: {DIAS_SEMANA[ph.proximo.wd].toLowerCase()} · {ph.proximo.dia.nombre}. {ph.hechoHoy ? "Descansar también es parte del progreso." : "Si quieres, puedes adelantarlo."}</p>
               )}
               {(diaElegido || !ph || (ph.deHoy && !ph.hechoHoy)) ? null : <p className="lab mt-3">Así se ve {DIAS_SEMANA[ph.proximo?.wd ?? 0].toLowerCase()}</p>}
-              <p className="lab mt-1">{dia.ejercicios.length} ejercicios · ~{minutosDia(dia)} min</p>
+              <p className="lab mt-1">{dia.ejercicios.length} ejercicios · ~{formatoMin(minutosDia(dia))}</p>
               <ul className="mt-1">
                 {dia.ejercicios.map((e, i) => {
                   const info = ejercicioPorId(e.ej);
@@ -184,6 +192,23 @@ export default function Entreno() {
             <span className="lab">7 días</span>
           </div>
           <div className="mt-3"><MapaMuscular zonas={zonas} /></div>
+          {faltan.length > 0 && (
+            <div className="mt-4 border-t border-line pt-3">
+              <p className="lab">A tu rutina le falta</p>
+              <ul className="mt-1">
+                {faltan.map((f) => (
+                  <li key={f.grupo} className="flex items-center gap-3 border-b border-line py-2 last:border-b-0">
+                    {f.sugerido ? <button onClick={() => setVer(f.sugerido!)} aria-label={`Ver ${f.sugerido.n}`}><FotoEjercicio id={f.sugerido.id} size={40} /></button> : <span className="h-10 w-10" />}
+                    <span className="min-w-0 flex-1 text-sm">
+                      <b className="font-medium">{f.grupo}</b> <span className="text-muted">· {f.series ? `${f.series} series a la semana` : "no lo trabajas"}</span>
+                      {f.sugerido && <span className="block truncate text-xs text-muted">Te recomendamos: {f.sugerido.n}</span>}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-1 text-xs text-muted">Lo ideal son al menos 6 series por músculo a la semana. <button onClick={() => rutina && setEditando(rutina)} className="font-medium text-lime-ink hover:underline">Agrégalos en tu rutina</button>.</p>
+            </div>
+          )}
         </Tarjeta>
 
         {/* Historial */}
@@ -196,7 +221,7 @@ export default function Entreno() {
                   <button onClick={() => setResumen(s)} className="flex w-full items-center gap-3 py-2.5 text-left">
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-medium">{s.nombre}{s.records?.length ? <span className="ml-2 rounded-full bg-lime px-2 py-0.5 align-middle text-[11px] text-on-lime">{s.records.length} récord{s.records.length > 1 ? "s" : ""}</span> : null}</span>
-                      <span className="lab !tracking-[0.05em]">{fechaCorta(s.fecha)} · {duracionMin(s)} min · {seriesHechas(s)} series · {volumen(s).toLocaleString("es-MX")} kg</span>
+                      <span className="lab !tracking-[0.05em]">{fechaCorta(s.fecha)} · {formatoMin(duracionMin(s))} · {seriesHechas(s)} series · {volumen(s).toLocaleString("es-MX")} kg</span>
                     </span>
                     <span className="lab">Ver →</span>
                   </button>

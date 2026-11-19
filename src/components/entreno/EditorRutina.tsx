@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { ejercicioPorId, type Ejercicio } from "../../data/ejercicios";
-import { DIAS_SEMANA, SEMANA_LD, uidE, type Lugar, type Rutina } from "../../lib/entreno";
+import { DIAS_SEMANA, SEMANA_LD, faltantesRutina, uidE, type Lugar, type Rutina } from "../../lib/entreno";
+import { useBrio } from "../../lib/store";
 import { SelectorSemana } from "./ElegirRutina";
 import { Hoja, btnPrimario, btnSecundario, inputCls } from "../ui";
 import Biblioteca, { DetalleEjercicio } from "./Biblioteca";
+import CambiarEjercicio from "./CambiarEjercicio";
 import { FotoEjercicio } from "./MapaMuscular";
 
 const DESCANSOS = [45, 60, 90, 120, 150, 180];
@@ -13,7 +15,19 @@ export default function EditorRutina({ inicial, onGuardar, onBorrar, lugar }: { 
   const [di, setDi] = useState(0);
   const [agregar, setAgregar] = useState(false);
   const [ver, setVer] = useState<Ejercicio | null>(null);
+  const [cambiar, setCambiar] = useState<number | null>(null);
+  const corregirEjercicio = useBrio((s) => s.corregirEjercicio);
   const dia = r.dias[di];
+  const faltan = faltantesRutina(r, lugar);
+  /** Cambia el ejercicio en este día (y en los demás días de la rutina si se corrige el historial). */
+  const cambiarEj = (ei: number, nuevo: string, historial: boolean) => {
+    const viejo = dia.ejercicios[ei].ej;
+    if (historial) {
+      corregirEjercicio(viejo, nuevo);
+      setR((x) => ({ ...x, dias: x.dias.map((d) => ({ ...d, ejercicios: d.ejercicios.map((e) => (e.ej === viejo ? { ...e, ej: nuevo } : e)) })) }));
+    } else editarEj(ei, { ej: nuevo });
+    setCambiar(null);
+  };
 
   const editarDia = (fn: (d: Rutina["dias"][number]) => Rutina["dias"][number]) => setR((x) => ({ ...x, dias: x.dias.map((d, i) => (i === di ? fn(d) : d)) }));
   const editarEj = (ei: number, cambio: Partial<Rutina["dias"][number]["ejercicios"][number]>) => editarDia((d) => ({ ...d, ejercicios: d.ejercicios.map((e, i) => (i === ei ? { ...e, ...cambio } : e)) }));
@@ -63,6 +77,7 @@ export default function EditorRutina({ inicial, onGuardar, onBorrar, lugar }: { 
                   <div className="flex items-center gap-2.5">
                     <button onClick={() => setVer(info)}><FotoEjercicio id={e.ej} size={44} /></button>
                     <span className="min-w-0 flex-1 truncate text-sm font-medium">{info.n}</span>
+                    <button onClick={() => setCambiar(ei)} className="shrink-0 rounded-full border border-line px-2.5 py-1 text-xs text-muted hover:text-ink">Cambiar</button>
                     <button onClick={() => mover(ei, -1)} aria-label="Subir" className="px-1.5 text-muted disabled:opacity-30" disabled={ei === 0}>↑</button>
                     <button onClick={() => mover(ei, 1)} aria-label="Bajar" className="px-1.5 text-muted disabled:opacity-30" disabled={ei === dia.ejercicios.length - 1}>↓</button>
                     <button onClick={() => editarDia((d) => ({ ...d, ejercicios: d.ejercicios.filter((_, i) => i !== ei) }))} aria-label={`Quitar ${info.n}`} className="px-1.5 text-lg text-muted hover:text-ember">×</button>
@@ -88,6 +103,23 @@ export default function EditorRutina({ inicial, onGuardar, onBorrar, lugar }: { 
         </div>
       )}
 
+      {faltan.some((f) => f.sugerido) && (
+        <div className="mt-3 rounded-[16px] border border-dashed border-line p-3">
+          <p className="lab">Sugerencias · músculos con pocas series a la semana</p>
+          <ul className="mt-1">
+            {faltan.filter((f) => f.sugerido).map((f) => (
+              <li key={f.grupo} className="flex items-center gap-3 border-b border-line py-2 last:border-b-0">
+                <button onClick={() => setVer(f.sugerido!)} aria-label={`Ver ${f.sugerido!.n}`}><FotoEjercicio id={f.sugerido!.id} size={40} /></button>
+                <span className="min-w-0 flex-1 text-sm"><b className="font-medium">{f.grupo}</b> <span className="text-muted">· {f.series} series</span>
+                  <span className="block truncate text-xs text-muted">{f.sugerido!.n}</span></span>
+                {dia && <button onClick={() => editarDia((d) => ({ ...d, ejercicios: [...d.ejercicios, { ej: f.sugerido!.id, series: 3, reps: "10-12", descanso: 90 }] }))}
+                  className="shrink-0 rounded-full border border-line px-3 py-1.5 text-xs font-medium hover:border-line-strong">+ A {dia.nombre || "este día"}</button>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="mt-5 flex gap-2">
         {onBorrar && <button onClick={onBorrar} className={`${btnSecundario} text-sm text-ember`}>Borrar rutina</button>}
         <button onClick={() => onGuardar({ ...r, nombre: r.nombre.trim() || "Mi rutina" })} disabled={!r.dias.some((d) => d.ejercicios.length)} className={`${btnPrimario} flex-1`}>Guardar rutina</button>
@@ -95,6 +127,12 @@ export default function EditorRutina({ inicial, onGuardar, onBorrar, lugar }: { 
 
       <Hoja abierta={agregar} onClose={() => setAgregar(false)} titulo="Agregar ejercicio" ancha>
         <Biblioteca onVer={setVer} lugar={lugar} yaAgregados={dia?.ejercicios.map((x) => x.ej)} onElegir={(l) => { editarDia((d) => ({ ...d, ejercicios: [...d.ejercicios, ...l.map((e) => ({ ej: e.id, series: e.cardio ? 1 : 3, reps: e.cardio ? "20 min" : "10-12", descanso: e.cardio ? 60 : 90 }))] })); setAgregar(false); }} />
+      </Hoja>
+      <Hoja abierta={cambiar !== null} onClose={() => setCambiar(null)} titulo="Cambiar ejercicio" ancha>
+        {cambiar !== null && dia?.ejercicios[cambiar] && (
+          <CambiarEjercicio actual={dia.ejercicios[cambiar].ej} lugar={lugar} excluir={dia.ejercicios.map((x) => x.ej)} onVer={setVer}
+            onElegir={(id, o) => cambiarEj(cambiar, id, o.historial)} />
+        )}
       </Hoja>
       <Hoja abierta={!!ver} onClose={() => setVer(null)} titulo="Ejercicio" ancha>
         {ver && <DetalleEjercicio e={ver} />}

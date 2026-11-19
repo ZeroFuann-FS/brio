@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { hoyISO, sumarDias, type Habito, type Perfil, type PlanNutriologo, type PrefsComida } from "./calc";
 import type { Equivalentes, GrupoEq } from "../data/equivalentes";
-import { recordsDe, type PrefsEntreno, type Sesion } from "./entreno";
+import { corregirHistorial, recordsDe, type PrefsEntreno, type Sesion } from "./entreno";
 import type { TipoReceta } from "../data/recetas";
 
 /** receta vacía + casa = comida que se hace en casa o fuera (sin receta ni compras). */
@@ -104,6 +104,8 @@ interface Estado {
   terminarSesion: () => Sesion | null;
   descartarSesion: () => void;
   borrarSesion: (id: string) => void;
+  /** Cambia un ejercicio por otro en todos los entrenos guardados (y recalcula récords). */
+  corregirEjercicio: (de: string, a: string) => void;
   ajustarEq: (fecha: string, g: GrupoEq, delta: number) => void;
   dia: (fecha: string) => Dia;
   addComida: (fecha: string, c: Omit<Comida, "id">) => void;
@@ -164,6 +166,12 @@ export const useBrio = create<Estado>()(
         },
         descartarSesion: () => set({ sesionActiva: null }),
         borrarSesion: (id) => set((s) => ({ sesiones: s.sesiones.filter((x) => x.id !== id) })),
+        corregirEjercicio: (de, a) => set((s) => {
+          const corregidas = corregirHistorial(s.sesiones, de, a);
+          // Los récords dependen de lo anterior: se recalculan en orden
+          const sesiones = corregidas.map((x, i) => (x === s.sesiones[i] && !x.ejercicios.some((e) => e.ej === a) ? x : { ...x, records: recordsDe(x, corregidas.slice(0, i)) }));
+          return { sesiones };
+        }),
         setAgenda: (agenda) => set((s) => (s.perfil ? { perfil: { ...s.perfil, agenda } } : {})),
         setMetas: (metas) => set((s) => (s.perfil ? { perfil: { ...s.perfil, metas } } : {})),
         marcarHabito: (fecha, id) => editarDia(fecha, (d) => ({ ...d, habitos: { ...d.habitos, [id]: true } })),

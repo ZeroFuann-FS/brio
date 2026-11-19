@@ -187,6 +187,8 @@ export const ALIMENTOS: Alimento[] = [
   A("chile-relleno", "Chile relleno capeado", "Platillos", 190, 8, 9, 13, [{ t: "pieza", g: 200 }]),
   A("flauta", "Flauta o taco dorado", "Platillos", 250, 10, 22, 13, [{ t: "pieza", g: 70 }], "tacos dorados"),
   A("sope", "Sope con frijol y queso", "Platillos", 230, 7, 28, 10, [{ t: "pieza", g: 110 }]),
+  A("huarache", "Huarache con frijol, salsa, queso y crema", "Platillos", 215, 8, 26, 9, [{ t: "pieza", g: 220 }, { t: "½ huarache", g: 110 }], "huaraches guarache sencillo antojito"),
+  A("huarache-carne", "Huarache con carne (bistec, pollo o chorizo)", "Platillos", 220, 12, 21, 10, [{ t: "pieza", g: 300 }, { t: "½ huarache", g: 150 }], "huaraches guarache bistec cecina costilla pollo chorizo"),
   A("gordita", "Gordita rellena", "Platillos", 240, 9, 27, 11, [{ t: "pieza", g: 130 }]),
   A("frijoles-charros", "Frijoles charros", "Platillos", 110, 6, 11, 4.5, [{ t: "taza", g: 250 }]),
   // Antojitos, comida de la calle y postres (estimados)

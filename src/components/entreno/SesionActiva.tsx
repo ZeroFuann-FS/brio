@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ejercicioPorId, type Ejercicio } from "../../data/ejercicios";
-import { duracionMin, serieInicial, seriesHechas, textoSerie, tocaSubir, ultimaVez, volumen, type Sesion } from "../../lib/entreno";
+import { duracionMin, formatoMin, logroSerie, reloj, serieInicial, seriesHechas, textoSerie, tocaSubir, ultimaVez, volumen, type EjSesion, type Sesion } from "../../lib/entreno";
 import { useBrio } from "../../lib/store";
 import { Hoja, Tarjeta, btnPrimario, btnSecundario } from "../ui";
 import Biblioteca, { DetalleEjercicio } from "./Biblioteca";
+import CambiarEjercicio, { type OpcionesCambio } from "./CambiarEjercicio";
 import { FotoEjercicio } from "./MapaMuscular";
 
-const reloj = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+/** Todas las series marcadas. */
+const completo = (e: EjSesion) => e.series.length > 0 && e.series.every((x) => x.hecha);
 const num = (v: string) => { const n = Number(v.replace(",", ".")); return Number.isFinite(n) && n >= 0 ? n : 0; };
 
 function Campo({ valor, onCambio, label, decimal = false }: { valor: number; onCambio: (n: number) => void; label: string; decimal?: boolean }) {
@@ -24,7 +26,14 @@ function Campo({ valor, onCambio, label, decimal = false }: { valor: number; onC
 export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion | null) => void }) {
   const sesion = useBrio((s) => s.sesionActiva)!;
   const sesiones = useBrio((s) => s.sesiones);
-  const { editarSesion, terminarSesion, descartarSesion } = useBrio();
+  const { editarSesion, terminarSesion, descartarSesion, setEntreno, corregirEjercicio } = useBrio();
+  const entreno = useBrio((s) => s.perfil?.entreno);
+  /** Ejercicios terminados que el usuario volvió a abrir (los demás terminados se ven minimizados). */
+  const [abiertos, setAbiertos] = useState<Set<number>>(new Set());
+  const [cambiar, setCambiar] = useState<number | null>(null);
+  const [logro, setLogro] = useState<string | null>(null);
+  const yaCelebrado = useRef(new Set<string>());
+  useEffect(() => { if (!logro) return; const t = setTimeout(() => setLogro(null), 3200); return () => clearTimeout(t); }, [logro]);
   const [, setTick] = useState(0);
   const [descanso, setDescanso] = useState<{ fin: number; total: number } | null>(null);
   const [agregar, setAgregar] = useState(false);
@@ -55,15 +64,45 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
   const marcar = (ei: number, si: number) => {
     const e = sesion.ejercicios[ei], x = e.series[si];
     editarSerie(ei, si, { hecha: !x.hecha });
-    if (!x.hecha && !ejercicioPorId(e.ej)?.cardio) setDescanso({ fin: Date.now() + e.descanso * 1000, total: e.descanso });
+    if (x.hecha) return;
+    const cardio = ejercicioPorId(e.ej)?.cardio;
+    const termina = e.series.every((y, j) => j === si || y.hecha);
+    if (termina) setAbiertos((a) => { const n = new Set(a); n.delete(ei); return n; });
+    const ultimo = termina && sesion.ejercicios.every((y, j) => j === ei || completo(y));
+    if (!cardio && !ultimo) setDescanso({ fin: Date.now() + e.descanso * 1000, total: e.descanso });
+    if (ultimo) setDescanso(null);
+    const msg = cardio ? null : logroSerie(sesiones, e.ej, si, x);
+    if (msg && !yaCelebrado.current.has(`${e.ej}:${msg}`)) {
+      yaCelebrado.current.add(`${e.ej}:${msg}`);
+      setLogro(msg);
+      try { navigator.vibrate?.([60, 40, 60]); } catch { /* sin vibración */ }
+    }
+  };
+  const alternar = (ei: number) => setAbiertos((a) => { const n = new Set(a); if (n.has(ei)) n.delete(ei); else n.add(ei); return n; });
+  /** Cambia el ejercicio ei por otro, conservando series, reps y descanso; opcionalmente también en la rutina y el historial. */
+  const cambiarEj = (ei: number, nuevo: string, o: OpcionesCambio) => {
+    const viejo = sesion.ejercicios[ei];
+    if (o.historial) corregirEjercicio(viejo.ej, nuevo);
+    const historial = o.historial ? useBrio.getState().sesiones : sesiones;
+    editarSesion((s) => ({ ...s, ejercicios: s.ejercicios.map((e, i) => (i !== ei ? e : serieInicial(historial, nuevo, e.series.length, e.reps, e.descanso))) }));
+    if (o.rutina && entreno && sesion.rutinaId) {
+      setEntreno({ ...entreno, rutinas: entreno.rutinas.map((r) => r.id !== sesion.rutinaId ? r : {
+        ...r, dias: r.dias.map((d) => d.id !== sesion.diaId ? d : { ...d, ejercicios: d.ejercicios.map((x) => (x.ej === viejo.ej ? { ...x, ej: nuevo } : x)) }),
+      }) });
+    }
+    setAbiertos((a) => { const n = new Set(a); n.delete(ei); return n; });
+    setCambiar(null);
+    setLogro(`Listo: ahora haces ${ejercicioPorId(nuevo)?.n ?? "el nuevo ejercicio"}`);
   };
   const sumarSerie = (ei: number) => editarSesion((s) => ({ ...s, ejercicios: s.ejercicios.map((e, i) => i !== ei ? e : { ...e, series: [...e.series, { ...(e.series[e.series.length - 1] ?? { kg: 0, reps: 10 }), hecha: false }] }) }));
   const quitarSerie = (ei: number) => editarSesion((s) => ({ ...s, ejercicios: s.ejercicios.map((e, i) => i !== ei || e.series.length <= 1 ? e : { ...e, series: e.series.slice(0, -1) }) }));
-  const quitarEjercicio = (ei: number) => editarSesion((s) => ({ ...s, ejercicios: s.ejercicios.filter((_, i) => i !== ei) }));
+  const quitarEjercicio = (ei: number) => { editarSesion((s) => ({ ...s, ejercicios: s.ejercicios.filter((_, i) => i !== ei) })); setAbiertos(new Set()); };
   const agregarEj = (l: Ejercicio[]) => { editarSesion((s) => ({ ...s, ejercicios: [...s.ejercicios, ...l.map((e) => serieInicial(sesiones, e.id, e.cardio ? 1 : 3, e.cardio ? "20 min" : "10", e.cardio ? 0 : 90))] })); setAgregar(false); };
   const lugar = useBrio((s) => s.perfil?.entreno?.lugar);
 
   const hechas = seriesHechas(sesion);
+  const listos = sesion.ejercicios.filter(completo).length;
+  const todoListo = sesion.ejercicios.length > 0 && listos === sesion.ejercicios.length;
   const transcurrido = (Date.now() - sesion.inicio) / 1000;
 
   return (
@@ -72,15 +111,38 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
         <div className="min-w-0">
           <p className="lab">Entrenando · {reloj(transcurrido)}</p>
           <h1 className="truncate font-serif text-3xl font-medium tracking-tight md:text-4xl">{sesion.nombre}</h1>
-          <p className="mt-0.5 text-sm text-muted">{hechas} series · {volumen(sesion).toLocaleString("es-MX")} kg levantados</p>
+          <p className="mt-0.5 text-sm text-muted">{listos} de {sesion.ejercicios.length} ejercicios · {hechas} series · {volumen(sesion).toLocaleString("es-MX")} kg</p>
         </div>
         <button onClick={() => setConfirmar("terminar")} className="h-11 shrink-0 rounded-full bg-lime px-5 font-display text-sm font-bold uppercase tracking-[0.12em] text-on-lime">Terminar</button>
       </div>
 
-      <div className="mt-4 grid gap-3 lg:grid-cols-2">
+      <AnimatePresence>
+        {todoListo && (
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+            className="mt-4 rounded-[18px] border border-lime bg-lime/15 p-4">
+            <p className="lab">Rutina completa</p>
+            <p className="mt-1 font-serif text-2xl font-medium">¡Terminaste todos los ejercicios!</p>
+            <p className="mt-1 text-sm text-muted">Ya no te falta nada de hoy. Toca terminar para guardar tu entreno y ver tu resumen.</p>
+            <button onClick={() => { onTerminada(terminarSesion()); }} className={`${btnPrimario} mt-3 w-full`}>Terminar y guardar</button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="mt-4 grid items-start gap-3 lg:grid-cols-2">
         {sesion.ejercicios.map((e, ei) => {
           const info = ejercicioPorId(e.ej);
           if (!info) return null;
+          if (completo(e) && !abiertos.has(ei)) return (
+            <motion.button layout key={`${e.ej}-${ei}`} onClick={() => alternar(ei)} aria-expanded={false} aria-label={`${info.n}: terminado. Toca para abrir`}
+              className="flex w-full items-center gap-3 rounded-[16px] border border-line bg-surface/60 px-4 py-2.5 text-left opacity-80 transition hover:opacity-100">
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-lime text-sm font-extrabold text-on-lime">✓</span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium">{info.n}</span>
+                <span className="num block truncate text-xs text-muted">{e.series.map(textoSerie).join(" · ")}</span>
+              </span>
+              <span className="lab shrink-0">Abrir</span>
+            </motion.button>
+          );
           const prev = ultimaVez(sesiones, e.ej);
           const subir = tocaSubir(sesiones, e.ej, e.reps);
           return (
@@ -91,6 +153,8 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
                   <button onClick={() => setVer(info)} className="block truncate text-left font-medium hover:underline">{info.n}</button>
                   <span className="lab !tracking-[0.05em]">Objetivo: {e.series.length} × {e.reps}{info.cardio ? "" : ` · descanso ${reloj(e.descanso)}`}</span>
                 </div>
+                {completo(e) && <button onClick={() => alternar(ei)} className="lab shrink-0 hover:underline">Minimizar</button>}
+                <button onClick={() => setCambiar(ei)} aria-label={`Cambiar ${info.n} por otro ejercicio`} className="shrink-0 rounded-full border border-line px-2.5 py-1 text-xs text-muted hover:text-ink">Cambiar</button>
                 <button onClick={() => quitarEjercicio(ei)} aria-label={`Quitar ${info.n}`} className="text-lg text-muted hover:text-ember">×</button>
               </div>
               {subir && !e.series.some((x) => x.hecha) && (
@@ -151,6 +215,24 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
         )}
       </AnimatePresence>
 
+      {/* Logro */}
+      <AnimatePresence>
+        {logro && (
+          <motion.div role="status" className="fixed inset-x-3 top-3 z-[60] mx-auto flex max-w-md items-center gap-3 rounded-[16px] bg-lime p-3 text-on-lime shadow-lg"
+            initial={{ y: -30, opacity: 0, scale: 0.96 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: -30, opacity: 0 }}>
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-on-lime/10 text-lg" aria-hidden>★</span>
+            <span className="text-sm font-semibold">{logro}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <Hoja abierta={cambiar !== null} onClose={() => setCambiar(null)} titulo="Cambiar ejercicio" ancha>
+        {cambiar !== null && sesion.ejercicios[cambiar] && (
+          <CambiarEjercicio actual={sesion.ejercicios[cambiar].ej} lugar={lugar} conRutina={!!sesion.rutinaId}
+            excluir={sesion.ejercicios.map((x) => x.ej)} onVer={setVer} onElegir={(id, o) => cambiarEj(cambiar, id, o)}
+            nota={sesion.ejercicios[cambiar].series.some((x) => x.hecha) ? "Las series que ya marcaste de este ejercicio se reinician con el nuevo." : undefined} />
+        )}
+      </Hoja>
       <Hoja abierta={agregar} onClose={() => setAgregar(false)} titulo="Agregar ejercicio" ancha>
         <Biblioteca onElegir={agregarEj} onVer={setVer} lugar={lugar} yaAgregados={sesion.ejercicios.map((x) => x.ej)} />
       </Hoja>
@@ -160,7 +242,7 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
       <Hoja abierta={!!confirmar} onClose={() => setConfirmar(null)} titulo={confirmar === "terminar" ? "¿Terminar entreno?" : "¿Cancelar entreno?"}>
         {confirmar === "terminar" ? (
           <>
-            <p className="text-sm text-muted">{hechas ? `Llevas ${hechas} series en ${duracionMin(sesion)} min. Se guardan solo las series que marcaste.` : "No has marcado ninguna serie; no se guardará nada."}</p>
+            <p className="text-sm text-muted">{hechas ? `Llevas ${hechas} series en ${formatoMin(duracionMin(sesion))}. Se guardan solo las series que marcaste.` : "No has marcado ninguna serie; no se guardará nada."}</p>
             <div className="mt-4 flex gap-2">
               <button onClick={() => setConfirmar(null)} className={`${btnSecundario} flex-1`}>Seguir</button>
               <button onClick={() => { setConfirmar(null); onTerminada(terminarSesion()); }} className={`${btnPrimario} flex-1`}>Terminar</button>

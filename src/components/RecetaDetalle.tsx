@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { escalarTexto } from "../lib/porciones";
+import { escalarIngrediente } from "../lib/porciones";
 import { ALIMENTOS } from "../data/alimentos";
 import { fotoDe, fotoReceta } from "../data/fotos";
 import { equivalentesDe } from "../data/equivalentes";
-import { costo, etiquetas, llevaCarneFresca, necesitaRefri, nutricion, type Receta, type TipoReceta } from "../data/recetas";
+import { costo, etiquetas, gramosIng, llevaCarneFresca, necesitaRefri, nutricion, type Receta, type TipoReceta } from "../data/recetas";
 import { hoyISO } from "../lib/calc";
 import { coincidenciaDespensa, useBrio, type TipoComida } from "../lib/store";
 import { tipoPorHora } from "./ComidasDia";
@@ -44,13 +44,13 @@ export function useRegistrarReceta() {
   return (r: Receta, factor: number, tipo?: TipoComida) => {
     const n = nutricion(r, factor);
     const t: TipoComida = tipo ?? (r.tipos.includes(tipoPorHora() as TipoReceta) ? tipoPorHora() : (r.tipos[0] === "colacion" ? "snack" : r.tipos[0] as TipoComida));
-    addComida(hoyISO(), { nombre: r.nombre, kcal: n.kcal, proteina: n.proteina, carbos: n.carbos, grasa: n.grasa, tipo: t, eq: equivalentesDe(r.ing.map(([id, g]) => [id, g * factor])) });
+    addComida(hoyISO(), { nombre: r.nombre, kcal: n.kcal, proteina: n.proteina, carbos: n.carbos, grasa: n.grasa, tipo: t, eq: equivalentesDe(r.ing.map((ing) => [ing[0], gramosIng(ing, factor)])) });
     const despensa = useBrio.getState().despensa;
     let descontados = 0;
-    for (const [id, g] of r.ing) {
-      const a = POR_ID.get(id);
-      if (!a || !g) continue;
-      const gramos = g * factor;
+    for (const ing of r.ing) {
+      const a = POR_ID.get(ing[0]);
+      if (!a || !ing[1]) continue;
+      const gramos = gramosIng(ing, factor);
       const m = coincidenciaDespensa(despensa, a.n, a.por[0].t, gramos / a.por[0].g, gramos);
       if (m) { descontar(m.item.id, Math.round(m.cuanto * 10) / 10); descontados++; }
     }
@@ -118,11 +118,12 @@ export default function RecetaDetalle({ r, factorInicial = 1, onRegistrado }: { 
         <ul>
           {r.ing.map(([id, g, t], i) => {
             const f = id ? fotoDe(id) : undefined;
+            const esc = escalarIngrediente(g, t, factor);
             return (
               <li key={i} className="flex items-center gap-3 border-b border-line py-2 text-sm last:border-b-0">
                 {f ? <img src={f} alt="" loading="lazy" className="h-9 w-9 shrink-0 rounded-[8px] bg-white object-cover" /> : <span className="h-9 w-9 shrink-0" />}
-                <span className="flex-1">{escalarTexto(t, factor, g)}</span>
-                {g > 0 && <span className="num text-muted">{Math.round(g * factor)} g</span>}
+                <span className="flex-1">{esc.t}</span>
+                {g > 0 && <span className="num text-muted">{Math.round(esc.g)} g</span>}
               </li>
             );
           })}

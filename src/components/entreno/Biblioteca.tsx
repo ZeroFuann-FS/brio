@@ -100,8 +100,8 @@ export function DetalleEjercicio({ e }: { e: Ejercicio }) {
   );
 }
 
-/** Catálogo con búsqueda y filtros. Con `onElegir` permite elegir varios y agregarlos juntos. */
-export default function Biblioteca({ onElegir, onVer, yaAgregados = [], lugar }: { onElegir?: (e: Ejercicio[]) => void; onVer?: (e: Ejercicio) => void; yaAgregados?: string[]; lugar?: Lugar }) {
+/** Catálogo con búsqueda y filtros. Con `onElegir` permite elegir varios y agregarlos juntos; con `uno`, elige uno al tocarlo. */
+export default function Biblioteca({ onElegir, onVer, yaAgregados = [], lugar, uno = false }: { onElegir?: (e: Ejercicio[]) => void; onVer?: (e: Ejercicio) => void; yaAgregados?: string[]; lugar?: Lugar; uno?: boolean }) {
   const [q, setQ] = useState("");
   const [grupo, setGrupo] = useState("");
   const [equipo, setEquipo] = useState<string[]>(lugar && lugar !== "gym" ? EQUIPO_LUGAR[lugar] : []);
@@ -118,7 +118,7 @@ export default function Biblioteca({ onElegir, onVer, yaAgregados = [], lugar }:
   const secciones = !q.trim() && !grupo
     ? [...GRUPOS.map((g) => ({ id: g.id, t: g.t })), { id: "cardio", t: "Cardio" }].map((g) => ({ ...g, items: lista.filter((e) => grupoDe(e) === g.id) })).filter((g) => g.items.length)
     : [{ id: "res", t: "", items: lista }];
-  const tocar = (e: Ejercicio) => (onElegir ? setSel((s) => (s.includes(e.id) ? s.filter((x) => x !== e.id) : [...s, e.id])) : onVer?.(e));
+  const tocar = (e: Ejercicio) => (onElegir && uno ? onElegir([e]) : onElegir ? setSel((s) => (s.includes(e.id) ? s.filter((x) => x !== e.id) : [...s, e.id])) : onVer?.(e));
 
   return (
     <div className={onElegir ? "pb-16" : ""}>
@@ -139,7 +139,7 @@ export default function Biblioteca({ onElegir, onVer, yaAgregados = [], lugar }:
             className={`shrink-0 rounded-full border px-3 py-1 text-xs ${equipo.includes(x.id) ? "border-lime bg-lime text-on-lime" : "border-line bg-surface text-muted"}`}>{x.t}</button>
         ))}
       </div>
-      <p className="lab mt-2">{lista.length} ejercicios{onElegir ? " · toca para elegir varios" : ""}</p>
+      <p className="lab mt-2">{lista.length} ejercicios{onElegir ? (uno ? " · toca el que quieras" : " · toca para elegir varios") : ""}</p>
 
       {secciones.map((s) => (
         <section key={s.id} className="mt-3">
@@ -153,7 +153,7 @@ export default function Biblioteca({ onElegir, onVer, yaAgregados = [], lugar }:
                     <button onClick={() => tocar(e)} aria-pressed={onElegir ? elegido : undefined} className="block w-full text-left">
                       <span className={`relative block aspect-[4/3] overflow-hidden rounded-[14px] border-2 bg-white ${elegido ? "border-lime" : "border-transparent"}`}>
                         <img src={`/ejercicios/${e.id}-0.webp`} alt="" loading="lazy" className="h-full w-full object-cover" />
-                        {onElegir && <span className={`absolute left-2 top-2 grid h-6 w-6 place-items-center rounded-full border-2 text-xs font-extrabold ${elegido ? "border-lime bg-lime text-on-lime" : "border-white bg-black/30 text-transparent"}`}>✓</span>}
+                        {onElegir && !uno && <span className={`absolute left-2 top-2 grid h-6 w-6 place-items-center rounded-full border-2 text-xs font-extrabold ${elegido ? "border-lime bg-lime text-on-lime" : "border-white bg-black/30 text-transparent"}`}>✓</span>}
                         {ya && <span className="lab absolute bottom-1.5 left-1.5 rounded-full bg-black/60 px-2 py-0.5 !text-[9px] !text-white">Ya en el día</span>}
                       </span>
                       <span className="mt-1.5 line-clamp-2 block text-sm font-medium leading-snug">{e.n}</span>

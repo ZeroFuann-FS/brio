@@ -1,5 +1,5 @@
 /** Tipos y cálculos del módulo de entrenamiento. */
-import { ejercicioPorId, type Musculo } from "../data/ejercicios";
+import { EJERCICIOS, ejercicioPorId, type Ejercicio, type Musculo } from "../data/ejercicios";
 import { hoyISO, sumarDias } from "./calc";
 
 export interface EjRutina { ej: string; series: number; reps: string; descanso: number }
@@ -177,3 +177,124 @@ export function progreso(sesiones: Sesion[], ej: string): { fecha: string; v: nu
 
 /** Minutos aproximados de un día de rutina. */
 export const minutosDia = (d: Pick<DiaRutina, "ejercicios">) => Math.round(d.ejercicios.reduce((a, e) => a + e.series * (0.75 + e.descanso / 60), 0) + 5);
+
+/** "45 min", "1 h", "1 h 15 min". */
+export function formatoMin(min: number): string {
+  const m = Math.max(0, Math.round(min));
+  if (m < 60) return `${m} min`;
+  const h = Math.floor(m / 60), r = m % 60;
+  return r ? `${h} h ${r} min` : `${h} h`;
+}
+
+/** Cronómetro: "4:05" o, pasando la hora, "1:04:05". */
+export function reloj(seg: number): string {
+  const s = Math.max(0, Math.floor(seg));
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = String(s % 60).padStart(2, "0");
+  return h ? `${h}:${String(m).padStart(2, "0")}:${r}` : `${m}:${r}`;
+}
+
+/* ---------- Recomendaciones ---------- */
+
+/** Equipo disponible según dónde entrena (nombres del campo `eq`). */
+const EQ_BASICO = new Set(["Mancuernas", "Barra", "Barra Z", "Peso corporal", "Barra fija / paralelas", "Barra fija", "Pesa rusa", "Banda", "Rueda abdominal", "Cuerda"]);
+const EQ_CASA = new Set(["Peso corporal", "Mancuernas", "Pesa rusa", "Banda", "Rueda abdominal", "Cuerda"]);
+export const hayEquipo = (eq: string, lugar?: Lugar) => (!lugar || lugar === "gym" ? true : (lugar === "basico" ? EQ_BASICO : EQ_CASA).has(eq));
+
+/** Los que más rinden por músculo (de mejor a menos), para recomendar. */
+const MEJORES: Partial<Record<Musculo, string[]>> = {
+  pecho: ["press-banca", "press-mancuernas", "press-inclinado", "press-maquina", "fondos-pecho", "lagartijas", "cruce-poleas", "peck-deck"],
+  hombros: ["press-hombro-sentado", "press-militar", "press-hombro-maquina", "elevaciones-laterales", "lateral-polea", "vuelo-posterior-maquina", "face-pull", "pajaros", "press-arnold"],
+  biceps: ["curl-mancuernas", "curl-barra", "curl-inclinado", "curl-martillo", "curl-polea", "curl-predicador", "curl-maquina"],
+  triceps: ["triceps-cuerda", "press-frances", "fondos-triceps", "extension-triceps", "triceps-polea", "press-cerrado", "fondos-banco", "lagartijas-cerradas"],
+  dorsales: ["dominadas", "jalon-pecho", "jalon-cerrado", "jalon-una-mano", "dominadas-supinas"],
+  "espalda-media": ["remo-barra", "remo-mancuerna", "remo-polea", "remo-maquina", "remo-t", "remo-invertido", "remo-pesa-rusa"],
+  cuadriceps: ["sentadilla", "prensa", "sentadilla-goblet", "hack-squat", "desplantes-mancuernas", "sentadilla-dividida-mancuernas", "extension-pierna", "sentadilla-libre"],
+  femorales: ["peso-muerto-rumano", "curl-femoral-acostado", "curl-femoral-sentado", "peso-muerto-mancuernas", "swing-pesa-rusa", "peso-muerto-una-pierna"],
+  gluteos: ["hip-thrust", "puente-gluteo-elevado", "pull-through", "patada-polea", "puente-gluteo", "abductor-maquina"],
+  abdomen: ["plancha", "crunch-inverso", "abdominal-polea", "elevacion-piernas", "rueda", "bicho-muerto"],
+  pantorrillas: ["pantorrilla-de-pie", "pantorrilla-prensa", "pantorrilla-mancuerna", "pantorrilla-sentado"],
+};
+const rango = (m: Musculo, id: string) => { const i = MEJORES[m]?.indexOf(id) ?? -1; return i === -1 ? 99 : i; };
+
+/** ¿Es de los más recomendados para su músculo principal? */
+export const esRecomendado = (id: string) => { const e = ejercicioPorId(id); return !!e && rango(e.m[0], id) < 3; };
+
+/** Ejercicios que trabajan el mismo músculo, los mejores primero (para cambiar uno por otro). */
+export function alternativas(id: string, lugar?: Lugar, excluir: string[] = []): Ejercicio[] {
+  const e = ejercicioPorId(id);
+  if (!e) return [];
+  const m = e.m[0];
+  return EJERCICIOS
+    .filter((x) => x.id !== id && !excluir.includes(x.id) && x.cardio === e.cardio && x.m[0] === m && hayEquipo(x.eq, lugar))
+    .sort((a, b) => rango(m, a.id) - rango(m, b.id) || Number(b.eq === e.eq) - Number(a.eq === e.eq))
+    .slice(0, 8);
+}
+
+/** Grupos que revisamos para avisar si la rutina los deja cortos. */
+const GRUPOS_CLAVE: { t: string; m: Musculo[] }[] = [
+  { t: "Pecho", m: ["pecho"] }, { t: "Espalda", m: ["dorsales", "espalda-media"] }, { t: "Hombros", m: ["hombros"] },
+  { t: "Bíceps", m: ["biceps"] }, { t: "Tríceps", m: ["triceps"] }, { t: "Cuádriceps", m: ["cuadriceps"] },
+  { t: "Femorales", m: ["femorales"] }, { t: "Glúteos", m: ["gluteos"] },
+];
+export interface Faltante { grupo: string; series: number; sugerido?: Ejercicio }
+
+/**
+ * Músculos que la rutina trabaja poco a la semana (menos de 6 series, contando los secundarios como media)
+ * y el mejor ejercicio para cubrirlos con el equipo que tiene.
+ */
+export function faltantesRutina(r: Rutina, lugar?: Lugar, max = 3): Faltante[] {
+  const conSemana = tieneSemana(r);
+  const t: Partial<Record<Musculo, number>> = {};
+  const usados = new Set<string>();
+  for (const d of r.dias) {
+    const veces = conSemana ? d.semana?.length ?? 0 : 1;
+    for (const x of d.ejercicios) {
+      usados.add(x.ej);
+      const info = ejercicioPorId(x.ej);
+      if (!info || info.cardio || !veces) continue;
+      for (const m of info.m) t[m] = (t[m] ?? 0) + x.series * veces;
+      for (const m of info.s) t[m] = (t[m] ?? 0) + x.series * veces * 0.5;
+    }
+  }
+  return GRUPOS_CLAVE
+    .map((g) => ({ g, series: g.m.reduce((a, m) => a + (t[m] ?? 0), 0) }))
+    .filter((x) => x.series < 6)
+    .sort((a, b) => a.series - b.series)
+    .slice(0, max)
+    .map(({ g, series }) => {
+      const ids = g.m.flatMap((m) => MEJORES[m] ?? []);
+      const sugerido = ids.map(ejercicioPorId).find((e): e is Ejercicio => !!e && !usados.has(e.id) && hayEquipo(e.eq, lugar));
+      return { grupo: g.t, series: Math.round(series), sugerido };
+    });
+}
+
+/* ---------- Logros durante el entreno ---------- */
+
+/** Mensaje de logro al marcar una serie: récord de peso, récord de fuerza o mejora contra la vez pasada. */
+export function logroSerie(sesiones: Sesion[], ej: string, si: number, x: Serie): string | null {
+  if (x.kg <= 0 && x.reps <= 0) return null;
+  const nombre = ejercicioPorId(ej)?.n ?? "este ejercicio";
+  let maxKg = 0, maxRepsSinPeso = 0;
+  for (const s of sesiones) for (const e of s.ejercicios) if (e.ej === ej) for (const y of e.series) {
+    if (!y.hecha) continue;
+    maxKg = Math.max(maxKg, y.kg);
+    if (!y.kg) maxRepsSinPeso = Math.max(maxRepsSinPeso, y.reps);
+  }
+  const marca = mejorMarca(sesiones, ej);
+  if (!marca && !maxRepsSinPeso) return null; // primera vez: no hay con qué comparar
+  if (x.kg > 0 && x.kg > maxKg && maxKg > 0) return `¡Récord de peso! ${x.kg} kg en ${nombre}`;
+  if (x.kg > 0 && marca && e1rm(x.kg, x.reps) > marca.e1rm + 0.01) return `¡Nuevo récord! ${x.kg} kg × ${x.reps} en ${nombre}`;
+  if (!x.kg && maxRepsSinPeso && x.reps > maxRepsSinPeso) return `¡Récord de repeticiones! ${x.reps} en ${nombre}`;
+  const p = ultimaVez(sesiones, ej)?.[si];
+  if (!p) return null;
+  if (x.kg > p.kg && x.reps >= p.reps) return `+${Math.round((x.kg - p.kg) * 10) / 10} kg que la vez pasada`;
+  if (x.kg >= p.kg && x.reps > p.reps) return `+${x.reps - p.reps} rep${x.reps - p.reps > 1 ? "s" : ""} que la vez pasada`;
+  return null;
+}
+
+/** Cambia un ejercicio por otro en todo el historial (cuando se registró con el nombre equivocado). */
+export function corregirHistorial(sesiones: Sesion[], de: string, a: string): Sesion[] {
+  return sesiones.map((s) => (s.ejercicios.some((e) => e.ej === de) || s.records?.includes(de)
+    ? { ...s, ejercicios: s.ejercicios.map((e) => (e.ej === de ? { ...e, ej: a } : e)), records: s.records?.map((r) => (r === de ? a : r)) }
+    : s));
+}
