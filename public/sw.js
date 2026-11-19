@@ -87,8 +87,11 @@ self.addEventListener("message", (e) => {
   const d = e.data || {};
   if (d.tipo === "actualizar") e.waitUntil(actualizar().catch(() => {}));
   else if (d.tipo === "guardar" && Array.isArray(d.urls)) {
+    // En tandas de 6; si el sistema corta a la mitad (iOS lo hace), la próxima vez sigue con las que faltan.
     e.waitUntil(caches.open(IMG).then(async (c) => {
-      for (const url of d.urls) if (!(await c.match(url))) await c.add(url).catch(() => {});
+      const faltan = [];
+      for (const url of new Set(d.urls)) if (!(await c.match(url))) faltan.push(url);
+      for (let i = 0; i < faltan.length; i += 6) await Promise.all(faltan.slice(i, i + 6).map((url) => c.add(url).catch(() => {})));
     }));
   } else if (d.tipo === "cancelar-descanso") cancelarDescanso();
   else if (d.tipo === "descanso") {

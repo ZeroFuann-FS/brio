@@ -19,6 +19,7 @@ import { aplicarPlan, calcularMetas } from "./lib/calc";
 import { useAvisosLocales } from "./lib/avisosLocales";
 import { guardarSinRed } from "./lib/push";
 import { fotosEjercicio } from "./data/ejercicios";
+import { fotoReceta, fotosIngredientes } from "./data/fotos";
 import Tour, { RECORRIDOS, marcarTutorial, reiniciarTutorial, tutorialVisto, type Recorrido } from "./components/Tour";
 import { habitosDe, pesoActual, racha, useBrio } from "./lib/store";
 
@@ -82,13 +83,21 @@ export default function App() {
     return () => { clearTimeout(respaldo); data.subscription.unsubscribe(); };
   }, []);
 
-  // Fotos de los ejercicios de tus rutinas guardadas para verlas en el gym sin internet
+  // Fotos guardadas para verlas sin internet: ejercicios de tus rutinas, todos los ingredientes
+  // y los platillos de tu menú y tus favoritas (las demás se guardan al verlas).
   const rutinas = useBrio((s) => s.perfil?.entreno?.rutinas);
+  const menuGuardado = useBrio((s) => s.menu);
+  const favoritas = useBrio((s) => s.perfil?.prefsComida?.favoritas);
   useEffect(() => {
     const ids = new Set((rutinas ?? []).flatMap((r) => r.dias.flatMap((d) => d.ejercicios.map((e) => e.ej))));
-    const t = setTimeout(() => guardarSinRed([...ids].flatMap(fotosEjercicio)), 4000);
+    const recetas = new Set([...(menuGuardado?.dias ?? []).flatMap((d) => d.comidas.map((c) => c.receta)), ...(favoritas ?? [])]);
+    const t = setTimeout(() => guardarSinRed([
+      ...[...ids].flatMap(fotosEjercicio),
+      ...fotosIngredientes(),
+      ...[...recetas].map(fotoReceta).filter((x): x is string => !!x),
+    ]), 4000);
     return () => clearTimeout(t);
-  }, [rutinas]);
+  }, [rutinas, menuGuardado, favoritas]);
 
   const uid = session?.user.id;
   useEffect(() => {

@@ -21,11 +21,11 @@ export function fotosReceta(r: Receta, max = 4): string[] {
 /** Portada de la receta: foto del platillo o, si no hay, mosaico de ingredientes. */
 export function PortadaReceta({ r, className = "" }: { r: Receta; className?: string }) {
   const f = fotoReceta(r.id);
-  if (f) return <img src={f} alt={r.nombre} loading="lazy" className={`h-full w-full object-cover ${className}`} />;
+  if (f) return <img src={f} alt={r.nombre} loading="lazy" onError={(e) => { e.currentTarget.style.visibility = "hidden"; }} className={`h-full w-full object-cover ${className}`} />;
   const ing = fotosReceta(r, 4);
   return (
     <div className={`grid h-full w-full grid-cols-2 gap-1 bg-white p-2 ${className}`}>
-      {ing.map((x) => <img key={x} src={x} alt="" loading="lazy" className="h-full w-full object-contain" />)}
+      {ing.map((x) => <img key={x} src={x} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.visibility = "hidden"; }} className="h-full w-full object-contain" />)}
     </div>
   );
 }
@@ -121,7 +121,7 @@ export default function RecetaDetalle({ r, factorInicial = 1, onRegistrado }: { 
             const esc = escalarIngrediente(g, t, factor);
             return (
               <li key={i} className="flex items-center gap-3 border-b border-line py-2 text-sm last:border-b-0">
-                {f ? <img src={f} alt="" loading="lazy" className="h-9 w-9 shrink-0 rounded-[8px] bg-white object-cover" /> : <span className="h-9 w-9 shrink-0" />}
+                {f ? <img src={f} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.visibility = "hidden"; }} className="h-9 w-9 shrink-0 rounded-[8px] bg-white object-cover" /> : <span className="h-9 w-9 shrink-0" />}
                 <span className="flex-1">{esc.t}</span>
                 {g > 0 && <span className="num text-muted">{Math.round(esc.g)} g</span>}
               </li>

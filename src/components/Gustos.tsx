@@ -29,7 +29,7 @@ export default function Gustos({ gustos, evitar, onCambio }: { gustos: string[];
                 <button key={id} onClick={() => tocar(id)} aria-pressed={gusta}
                   className={`relative flex flex-col items-center gap-1.5 rounded-[14px] border p-1.5 pb-2 text-center text-xs transition ${gusta ? "border-lime bg-lime/15 dark:bg-lime/10" : no ? "border-ember/60 bg-ember/10 text-muted" : "border-line bg-surface"}`}>
                   {foto
-                    ? <img src={foto} alt="" loading="lazy" className={`aspect-square w-full rounded-[10px] bg-white object-cover ${no ? "opacity-40 grayscale" : ""}`} />
+                    ? <img src={foto} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.visibility = "hidden"; }} className={`aspect-square w-full rounded-[10px] bg-white object-cover ${no ? "opacity-40 grayscale" : ""}`} />
                     : <span className="num grid aspect-square w-full place-items-center rounded-[10px] bg-t-food text-lg">{a.n.charAt(0)}</span>}
                   <span className={`leading-tight ${no ? "line-through" : ""}`}>{nombreGusto(a.n)}</span>
                   {gusta && <span className="absolute right-2.5 top-2.5 grid h-5 w-5 place-items-center rounded-full bg-lime text-[11px] font-bold text-on-lime">♥</span>}

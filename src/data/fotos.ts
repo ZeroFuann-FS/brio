@@ -93,5 +93,8 @@ export const fotoDe = (id: string): string | undefined =>
   FOTOS_ALIMENTOS.has(id) ? `/fotos/a/${id}.webp`
     : FOTOS[id] ? `https://www.themealdb.com/images/ingredients/${encodeURIComponent(FOTOS[id])}-Small.png` : undefined;
 
+/** Fotos de todos los ingredientes (para guardarlas y verlas sin internet). */
+export const fotosIngredientes = (): string[] => [...new Set([...FOTOS_ALIMENTOS, ...Object.keys(FOTOS)].map(fotoDe).filter((x): x is string => !!x))];
+
 /** Foto del platillo terminado. */
 export const fotoReceta = (id: string): string | undefined => (FOTOS_RECETAS.has(id) ? `/fotos/r/${id}.webp` : undefined);
