@@ -129,6 +129,8 @@ self.addEventListener("push", (e) => {
     icon: "/icono-192.png",
     badge: "/icono-badge.png",
     tag: d.tag,
+    renotify: !!d.tag,
+    vibrate: d.tag === "descanso" ? [300, 120, 300, 120, 300] : undefined,
     data: { url: d.url || "/" },
   }));
 });

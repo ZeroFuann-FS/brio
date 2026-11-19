@@ -29,18 +29,52 @@ async function alSW(msg: object) {
 /** Guarda estas imágenes para verlas sin internet (por ejemplo, las fotos de los ejercicios de tus rutinas). */
 export const guardarSinRed = (urls: string[]) => { if (urls.length) void alSW({ tipo: "guardar", urls }); };
 
-/** Programa el aviso de fin de descanso (llega aunque la pantalla esté bloqueada). */
-export function avisarDescanso(fin: number, siguiente?: string) {
+/**
+ * Programa el aviso de fin de descanso.
+ * 1) Por push desde el servidor: llega con la pantalla bloqueada también en iPhone (necesita internet).
+ * 2) Si no se pudo (sin red o sin cuenta), con el service worker: funciona sin internet en Android y computadora.
+ */
+let ultimoDescanso = 0;
+export async function avisarDescanso(fin: number, siguiente?: string) {
   if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
-  void alSW({ tipo: "descanso", fin, titulo: "Se acabó el descanso", cuerpo: siguiente ? `Sigue: ${siguiente}` : "Vamos con la siguiente serie." });
+  const titulo = "Se acabó el descanso", cuerpo = siguiente ? `Sigue: ${siguiente}` : "Vamos con la siguiente serie.";
+  const yo = ++ultimoDescanso;
+  let enServidor = false;
+  if (navigator.onLine) {
+    const { data } = await supabase.auth.getSession();
+    const tieneSub = await navigator.serviceWorker?.getRegistration().then((r) => r?.pushManager.getSubscription()).catch(() => null);
+    if (data.session && tieneSub) {
+      const { error } = await supabase.from("descansos").upsert({ user_id: data.session.user.id, fin: new Date(fin).toISOString(), titulo, cuerpo: cuerpo.slice(0, 160) }, { onConflict: "user_id" });
+      enServidor = !error;
+    }
+  }
+  if (yo !== ultimoDescanso) return; // ya se reprogramó o canceló mientras tanto
+  if (enServidor) void alSW({ tipo: "cancelar-descanso" });
+  else void alSW({ tipo: "descanso", fin, titulo, cuerpo });
 }
-export const cancelarAvisoDescanso = () => { void alSW({ tipo: "cancelar-descanso" }); };
+export async function cancelarAvisoDescanso() {
+  ultimoDescanso++;
+  void alSW({ tipo: "cancelar-descanso" });
+  if (!navigator.onLine) return;
+  const { data } = await supabase.auth.getSession();
+  if (data.session) await supabase.from("descansos").delete().eq("user_id", data.session.user.id);
+}
 
-/** Pide permiso de notificaciones una sola vez para el aviso del descanso (debe llamarse desde un toque). */
+/**
+ * Deja listo el aviso del descanso al marcar una serie (debe llamarse desde un toque):
+ * pide permiso la primera vez y activa el push del dispositivo si aún no está.
+ */
+let preparado = false;
 export function pedirPermisoDescanso() {
-  if (typeof Notification === "undefined" || Notification.permission !== "default") return;
-  try { if (localStorage.getItem("brio:pidio-descanso")) return; localStorage.setItem("brio:pidio-descanso", "1"); } catch { /* sin storage */ }
-  void Notification.requestPermission();
+  if (preparado || typeof Notification === "undefined" || !soportaPush() || (esIOS() && !instalada())) return;
+  preparado = true;
+  if (Notification.permission === "denied") return;
+  if (Notification.permission === "default") {
+    try { if (localStorage.getItem("brio:pidio-descanso")) return; localStorage.setItem("brio:pidio-descanso", "1"); } catch { /* sin storage */ }
+    void activarPush(); // directo en el toque: Safari no deja pedir permiso después de esperar otra cosa
+    return;
+  }
+  void estadoPush().then((e) => { if (e === "inactivo") void activarPush(); });
 }
 
 function base64AUint8(b64: string) {

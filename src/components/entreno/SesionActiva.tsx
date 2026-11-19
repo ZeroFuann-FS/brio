@@ -68,7 +68,7 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
     if (finDescanso && finDescanso > Date.now()) avisarDescanso(finDescanso, descanso?.sig);
     else cancelarAvisoDescanso();
   }, [finDescanso]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => () => cancelarAvisoDescanso(), []);
+  useEffect(() => () => { void cancelarAvisoDescanso(); }, []);
 
   /** Cambia una serie; el peso o las reps nuevas se copian a las siguientes series que aún no haces y tenían el valor anterior. */
   const editarSerie = (ei: number, si: number, cambio: Partial<{ kg: number; reps: number; min: number; km: number; hecha: boolean }>) =>
