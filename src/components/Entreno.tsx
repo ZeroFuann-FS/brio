@@ -3,7 +3,7 @@ import { motion } from "motion/react";
 import { ejercicioPorId, type Ejercicio } from "../data/ejercicios";
 import { hoyISO, sumarDias } from "../lib/calc";
 import {
-  DIAS_CORTOS, DIAS_SEMANA, SEMANA_LD, duracionMin, faltantesRutina, formatoMin, lunesDe, mejorMarca, minutosDia, nuevaSesion, planHoy,
+  DIAS_CORTOS, DIAS_SEMANA, PASOS_KG, PASO_KG, SEMANA_LD, duracionMin, faltantesRutina, formatoMin, lunesDe, mejorMarca, minutosDia, nuevaSesion, planHoy,
   seriesHechas, seriesPorMusculo, siguienteDia, textoSerie, tieneSemana, volumen, type Lugar, type Rutina, type Sesion,
 } from "../lib/entreno";
 import { useBrio } from "../lib/store";
@@ -259,6 +259,13 @@ export default function Entreno() {
                   </li>
                 ))}
               </ul>
+              <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs text-muted">
+                <span>Las pesas de tu gym suben de</span>
+                {PASOS_KG.map((p) => (
+                  <button key={p} onClick={() => setEntreno({ ...perfil?.entreno, rutinas, pasoKg: p })} aria-pressed={p === (perfil?.entreno?.pasoKg ?? PASO_KG)}
+                    className={`rounded-full border px-2.5 py-0.5 ${p === (perfil?.entreno?.pasoKg ?? PASO_KG) ? "border-lime bg-lime text-on-lime" : "border-line"}`}>{p} kg</button>
+                ))}
+              </div>
             </Tarjeta>
           )}
           <Tarjeta delay={0.16} tour="catalogo">

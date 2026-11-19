@@ -13,10 +13,12 @@ import { useTema } from "./lib/tema";
 import Perfil from "./components/Perfil";
 import Cuenta from "./components/Cuenta";
 import Logo from "./components/Logo";
-import { nubeDisponible, supabase } from "./lib/supabase";
+import { nubeDisponible, sesionGuardada, supabase } from "./lib/supabase";
 import { iniciarSync, useSync } from "./lib/sync";
 import { aplicarPlan, calcularMetas } from "./lib/calc";
 import { useAvisosLocales } from "./lib/avisosLocales";
+import { guardarSinRed } from "./lib/push";
+import { fotosEjercicio } from "./data/ejercicios";
 import Tour, { RECORRIDOS, marcarTutorial, reiniciarTutorial, tutorialVisto, type Recorrido } from "./components/Tour";
 import { habitosDe, pesoActual, racha, useBrio } from "./lib/store";
 
@@ -63,15 +65,37 @@ export default function App() {
 
   useEffect(() => {
     if (!nubeDisponible) return;
-    supabase.auth.getSession().then(({ data }) => { setSession(data.session); setAuthListo(true); });
+    // Sin red (o con señal mala en el gym) getSession puede tardar mucho al intentar renovar el token:
+    // si no responde rápido, se entra con la sesión guardada en el dispositivo y se sigue local-first.
+    let resuelto = false;
+    const respaldo = setTimeout(() => {
+      if (resuelto) return;
+      resuelto = true;
+      setSession(sesionGuardada());
+      setAuthListo(true);
+    }, 2500);
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session || !resuelto) setSession(data.session);
+      resuelto = true; clearTimeout(respaldo); setAuthListo(true);
+    }).catch(() => { if (!resuelto) { resuelto = true; clearTimeout(respaldo); setSession(sesionGuardada()); setAuthListo(true); } });
     const { data } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
-    return () => data.subscription.unsubscribe();
+    return () => { clearTimeout(respaldo); data.subscription.unsubscribe(); };
   }, []);
+
+  // Fotos de los ejercicios de tus rutinas guardadas para verlas en el gym sin internet
+  const rutinas = useBrio((s) => s.perfil?.entreno?.rutinas);
+  useEffect(() => {
+    const ids = new Set((rutinas ?? []).flatMap((r) => r.dias.flatMap((d) => d.ejercicios.map((e) => e.ej))));
+    const t = setTimeout(() => guardarSinRed([...ids].flatMap(fotosEjercicio)), 4000);
+    return () => clearTimeout(t);
+  }, [rutinas]);
 
   const uid = session?.user.id;
   useEffect(() => {
     if (!uid) return;
-    setSyncListo(false);
+    // Si ya hay datos en el dispositivo se muestran de inmediato y se sincroniza en segundo plano
+    // (sin internet la app no debe quedarse en "cargando").
+    if (!useBrio.getState().perfil) setSyncListo(false);
     setVerCuenta(false);
     iniciarSync(uid).finally(() => setSyncListo(true));
   }, [uid]);

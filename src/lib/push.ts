@@ -8,8 +8,39 @@ export const esIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (nav
 export const instalada = () => window.matchMedia?.("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
 
 export function registrarSW() {
-  if (!("serviceWorker" in navigator)) return;
-  window.addEventListener("load", () => { navigator.serviceWorker.register("/sw.js").catch(() => { /* sin SW */ }); });
+  if (!("serviceWorker" in navigator) || import.meta.env.DEV) return;
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js")
+      .then(() => navigator.serviceWorker.ready)
+      .then((reg) => reg.active?.postMessage({ tipo: "actualizar" })) // deja lista la versión actual para usarla sin internet
+      .catch(() => { /* sin SW */ });
+  });
+}
+
+/** Manda un mensaje al service worker activo (si hay). */
+async function alSW(msg: object) {
+  if (!("serviceWorker" in navigator)) return false;
+  const reg = await navigator.serviceWorker.getRegistration();
+  if (!reg?.active) return false;
+  reg.active.postMessage(msg);
+  return true;
+}
+
+/** Guarda estas imágenes para verlas sin internet (por ejemplo, las fotos de los ejercicios de tus rutinas). */
+export const guardarSinRed = (urls: string[]) => { if (urls.length) void alSW({ tipo: "guardar", urls }); };
+
+/** Programa el aviso de fin de descanso (llega aunque la pantalla esté bloqueada). */
+export function avisarDescanso(fin: number, siguiente?: string) {
+  if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+  void alSW({ tipo: "descanso", fin, titulo: "Se acabó el descanso", cuerpo: siguiente ? `Sigue: ${siguiente}` : "Vamos con la siguiente serie." });
+}
+export const cancelarAvisoDescanso = () => { void alSW({ tipo: "cancelar-descanso" }); };
+
+/** Pide permiso de notificaciones una sola vez para el aviso del descanso (debe llamarse desde un toque). */
+export function pedirPermisoDescanso() {
+  if (typeof Notification === "undefined" || Notification.permission !== "default") return;
+  try { if (localStorage.getItem("brio:pidio-descanso")) return; localStorage.setItem("brio:pidio-descanso", "1"); } catch { /* sin storage */ }
+  void Notification.requestPermission();
 }
 
 function base64AUint8(b64: string) {

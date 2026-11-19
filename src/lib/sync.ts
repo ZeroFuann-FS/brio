@@ -186,13 +186,8 @@ export async function iniciarSync(uid: string) {
   detenerSync();
   usuario = uid;
   useSync.setState({ estado: "sincronizando" });
-  try {
-    await bajarYMezclar(uid);
-    useSync.setState({ estado: "ok", ultima: Date.now() });
-  } catch {
-    useSync.setState({ estado: "error" });
-  }
-
+  // Se escuchan los cambios desde ya: la app se usa mientras baja lo remoto (o sin internet),
+  // y lo que se cambie mientras tanto queda pendiente y gana al mezclar.
   const unsub = useBrio.subscribe((s, prev) => {
     if (aplicandoRemoto) return;
     const a = snapshot(prev), b = snapshot(s);
@@ -202,10 +197,28 @@ export async function iniciarSync(uid: string) {
     if (cambio) { guardarPendientes(); useSync.setState({ estado: "pendiente" }); programar(); }
   });
 
+  desuscribir = unsub;
+
+  // Mientras se baja no se sube nada: si no, la mezcla podría pisar con lo remoto viejo algo que se acaba de subir.
+  ocupado = true;
+  try {
+    await bajarYMezclar(uid);
+    useSync.setState({ estado: pendientes.size ? "pendiente" : "ok", ultima: Date.now() });
+  } catch {
+    useSync.setState({ estado: navigator.onLine ? "error" : "pendiente" });
+  } finally {
+    ocupado = false;
+  }
+  if (usuario !== uid) return; // se cerró sesión mientras bajaba
+
   const alVolver = async () => {
     if (document.visibilityState !== "visible" || !usuario || ocupado) return;
     await flush();
+    if (ocupado) return;
+    ocupado = true;
     try { await bajarYMezclar(usuario); useSync.setState({ estado: pendientes.size ? "pendiente" : "ok", ultima: Date.now() }); } catch { /* sin red */ }
+    finally { ocupado = false; }
+    if (pendientes.size) programar();
   };
   const enLinea = () => programar(100);
   document.addEventListener("visibilitychange", alVolver);

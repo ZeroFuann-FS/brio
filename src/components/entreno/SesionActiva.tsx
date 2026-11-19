@@ -1,12 +1,26 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ejercicioPorId, type Ejercicio } from "../../data/ejercicios";
-import { duracionMin, formatoMin, logroSerie, reloj, serieInicial, seriesHechas, textoSerie, tocaSubir, ultimaVez, volumen, type EjSesion, type Sesion } from "../../lib/entreno";
+import { duracionMin, formatoMin, logroSerie, PASOS_KG, PASO_KG, reloj, serieInicial, seriesHechas, textoSerie, tocaSubir, ultimaVez, volumen, type EjSesion, type Sesion } from "../../lib/entreno";
 import { useBrio } from "../../lib/store";
+import { avisarDescanso, cancelarAvisoDescanso, pedirPermisoDescanso } from "../../lib/push";
 import { Hoja, Tarjeta, btnPrimario, btnSecundario } from "../ui";
 import Biblioteca, { DetalleEjercicio } from "./Biblioteca";
 import CambiarEjercicio, { type OpcionesCambio } from "./CambiarEjercicio";
 import { FotoEjercicio } from "./MapaMuscular";
+
+/* Pitido al terminar el descanso (el contexto de audio se prepara en un toque, como piden los navegadores). */
+let audio: AudioContext | null = null;
+const prepararSonido = () => { try { audio ??= new AudioContext(); void audio.resume(); } catch { /* sin audio */ } };
+function pitido() {
+  if (!audio || audio.state !== "running") return;
+  [0, 0.22, 0.44].forEach((t, i) => {
+    const o = audio!.createOscillator(), g = audio!.createGain(), t0 = audio!.currentTime + t;
+    o.frequency.value = i === 2 ? 1175 : 880;
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.25, t0 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.18);
+    o.connect(g).connect(audio!.destination); o.start(t0); o.stop(t0 + 0.2);
+  });
+}
 
 /** Todas las series marcadas. */
 const completo = (e: EjSesion) => e.series.length > 0 && e.series.every((x) => x.hecha);
@@ -35,7 +49,7 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
   const yaCelebrado = useRef(new Set<string>());
   useEffect(() => { if (!logro) return; const t = setTimeout(() => setLogro(null), 3200); return () => clearTimeout(t); }, [logro]);
   const [, setTick] = useState(0);
-  const [descanso, setDescanso] = useState<{ fin: number; total: number } | null>(null);
+  const [descanso, setDescanso] = useState<{ fin: number; total: number; sig?: string } | null>(null);
   const [agregar, setAgregar] = useState(false);
   const [ver, setVer] = useState<Ejercicio | null>(null);
   const [confirmar, setConfirmar] = useState<"terminar" | "cancelar" | null>(null);
@@ -43,8 +57,18 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
   useEffect(() => { const t = setInterval(() => setTick((x) => x + 1), 1000); return () => clearInterval(t); }, []);
   const restante = descanso ? Math.max(0, (descanso.fin - Date.now()) / 1000) : 0;
   useEffect(() => {
-    if (descanso && restante <= 0) { try { navigator.vibrate?.([200, 100, 200]); } catch { /* sin vibración */ } setDescanso(null); }
+    if (descanso && restante <= 0) {
+      if (document.visibilityState === "visible") { try { navigator.vibrate?.([300, 120, 300, 120, 300]); } catch { /* sin vibración */ } pitido(); }
+      setDescanso(null);
+    }
   }, [descanso, restante]);
+  // El aviso con pantalla bloqueada lo da el service worker: se reprograma si cambias el descanso (±15, saltar).
+  const finDescanso = descanso?.fin;
+  useEffect(() => {
+    if (finDescanso && finDescanso > Date.now()) avisarDescanso(finDescanso, descanso?.sig);
+    else cancelarAvisoDescanso();
+  }, [finDescanso]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => cancelarAvisoDescanso(), []);
 
   /** Cambia una serie; el peso o las reps nuevas se copian a las siguientes series que aún no haces y tenían el valor anterior. */
   const editarSerie = (ei: number, si: number, cambio: Partial<{ kg: number; reps: number; min: number; km: number; hecha: boolean }>) =>
@@ -65,11 +89,15 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
     const e = sesion.ejercicios[ei], x = e.series[si];
     editarSerie(ei, si, { hecha: !x.hecha });
     if (x.hecha) return;
+    prepararSonido();
+    pedirPermisoDescanso();
     const cardio = ejercicioPorId(e.ej)?.cardio;
     const termina = e.series.every((y, j) => j === si || y.hecha);
     if (termina) setAbiertos((a) => { const n = new Set(a); n.delete(ei); return n; });
     const ultimo = termina && sesion.ejercicios.every((y, j) => j === ei || completo(y));
-    if (!cardio && !ultimo) setDescanso({ fin: Date.now() + e.descanso * 1000, total: e.descanso });
+    const otro = sesion.ejercicios.find((y, j) => j !== ei && !completo(y));
+    const sig = !termina ? `${ejercicioPorId(e.ej)?.n ?? ""}, serie ${e.series.filter((y) => y.hecha).length + 2} de ${e.series.length}` : otro ? ejercicioPorId(otro.ej)?.n : undefined;
+    if (!cardio && !ultimo) setDescanso({ fin: Date.now() + e.descanso * 1000, total: e.descanso, sig });
     if (ultimo) setDescanso(null);
     const msg = cardio ? null : logroSerie(sesiones, e.ej, si, x);
     if (msg && !yaCelebrado.current.has(`${e.ej}:${msg}`)) {
@@ -92,7 +120,6 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
     }
     setAbiertos((a) => { const n = new Set(a); n.delete(ei); return n; });
     setCambiar(null);
-    setLogro(`Listo: ahora haces ${ejercicioPorId(nuevo)?.n ?? "el nuevo ejercicio"}`);
   };
   const sumarSerie = (ei: number) => editarSesion((s) => ({ ...s, ejercicios: s.ejercicios.map((e, i) => i !== ei ? e : { ...e, series: [...e.series, { ...(e.series[e.series.length - 1] ?? { kg: 0, reps: 10 }), hecha: false }] }) }));
   const quitarSerie = (ei: number) => editarSesion((s) => ({ ...s, ejercicios: s.ejercicios.map((e, i) => i !== ei || e.series.length <= 1 ? e : { ...e, series: e.series.slice(0, -1) }) }));
@@ -100,6 +127,8 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
   const agregarEj = (l: Ejercicio[]) => { editarSesion((s) => ({ ...s, ejercicios: [...s.ejercicios, ...l.map((e) => serieInicial(sesiones, e.id, e.cardio ? 1 : 3, e.cardio ? "20 min" : "10", e.cardio ? 0 : 90))] })); setAgregar(false); };
   const lugar = useBrio((s) => s.perfil?.entreno?.lugar);
 
+  const paso = entreno?.pasoKg ?? PASO_KG;
+  const setPaso = (p: number) => entreno && setEntreno({ ...entreno, pasoKg: p });
   const hechas = seriesHechas(sesion);
   const listos = sesion.ejercicios.filter(completo).length;
   const todoListo = sesion.ejercicios.length > 0 && listos === sesion.ejercicios.length;
@@ -144,7 +173,7 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
             </motion.button>
           );
           const prev = ultimaVez(sesiones, e.ej);
-          const subir = tocaSubir(sesiones, e.ej, e.reps);
+          const subir = tocaSubir(sesiones, e.ej, e.reps, paso);
           return (
             <Tarjeta key={`${e.ej}-${ei}`} className="!p-4">
               <div className="flex items-center gap-3">
@@ -158,9 +187,19 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
                 <button onClick={() => quitarEjercicio(ei)} aria-label={`Quitar ${info.n}`} className="text-lg text-muted hover:text-ember">×</button>
               </div>
               {subir && !e.series.some((x) => x.hecha) && (
-                <button onClick={() => e.series.forEach((_, si) => editarSerie(ei, si, { kg: subir }))} className="mt-2 w-full rounded-[10px] bg-lime/20 px-3 py-1.5 text-left text-xs">
-                  ↑ La vez pasada llegaste al tope de reps en todas. <b>Prueba con {subir} kg</b> (toca para ponerlo).
-                </button>
+                <div className="mt-2 rounded-[10px] bg-lime/20 px-3 py-1.5 text-xs">
+                  <button onClick={() => e.series.forEach((_, si) => editarSerie(ei, si, { kg: subir }))} className="w-full text-left">
+                    ↑ La vez pasada llegaste al tope de reps en todas. <b>Prueba con {subir} kg</b> (toca para ponerlo).
+                  </button>
+                  {entreno && (
+                    <span className="mt-1 flex items-center gap-1.5 text-muted">Tus pesas suben de
+                      {PASOS_KG.map((p) => (
+                        <button key={p} onClick={() => setPaso(p)} aria-pressed={p === paso}
+                          className={`rounded-full border px-2 py-0.5 ${p === paso ? "border-lime bg-lime text-on-lime" : "border-line"}`}>{p} kg</button>
+                      ))}
+                    </span>
+                  )}
+                </div>
               )}
               <div className={`mt-3 grid items-center gap-x-2 gap-y-1.5 text-center ${info.cardio ? "grid-cols-[28px_1fr_1fr_1fr_40px]" : "grid-cols-[28px_1fr_1fr_1fr_40px]"}`}>
                 <span className="lab">#</span><span className="lab">Anterior</span>
@@ -218,10 +257,13 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
       {/* Logro */}
       <AnimatePresence>
         {logro && (
-          <motion.div role="status" className="fixed inset-x-3 top-3 z-[60] mx-auto flex max-w-md items-center gap-3 rounded-[16px] bg-lime p-3 text-on-lime shadow-lg"
-            initial={{ y: -30, opacity: 0, scale: 0.96 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: -30, opacity: 0 }}>
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-on-lime/10 text-lg" aria-hidden>★</span>
-            <span className="text-sm font-semibold">{logro}</span>
+          <motion.div className="pointer-events-none fixed inset-0 z-[60] grid place-items-center p-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.button role="status" onClick={() => setLogro(null)} aria-label={`${logro}. Toca para cerrar`}
+              className="pointer-events-auto flex w-full max-w-xs flex-col items-center gap-2 rounded-[24px] bg-lime px-6 py-6 text-center text-on-lime shadow-2xl"
+              initial={{ scale: 0.6, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ type: "spring", stiffness: 380, damping: 18 }}>
+              <span className="grid h-14 w-14 place-items-center rounded-full bg-on-lime/10 text-3xl" aria-hidden>★</span>
+              <span className="font-serif text-xl font-medium leading-snug">{logro}</span>
+            </motion.button>
           </motion.div>
         )}
       </AnimatePresence>

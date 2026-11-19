@@ -13,7 +13,10 @@ export interface Sesion {
   rutinaId?: string; diaId?: string; ejercicios: EjSesion[]; records?: string[];
 }
 export type Lugar = "gym" | "basico" | "casa";
-export interface PrefsEntreno { rutinas: Rutina[]; activa?: string; lugar?: Lugar }
+/** pasoKg: de cuánto en cuánto suben las pesas de su gym (discos y mancuernas suelen ir de 5 en 5). */
+export interface PrefsEntreno { rutinas: Rutina[]; activa?: string; lugar?: Lugar; pasoKg?: number }
+export const PASO_KG = 5;
+export const PASOS_KG = [2.5, 5, 10];
 
 export const uidE = () => Math.random().toString(36).slice(2, 10);
 
@@ -153,15 +156,18 @@ export function planHoy(r: Rutina, sesiones: Sesion[], hoy: string) {
 /** Número superior del rango de reps ("8-12" → 12). */
 export const repsTope = (reps: string) => Number((reps.match(/\d+/g) ?? []).slice(-1)[0]) || 0;
 
-/** ¿Le toca subir peso? Si la última vez llegó al tope de reps en todas las series. */
-export function tocaSubir(sesiones: Sesion[], ej: string, reps: string): number | null {
+/** ¿Le toca subir peso? Si la última vez llegó al tope de reps en todas las series. Sugiere el siguiente peso que existe en su gym. */
+export function tocaSubir(sesiones: Sesion[], ej: string, reps: string, paso = PASO_KG): number | null {
   if (/s|min/i.test(reps)) return null;
   const tope = repsTope(reps);
   const prev = ultimaVez(sesiones, ej);
   if (!tope || !prev?.length || prev.length < 2 || !prev.every((x) => x.reps >= tope && x.kg > 0)) return null;
   const kg = Math.max(...prev.map((x) => x.kg));
-  return Math.round((kg + (kg >= 40 ? 2.5 : 1)) * 2) / 2;
+  return siguientePeso(kg, paso);
 }
+
+/** El siguiente peso arriba de kg en pasos de `paso` (42 kg con paso 5 → 45; 45 → 50). */
+export const siguientePeso = (kg: number, paso = PASO_KG) => Math.round((Math.floor(kg / paso + 1e-9) + 1) * paso * 10) / 10;
 
 /** Historial de 1RM estimado por fecha (para la gráfica de progreso). */
 export function progreso(sesiones: Sesion[], ej: string): { fecha: string; v: number }[] {
