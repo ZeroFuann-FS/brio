@@ -125,7 +125,7 @@ export default function App() {
 
   useEffect(() => {
     if (!splash) return;
-    const t = setTimeout(() => setSplash(false), 2600);
+    const t = setTimeout(() => setSplash(false), 1300); // corto: el intro ya muestra el logo
     return () => clearTimeout(t);
   }, [splash]);
 

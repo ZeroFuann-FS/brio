@@ -12,7 +12,7 @@ export function InicioFin({ id, alt = "" }: { id: string; alt?: string }) {
       <span className="absolute left-2 top-2 flex items-center gap-1.5 rounded-full bg-black/65 py-1 pl-1 pr-3 text-xs font-medium text-white">
         <span className="num grid h-5 w-5 place-items-center rounded-full bg-lime text-[13px] text-on-lime">{zoom + 1}</span>{etiquetas[zoom]}
       </span>
-      <span className="lab absolute bottom-2 right-2 rounded-full bg-black/60 px-2 py-0.5 !text-[10px] !text-white">Toca para regresar</span>
+      <span className="lab absolute bottom-2 right-2 rounded-full bg-black/60 px-2 py-0.5 !text-[11px] !text-white">Toca para regresar</span>
     </button>
   );
   return (
@@ -118,9 +118,9 @@ export default function MapaMuscular({ zonas = {}, resaltar, sec, compacto = fal
       <div>
         {figuras}
         <div className="mx-auto mt-3 flex max-w-[260px] items-center gap-2">
-          <span className="lab !text-[10px]">0</span>
+          <span className="lab !text-[11px]">0</span>
           <span className="h-2 flex-1 rounded-full" style={{ background: `linear-gradient(90deg, var(--mm-vacio), var(--color-lime))` }} />
-          <span className="lab !text-[10px]">12+ series</span>
+          <span className="lab !text-[11px]">12+ series</span>
         </div>
       </div>
       <div className="self-center">

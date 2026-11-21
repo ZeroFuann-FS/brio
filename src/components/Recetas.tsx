@@ -35,7 +35,7 @@ function TarjetaReceta({ r, fav, onAbrir, i }: { r: Receta; fav: boolean; onAbri
       <div className="relative aspect-[4/3] overflow-hidden rounded-[16px] border border-line bg-white">
         <div className="h-full w-full transition duration-300 group-hover:scale-[1.04]"><PortadaReceta r={r} /></div>
         {fav && <span className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-lime text-sm text-on-lime">♥</span>}
-        {e.includes("Rápida") && <span className="lab absolute bottom-2 left-2 rounded-full bg-black/60 px-2 py-0.5 !text-[10px] !text-white backdrop-blur">{r.min} min</span>}
+        {e.includes("Rápida") && <span className="lab absolute bottom-2 left-2 rounded-full bg-black/60 px-2 py-0.5 !text-[11px] !text-white backdrop-blur">{r.min} min</span>}
       </div>
       <p className="mt-2 line-clamp-2 text-[15px] font-medium leading-snug">{r.nombre}</p>
       <p className="lab mt-0.5 !tracking-[0.05em]">{n.kcal} kcal · {n.proteina} g prot · ~${costo(r)}</p>

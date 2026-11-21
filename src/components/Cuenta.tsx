@@ -83,10 +83,12 @@ export default function Cuenta({ onOmitir, puedeOmitir = true }: { onOmitir: () 
             <button
               onClick={google}
               disabled={!acepto || estado === "google"}
-              className="flex h-[54px] w-full items-center justify-center gap-2.5 rounded-[14px] border border-line-strong bg-surface font-semibold text-ink transition active:scale-[0.98] disabled:opacity-60 dark:border-white dark:bg-white dark:text-[#1f1f1f]"
+              className="flex h-[54px] w-full items-center justify-center gap-2.5 rounded-[14px] border border-line-strong bg-surface font-semibold text-ink transition active:scale-[0.98] disabled:cursor-not-allowed disabled:border-line disabled:opacity-45 disabled:grayscale dark:border-white dark:bg-white dark:text-[#1f1f1f]"
             >
               <IconoGoogle /> {estado === "google" ? "Abriendo Google…" : "Continuar con Google"}
             </button>
+
+            {!acepto && <p className="-mt-1 text-center text-sm text-muted" aria-live="polite">Marca la casilla de arriba para continuar.</p>}
 
             <div className="lab flex items-center gap-3"><span className="h-px flex-1 bg-line" />o con tu correo<span className="h-px flex-1 bg-line" /></div>
 

@@ -145,7 +145,7 @@ export default function Entreno() {
                       <button key={wd} onClick={() => d && setDiaElegido(d.id)} disabled={!d && !hecho} aria-label={`${DIAS_SEMANA[wd]}: ${d ? d.nombre : "descanso"}${hecho ? ", entrenaste" : ""}`}
                         className={`relative flex h-[58px] flex-col items-center justify-center gap-1 rounded-[12px] border transition ${hecho ? "border-lime bg-lime text-on-lime" : sel ? "border-ink bg-ink text-bg dark:border-lime dark:bg-transparent dark:text-ink" : d ? "border-line bg-surface" : "border-dashed border-line/70 text-muted/70"}`}>
                         <span className="num text-[15px] uppercase leading-none">{DIAS_CORTOS[wd]}</span>
-                        <span className="text-[10px] font-semibold leading-none">{hecho ? "✓" : d ? iniciales(d.nombre) : "desc."}</span>
+                        <span className="text-[11px] font-semibold leading-none">{hecho ? "✓" : d ? iniciales(d.nombre) : "desc."}</span>
                         {esHoy && <i className="absolute -bottom-1 h-1.5 w-1.5 rounded-full bg-lime ring-2 ring-[var(--color-t-habit)]" />}
                       </button>
                     );

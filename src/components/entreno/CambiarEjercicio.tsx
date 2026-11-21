@@ -59,7 +59,7 @@ export default function CambiarEjercicio({ actual, lugar, excluir = [], conRutin
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium">{e.n}</span>
                     <span className="lab !tracking-[0.04em]">{e.eq}</span>
-                    {esRecomendado(e.id) && <span className="ml-1.5 rounded-full bg-lime px-2 py-0.5 align-middle text-[10px] font-semibold text-on-lime">Recomendado</span>}
+                    {esRecomendado(e.id) && <span className="ml-1.5 rounded-full bg-lime px-2 py-0.5 align-middle text-[11px] font-semibold text-on-lime">Recomendado</span>}
                   </span>
                   <button onClick={() => elegir(e.id)} className="shrink-0 rounded-full border border-line px-3 py-1.5 text-xs font-medium hover:border-line-strong">Usar</button>
                 </li>

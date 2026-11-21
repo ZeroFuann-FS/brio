@@ -133,7 +133,7 @@ export default function Hoy({ perfil, metas, onIrComida }: { perfil: Perfil; met
         <Tarjeta tono="habit" delay={0.15} className="md:col-span-5" tour="habitos">
           <div className="flex items-baseline justify-between">
             <h2 className="font-serif text-xl font-medium">Hábitos</h2>
-            <span className="flex items-baseline gap-3"><span className="lab">{puntos} de {habitos.length + 1}</span><button onClick={() => setEditarHabitos(true)} className="lab !text-lime-ink hover:underline">Editar</button></span>
+            <span className="flex items-baseline gap-3"><span className="lab" title="Cuentan tus hábitos y la meta de agua">{puntos} de {habitos.length + 1} · con agua</span><button onClick={() => setEditarHabitos(true)} className="lab !text-lime-ink hover:underline">Editar</button></span>
           </div>
           <ul className="mt-2">
             {habitos.map((h) => {

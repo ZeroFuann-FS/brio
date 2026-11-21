@@ -41,11 +41,11 @@ function Barras({ datos, titulo }: { datos: { fecha: string; n: number }[]; titu
         {datos.map((d) => (
           <div key={d.fecha} className="group relative flex-1" style={{ height: "100%" }}>
             <div className="absolute bottom-0 w-full rounded-t-[3px] bg-lime" style={{ height: `${(d.n / max) * 100}%`, minHeight: d.n ? 3 : 0 }} />
-            <span className="pointer-events-none absolute -top-6 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-ink px-1.5 py-0.5 text-[10px] text-bg group-hover:block">{fecha(d.fecha)}: {d.n}</span>
+            <span className="pointer-events-none absolute -top-6 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-ink px-1.5 py-0.5 text-[11px] text-bg group-hover:block">{fecha(d.fecha)}: {d.n}</span>
           </div>
         ))}
       </div>
-      <div className="mt-1 flex justify-between"><span className="lab !text-[10px]">{fecha(datos[0]?.fecha)}</span><span className="lab !text-[10px]">hoy</span></div>
+      <div className="mt-1 flex justify-between"><span className="lab !text-[11px]">{fecha(datos[0]?.fecha)}</span><span className="lab !text-[11px]">hoy</span></div>
     </div>
   );
 }

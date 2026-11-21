@@ -122,7 +122,7 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
                   <p className="mb-2 text-xs text-muted">Toca para cambiar: <b className="text-ink">Yo</b> = Brío te da receta y compras · <b className="text-ink">Casa</b> = comes lo que hacen en casa o fuera · <b className="text-ink">—</b> = no la haces.</p>
                   <div className="grid gap-1" style={{ gridTemplateColumns: `44px repeat(${cols.length}, minmax(0, 1fr))` }}>
                     <span />
-                    {cols.map((c) => <span key={c} className="lab truncate text-center !text-[10px]">{NOMBRE_TIPO[c]}</span>)}
+                    {cols.map((c) => <span key={c} className="lab truncate text-center !text-[11px]">{NOMBRE_TIPO[c]}</span>)}
                     {(p.dias ?? []).map((d) => (
                       <div key={d} className="contents">
                         <span className="num self-center text-[15px] uppercase text-muted">{CORTO[d]}</span>
@@ -228,7 +228,7 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
               if (c.casa) return (
                 <li key={ci} className="border-b border-line py-2.5 last:border-b-0">
                   <div className="flex min-w-0 items-center gap-3">
-                    <span className="lab grid h-11 w-11 shrink-0 place-items-center rounded-[12px] bg-t-water !text-[10px] !text-ink">Casa</span>
+                    <span className="lab grid h-11 w-11 shrink-0 place-items-center rounded-[12px] bg-t-water !text-[11px] !text-ink">Casa</span>
                     <span className="min-w-0">
                       <span className="lab block !tracking-[0.08em]">{NOMBRE_TIPO[c.tipo]}</span>
                       <span className="block font-medium">Lo que hagan en casa o fuera</span>

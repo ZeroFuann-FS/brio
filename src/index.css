@@ -9,7 +9,7 @@
   --bg: #f4f2ea;
   --surface: #fbfaf5;
   --ink: #17191c;
-  --muted: #6b6e66;
+  --muted: #5d6058; /* más contraste para textos chicos (≈6:1 sobre el fondo) */
   --line: #dcd8cb;
   --line-strong: #17191c;
   --lime: #c6f432;
@@ -98,7 +98,7 @@ body {
   .lab {
     font-family: var(--font-display);
     font-weight: 600;
-    font-size: 12px;
+    font-size: 12.5px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--muted);

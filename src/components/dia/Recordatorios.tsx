@@ -29,7 +29,7 @@ function Fila({ titulo, desc, on, onCambio, children }: { titulo: string; desc: 
 }
 
 function Campo({ label, children }: { label: string; children: React.ReactNode }) {
-  return <label className="block min-w-0"><span className="lab mb-1 block !text-[10px]">{label}</span>{children}</label>;
+  return <label className="block min-w-0"><span className="lab mb-1 block !text-[11px]">{label}</span>{children}</label>;
 }
 
 export const TEXTO_ESTADO: Record<EstadoPush, string> = {

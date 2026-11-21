@@ -47,7 +47,7 @@ function Grafica({ datos }: { datos: { fecha: string; v: number }[] }) {
     <svg viewBox={`0 0 ${w} ${h}`} className="h-[70px] w-full" aria-label="Progreso de tu fuerza en este ejercicio">
       <polyline points={pts} fill="none" stroke="var(--color-lime)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
       {datos.map((d, i) => <circle key={i} cx={x(i)} cy={y(d.v)} r="3" fill="var(--color-lime)" />)}
-      <text x={x(datos.length - 1)} y={y(datos[datos.length - 1].v) - 7} textAnchor="end" className="fill-current text-[10px]">{datos[datos.length - 1].v} kg</text>
+      <text x={x(datos.length - 1)} y={y(datos[datos.length - 1].v) - 7} textAnchor="end" className="fill-current text-[11px]">{datos[datos.length - 1].v} kg</text>
     </svg>
   );
 }
@@ -154,7 +154,7 @@ export default function Biblioteca({ onElegir, onVer, yaAgregados = [], lugar, u
                       <span className={`relative block aspect-[4/3] overflow-hidden rounded-[14px] border-2 bg-white ${elegido ? "border-lime" : "border-transparent"}`}>
                         <img src={`/ejercicios/${e.id}-0.webp`} alt="" loading="lazy" className="h-full w-full object-cover" />
                         {onElegir && !uno && <span className={`absolute left-2 top-2 grid h-6 w-6 place-items-center rounded-full border-2 text-xs font-extrabold ${elegido ? "border-lime bg-lime text-on-lime" : "border-white bg-black/30 text-transparent"}`}>✓</span>}
-                        {ya && <span className="lab absolute bottom-1.5 left-1.5 rounded-full bg-black/60 px-2 py-0.5 !text-[9px] !text-white">Ya en el día</span>}
+                        {ya && <span className="lab absolute bottom-1.5 left-1.5 rounded-full bg-black/60 px-2 py-0.5 !text-[10px] !text-white">Ya en el día</span>}
                       </span>
                       <span className="mt-1.5 line-clamp-2 block text-sm font-medium leading-snug">{e.n}</span>
                       <span className="lab block truncate !tracking-[0.04em]">{e.cardio ? "Cardio" : e.m.map((m) => NOMBRE_MUSCULO[m]).join(" · ")} · {e.eq}</span>

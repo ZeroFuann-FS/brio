@@ -103,7 +103,7 @@ export default function Medidas({ perfil, pesos }: { perfil: Perfil; pesos: Peso
                   <motion.span className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-bg bg-ink"
                     initial={{ left: "0%" }} animate={{ left: `${Math.min(100, Math.max(0, ((ratio.r - 0.3) / 0.4) * 100))}%` }} transition={{ duration: 0.9, ease }} />
                 </div>
-                <div className="mt-1 flex justify-between text-[10px] text-muted"><span>0.3</span><span>0.4</span><span>0.5</span><span>0.6</span><span>0.7</span></div>
+                <div className="mt-1 flex justify-between text-[11px] text-muted"><span>0.3</span><span>0.4</span><span>0.5</span><span>0.6</span><span>0.7</span></div>
                 {!ratio.ok && ratio.r >= 0.5 && <p className="mt-2 text-xs text-muted">Meta: cintura menor a <b className="text-ink">{ratio.limite} cm</b> (te faltan {(cintura! - ratio.limite).toFixed(1)} cm).</p>}
               </div>
             )}

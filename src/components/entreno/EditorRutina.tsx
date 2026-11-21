@@ -55,7 +55,7 @@ export default function EditorRutina({ inicial, onGuardar, onBorrar, lugar }: { 
         {r.dias.map((d, i) => (
           <button key={d.id} onClick={() => setDi(i)} aria-pressed={i === di}
             className={`shrink-0 rounded-[12px] border px-3 py-1.5 text-left text-sm ${i === di ? chipOn : "border-line bg-surface text-muted"}`}>
-            <span className="block font-medium">{d.nombre || `Día ${i + 1}`}</span><span className="lab block !text-[10px] !text-current opacity-80">{etiqueta(d)}</span></button>
+            <span className="block font-medium">{d.nombre || `Día ${i + 1}`}</span><span className="lab block !text-[11px] !text-current opacity-80">{etiqueta(d)}</span></button>
         ))}
         <button onClick={nuevoDia} className="shrink-0 rounded-full border border-dashed border-line px-3.5 py-1.5 text-sm text-muted">+ Día</button>
       </div>
@@ -83,13 +83,13 @@ export default function EditorRutina({ inicial, onGuardar, onBorrar, lugar }: { 
                     <button onClick={() => editarDia((d) => ({ ...d, ejercicios: d.ejercicios.filter((_, i) => i !== ei) }))} aria-label={`Quitar ${info.n}`} className="px-1.5 text-lg text-muted hover:text-ember">×</button>
                   </div>
                   <div className="mt-2 grid grid-cols-3 gap-2 pl-[54px]">
-                    <label className="block"><span className="lab block !text-[10px]">Series</span>
+                    <label className="block"><span className="lab block !text-[11px]">Series</span>
                       <select className={`${inputCls} px-2 py-1.5 text-sm`} value={e.series} onChange={(x) => editarEj(ei, { series: Number(x.target.value) })}>
                         {[1, 2, 3, 4, 5, 6].map((n) => <option key={n}>{n}</option>)}
                       </select></label>
-                    <label className="block"><span className="lab block !text-[10px]">{info.cardio ? "Tiempo" : "Reps"}</span>
+                    <label className="block"><span className="lab block !text-[11px]">{info.cardio ? "Tiempo" : "Reps"}</span>
                       <input className={`${inputCls} px-2 py-1.5 text-sm`} value={e.reps} maxLength={10} onChange={(x) => editarEj(ei, { reps: x.target.value })} /></label>
-                    <label className="block"><span className="lab block !text-[10px]">Descanso</span>
+                    <label className="block"><span className="lab block !text-[11px]">Descanso</span>
                       <select className={`${inputCls} px-2 py-1.5 text-sm`} value={e.descanso} onChange={(x) => editarEj(ei, { descanso: Number(x.target.value) })}>
                         {DESCANSOS.map((n) => <option key={n} value={n}>{n < 60 ? `${n} s` : `${n / 60} min`}</option>)}
                       </select></label>

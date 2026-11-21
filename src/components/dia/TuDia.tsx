@@ -81,7 +81,7 @@ export default function TuDia({ perfil, className = "", delay = 0, tour }: { per
               ))}
               {ahora > desp && ahora < dorm && <i className="absolute top-0 h-full w-0.5 bg-ember" style={{ left: `${((ahora - desp) / (dorm - desp)) * 100}%` }} />}
             </div>
-            <div className="mt-1 flex justify-between"><span className="lab !text-[10px]">{hora12(desp)}</span><span className="lab !text-[10px]">{hora12(aMin(ag.dormir))}</span></div>
+            <div className="mt-1 flex justify-between"><span className="lab !text-[11px]">{hora12(desp)}</span><span className="lab !text-[11px]">{hora12(aMin(ag.dormir))}</span></div>
             {(ch.length > 0 || sueno < 7) && (
               <button onClick={() => setVista("dia")} className="mt-2 w-full rounded-[12px] border border-ember/50 bg-ember/10 px-3 py-2 text-left text-sm">
                 ⚠ {ch.length ? explicar(ch[0]) : `Duermes ${sueno.toFixed(1).replace(".0", "")} h; lo ideal son 7–9 h.`}{ch.length > 1 ? ` (+${ch.length - 1} más)` : ""}

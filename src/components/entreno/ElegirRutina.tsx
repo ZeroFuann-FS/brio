@@ -112,7 +112,7 @@ export default function ElegirRutina({ diasIniciales, lugarInicial, onListo }: {
               className={`flex flex-col rounded-[18px] border p-4 ${rec ? "border-lime bg-lime/10" : "border-line bg-surface"}`}>
               <div className="flex items-start gap-3">
                 <div className="min-w-0 flex-1">
-                  {rec && <span className="lab mb-1 inline-block rounded-full bg-lime px-2 py-0.5 !text-[10px] !text-on-lime">Recomendada</span>}
+                  {rec && <span className="lab mb-1 inline-block rounded-full bg-lime px-2 py-0.5 !text-[11px] !text-on-lime">Recomendada</span>}
                   <h4 className="font-medium leading-snug">{p.nombre}</h4>
                   <p className="mt-1 text-sm text-muted">{p.desc}</p>
                 </div>
