@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase";
-import { inputCls } from "../ui";
+import { inputCls, chipOn } from "../ui";
 
 interface Stats {
   usuarios: number; nuevos7: number; nuevos30: number; activos7: number; activos30: number; conPerfil: number;
@@ -168,7 +168,7 @@ export default function PanelAdmin() {
           <div className="flex flex-wrap gap-1.5">
             {[["nuevo", "Nuevos"], ["visto", "Vistos"], ["hecho", "Hechos"], ["descartado", "Descartados"], ["todos", "Todos"]].map(([id, t]) => (
               <button key={id} onClick={() => setFiltro(id)} aria-pressed={filtro === id}
-                className={`rounded-full border px-3 py-1 text-sm ${filtro === id ? "border-lime bg-lime text-on-lime" : "border-line bg-surface text-muted"}`}>{t}</button>
+                className={`rounded-full border px-3 py-1 text-sm ${filtro === id ? chipOn : "border-line bg-surface text-muted"}`}>{t}</button>
             ))}
           </div>
           <ul className="mt-3 space-y-2">

@@ -4,7 +4,7 @@ import { ejercicioPorId, type Ejercicio } from "../../data/ejercicios";
 import { duracionMin, formatoMin, logroSerie, PASOS_KG, PASO_KG, reloj, serieInicial, seriesHechas, textoSerie, tocaSubir, ultimaVez, volumen, type EjSesion, type Sesion } from "../../lib/entreno";
 import { useBrio } from "../../lib/store";
 import { avisarDescanso, cancelarAvisoDescanso, pedirPermisoDescanso } from "../../lib/push";
-import { Hoja, Tarjeta, btnPrimario, btnSecundario } from "../ui";
+import { Hoja, Tarjeta, btnPrimario, btnSecundario, chipOn } from "../ui";
 import Biblioteca, { DetalleEjercicio } from "./Biblioteca";
 import CambiarEjercicio, { type OpcionesCambio } from "./CambiarEjercicio";
 import { FotoEjercicio } from "./MapaMuscular";
@@ -195,7 +195,7 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
                     <span className="mt-1 flex items-center gap-1.5 text-muted">Tus pesas suben de
                       {PASOS_KG.map((p) => (
                         <button key={p} onClick={() => setPaso(p)} aria-pressed={p === paso}
-                          className={`rounded-full border px-2 py-0.5 ${p === paso ? "border-lime bg-lime text-on-lime" : "border-line"}`}>{p} kg</button>
+                          className={`rounded-full border px-2 py-0.5 ${p === paso ? chipOn : "border-line"}`}>{p} kg</button>
                       ))}
                     </span>
                   )}

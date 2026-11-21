@@ -3,7 +3,7 @@ import { ejercicioPorId, type Ejercicio } from "../../data/ejercicios";
 import { DIAS_SEMANA, SEMANA_LD, faltantesRutina, uidE, type Lugar, type Rutina } from "../../lib/entreno";
 import { useBrio } from "../../lib/store";
 import { SelectorSemana } from "./ElegirRutina";
-import { Hoja, btnPrimario, btnSecundario, inputCls } from "../ui";
+import { Hoja, btnPrimario, btnSecundario, inputCls, chipOn } from "../ui";
 import Biblioteca, { DetalleEjercicio } from "./Biblioteca";
 import CambiarEjercicio from "./CambiarEjercicio";
 import { FotoEjercicio } from "./MapaMuscular";
@@ -54,7 +54,7 @@ export default function EditorRutina({ inicial, onGuardar, onBorrar, lugar }: { 
       <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
         {r.dias.map((d, i) => (
           <button key={d.id} onClick={() => setDi(i)} aria-pressed={i === di}
-            className={`shrink-0 rounded-[12px] border px-3 py-1.5 text-left text-sm ${i === di ? "border-lime bg-lime text-on-lime" : "border-line bg-surface text-muted"}`}>
+            className={`shrink-0 rounded-[12px] border px-3 py-1.5 text-left text-sm ${i === di ? chipOn : "border-line bg-surface text-muted"}`}>
             <span className="block font-medium">{d.nombre || `Día ${i + 1}`}</span><span className="lab block !text-[10px] !text-current opacity-80">{etiqueta(d)}</span></button>
         ))}
         <button onClick={nuevoDia} className="shrink-0 rounded-full border border-dashed border-line px-3.5 py-1.5 text-sm text-muted">+ Día</button>

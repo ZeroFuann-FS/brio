@@ -4,7 +4,7 @@ import { RECETAS, TIPOS_RECETA, costo, etiquetas, nutricion, type Receta, type T
 import { enDespensa } from "../lib/menu";
 import { useBrio } from "../lib/store";
 import RecetaDetalle, { PortadaReceta } from "./RecetaDetalle";
-import { Hoja, Toast, ease, inputCls, useToast } from "./ui";
+import { Hoja, Toast, ease, inputCls, useToast, chipOn } from "./ui";
 
 const SIN_FAVORITAS: string[] = [];
 
@@ -20,7 +20,7 @@ const PASO = 12;
 function Chip({ on, children, onClick }: { on: boolean; children: string; onClick: () => void }) {
   return (
     <button onClick={onClick} aria-pressed={on}
-      className={`shrink-0 rounded-full border px-3.5 py-1.5 text-sm transition ${on ? "border-lime bg-lime text-on-lime" : "border-line bg-surface text-muted hover:text-ink"}`}>
+      className={`shrink-0 rounded-full border px-3.5 py-1.5 text-sm transition ${on ? chipOn : "border-line bg-surface text-muted hover:text-ink"}`}>
       {children}
     </button>
   );

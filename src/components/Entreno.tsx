@@ -12,7 +12,7 @@ import ElegirRutina from "./entreno/ElegirRutina";
 import Biblioteca, { DetalleEjercicio } from "./entreno/Biblioteca";
 import MapaMuscular, { FotoEjercicio } from "./entreno/MapaMuscular";
 import SesionActiva from "./entreno/SesionActiva";
-import { Hoja, Tarjeta, Toast, btnPrimario, btnSecundario, ease, useToast } from "./ui";
+import { Hoja, Tarjeta, Toast, btnPrimario, btnSecundario, ease, useToast, chipOn } from "./ui";
 import { BarraPestanas, PanelPestana, type Pestana } from "./Pestanas";
 
 const SIN_RUTINAS: Rutina[] = [];
@@ -285,7 +285,7 @@ export default function Entreno() {
                 <span>Las pesas de tu gym suben de</span>
                 {PASOS_KG.map((p) => (
                   <button key={p} onClick={() => setEntreno({ ...perfil?.entreno, rutinas, pasoKg: p })} aria-pressed={p === (perfil?.entreno?.pasoKg ?? PASO_KG)}
-                    className={`rounded-full border px-2.5 py-0.5 ${p === (perfil?.entreno?.pasoKg ?? PASO_KG) ? "border-lime bg-lime text-on-lime" : "border-line"}`}>{p} kg</button>
+                    className={`rounded-full border px-2.5 py-0.5 ${p === (perfil?.entreno?.pasoKg ?? PASO_KG) ? chipOn : "border-line"}`}>{p} kg</button>
                 ))}
               </div>
             </Tarjeta>

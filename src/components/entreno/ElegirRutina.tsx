@@ -3,13 +3,13 @@ import { motion } from "motion/react";
 import { ejercicioPorId, type Musculo } from "../../data/ejercicios";
 import { NOMBRE_LUGAR, PLANTILLAS, encaje, rutinaDePlantilla, type Plantilla } from "../../data/plantillas";
 import { DIAS_CORTOS, DIAS_SEMANA, SEMANA_LD, asignarSemana, minutosDia, semanaSugerida, uidE, type Lugar, type Rutina } from "../../lib/entreno";
-import { btnPrimario, btnSecundario, ease } from "../ui";
+import { btnPrimario, btnSecundario, ease, chipOn } from "../ui";
 import MapaMuscular from "./MapaMuscular";
 
 function Chip({ on, children, onClick }: { on: boolean; children: string; onClick: () => void }) {
   return (
     <button type="button" onClick={onClick} aria-pressed={on}
-      className={`rounded-full border px-3.5 py-1.5 text-sm transition ${on ? "border-lime bg-lime text-on-lime" : "border-line bg-surface text-muted hover:text-ink"}`}>{children}</button>
+      className={`rounded-full border px-3.5 py-1.5 text-sm transition ${on ? chipOn : "border-line bg-surface text-muted hover:text-ink"}`}>{children}</button>
   );
 }
 
@@ -32,7 +32,7 @@ export function SelectorSemana({ valor, onCambio }: { valor: number[]; onCambio:
         const on = valor.includes(wd);
         return (
           <button key={wd} type="button" aria-pressed={on} aria-label={DIAS_SEMANA[wd]} onClick={() => onCambio(on ? valor.filter((x) => x !== wd) : [...valor, wd])}
-            className={`num h-11 rounded-[11px] border text-[15px] uppercase transition ${on ? "border-lime bg-lime text-on-lime" : "border-line bg-surface text-muted"}`}>{DIAS_CORTOS[wd]}</button>
+            className={`num h-11 rounded-[11px] border text-[15px] uppercase transition ${on ? chipOn : "border-line bg-surface text-muted"}`}>{DIAS_CORTOS[wd]}</button>
         );
       })}
     </div>

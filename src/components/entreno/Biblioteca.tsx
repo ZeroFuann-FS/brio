@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { EJERCICIOS, NOMBRE_MUSCULO, type Ejercicio, type Musculo } from "../../data/ejercicios";
 import { mejorMarca, progreso, textoSerie, ultimaVez, type Lugar } from "../../lib/entreno";
 import { useBrio } from "../../lib/store";
-import { btnPrimario, inputCls } from "../ui";
+import { btnPrimario, inputCls, chipOn } from "../ui";
 import MapaMuscular, { FotoEjercicio, InicioFin } from "./MapaMuscular";
 
 const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -136,7 +136,7 @@ export default function Biblioteca({ onElegir, onVer, yaAgregados = [], lugar, u
         )}
         {EQUIPO.map((x) => (
           <button key={x.id} onClick={() => setEquipo((l) => (l.includes(x.id) ? l.filter((y) => y !== x.id) : [...l, x.id]))} aria-pressed={equipo.includes(x.id)}
-            className={`shrink-0 rounded-full border px-3 py-1 text-xs ${equipo.includes(x.id) ? "border-lime bg-lime text-on-lime" : "border-line bg-surface text-muted"}`}>{x.t}</button>
+            className={`shrink-0 rounded-full border px-3 py-1 text-xs ${equipo.includes(x.id) ? chipOn : "border-line bg-surface text-muted"}`}>{x.t}</button>
         ))}
       </div>
       <p className="lab mt-2">{lista.length} ejercicios{onElegir ? (uno ? " · toca el que quieras" : " · toca para elegir varios") : ""}</p>

@@ -120,6 +120,8 @@ export function Hoja({ abierta, onClose, titulo, children, ancha = false }: { ab
 export const inputCls =
   "w-full rounded-[14px] border border-line bg-surface px-4 py-3 text-base text-ink outline-none transition placeholder:text-muted/70 focus:border-line-strong dark:focus:border-lime";
 
+/** Estado "elegido" de chips y botones de opción. El lima queda para logros y acciones principales. */
+export const chipOn = "border-ink bg-ink text-bg dark:border-lime dark:bg-transparent dark:text-ink";
 export const btnPrimario =
   "h-12 rounded-[14px] bg-lime px-5 font-display text-[17px] font-bold uppercase tracking-[0.1em] text-on-lime transition active:scale-[0.98] disabled:opacity-40";
 

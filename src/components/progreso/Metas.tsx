@@ -6,7 +6,7 @@ import {
   type AreaMeta, type Meta, type TipoMeta,
 } from "../../lib/metas";
 import { habitosDe, useBrio } from "../../lib/store";
-import { Barra, Hoja, Tarjeta, Toast, btnPrimario, btnSecundario, ease, inputCls, useToast } from "../ui";
+import { Barra, Hoja, Tarjeta, Toast, btnPrimario, btnSecundario, ease, inputCls, useToast, chipOn } from "../ui";
 
 const SIN_METAS: Meta[] = [];
 const dinero = (n: number) => `$${Math.round(n).toLocaleString("es-MX")}`;
@@ -40,7 +40,7 @@ function EditorMeta({ inicial, onGuardar, onBorrar, onCerrar }: { inicial: Meta;
     <div className="space-y-4">
       <div className="flex flex-wrap gap-1.5">
         {AREAS.map((a) => <button key={a.id} onClick={() => set("area", a.id)} aria-pressed={m.area === a.id}
-          className={`rounded-full border px-3 py-1 text-sm ${m.area === a.id ? "border-lime bg-lime text-on-lime" : "border-line bg-surface text-muted"}`}>{a.t}</button>)}
+          className={`rounded-full border px-3 py-1 text-sm ${m.area === a.id ? chipOn : "border-line bg-surface text-muted"}`}>{a.t}</button>)}
       </div>
       <label className="block"><span className="lab mb-1 block">¿Qué quieres lograr?</span>
         <input className={inputCls} value={m.titulo} maxLength={60} placeholder="Ej. Juntar para una laptop" onChange={(e) => set("titulo", e.target.value)} /></label>

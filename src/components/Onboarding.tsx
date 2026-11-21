@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { calcularMetas, categoriaImc, fechaCorta, hoyISO, imc, pesoEnFecha, pesoReferencia, rangoSaludable, type DiaADia, type Habito, type Perfil, type Ritmo, type Sexo } from "../lib/calc";
 import { CATALOGO_HABITOS, MAX_HABITOS, habitosDe } from "../lib/store";
-import { Numero, btnPrimario, ease, inputCls } from "./ui";
+import { Numero, btnPrimario, ease, inputCls, chipOn } from "./ui";
 import Logo from "./Logo";
 import Proyeccion from "./Proyeccion";
 
@@ -199,7 +199,7 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
                 key={n}
                 type="button"
                 onClick={() => set("diasEntreno", n)}
-                className={`num h-11 rounded-[12px] border text-lg transition ${b.diasEntreno === n ? "border-lime bg-lime text-on-lime" : "border-line bg-surface"}`}
+                className={`num h-11 rounded-[12px] border text-lg transition ${b.diasEntreno === n ? chipOn : "border-line bg-surface"}`}
               >
                 {n}
               </button>
@@ -284,7 +284,7 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
           <div className="flex flex-wrap gap-2">
             {MOTIVOS.map((m) => (
               <button key={m} type="button" onClick={() => set("motivoTitulo", b.motivoTitulo === m ? "" : m)}
-                className={`rounded-full border px-3.5 py-2 text-sm transition ${b.motivoTitulo === m ? "border-lime bg-lime text-on-lime" : "border-line bg-surface text-muted"}`}>
+                className={`rounded-full border px-3.5 py-2 text-sm transition ${b.motivoTitulo === m ? chipOn : "border-line bg-surface text-muted"}`}>
                 {m}
               </button>
             ))}

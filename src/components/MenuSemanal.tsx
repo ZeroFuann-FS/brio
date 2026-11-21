@@ -6,7 +6,7 @@ import { alternativas, generarMenuReglas, kcalCasa, listaSuper, polloDelDia, qui
 import { useBrio } from "../lib/store";
 import Gustos from "./Gustos";
 import RecetaDetalle, { MiniReceta, useRegistrarReceta } from "./RecetaDetalle";
-import { Hoja, Tarjeta, Toast, btnPrimario, btnSecundario, ease, inputCls, useToast } from "./ui";
+import { Hoja, Tarjeta, Toast, btnPrimario, btnSecundario, ease, inputCls, useToast, chipOn } from "./ui";
 import { VER_COMIDAS_HOY } from "./Comida";
 
 const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
@@ -25,9 +25,9 @@ const NOMBRE_TIPO: Record<TipoReceta, string> = { desayuno: "Desayuno", comida: 
 const BASE: PrefsComida = { presupuesto: 500, comidas: ["desayuno", "comida", "cena"], equipo: ["Estufa", "Microondas", "Refrigerador"], preferencias: "", colaciones: 1, dias: DIAS.slice(0, 7), gustos: [], evitar: [] };
 const SIGUIENTE: Record<QuienCocina, QuienCocina> = { yo: "casa", casa: "no", no: "yo" };
 const CELDA: Record<QuienCocina, { t: string; cls: string }> = {
-  yo: { t: "Yo", cls: "border-lime bg-lime text-on-lime" },
+  yo: { t: "Yo", cls: "border-line bg-surface font-semibold text-ink" },
   casa: { t: "Casa", cls: "border-water/60 bg-t-water text-ink" },
-  no: { t: "—", cls: "border-line bg-surface text-muted" },
+  no: { t: "—", cls: "border-dashed border-line bg-transparent text-muted" },
 };
 const dinero = (n: number) => `$${Math.round(n).toLocaleString("es-MX")}`;
 const cant = (n: number) => n.toLocaleString("es-MX", { maximumFractionDigits: 2 });
@@ -42,7 +42,7 @@ const BEBIDA: Record<TipoReceta, string | null> = {
 function Chip({ on, children, onClick }: { on: boolean; children: string; onClick: () => void }) {
   return (
     <button type="button" onClick={onClick} aria-pressed={on}
-      className={`rounded-full border px-3.5 py-1.5 text-sm transition ${on ? "border-lime bg-lime text-on-lime" : "border-line bg-surface text-muted"}`}>
+      className={`rounded-full border px-3.5 py-1.5 text-sm transition ${on ? chipOn : "border-line bg-surface text-muted"}`}>
       {children}
     </button>
   );
@@ -102,7 +102,7 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
                 {DIAS.map((d) => {
                   const on = (p.dias ?? []).includes(d);
                   return <button key={d} onClick={() => toggle("dias", d)} aria-pressed={on}
-                    className={`num h-11 rounded-[10px] border text-[15px] uppercase transition ${on ? "border-lime bg-lime text-on-lime" : "border-line bg-surface text-muted"}`}>{CORTO[d]}</button>;
+                    className={`num h-11 rounded-[10px] border text-[15px] uppercase transition ${on ? chipOn : "border-line bg-surface text-muted"}`}>{CORTO[d]}</button>;
                 })}
               </div>
             </div>

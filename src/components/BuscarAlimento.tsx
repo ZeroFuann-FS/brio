@@ -6,7 +6,7 @@ import { buscarOFF, porCodigoOFF } from "../lib/off";
 import { buscarComunidad, porCodigoComunidad } from "../lib/comunidad";
 import { useSync } from "../lib/sync";
 import CrearAlimento from "./CrearAlimento";
-import { btnPrimario, btnSecundario, inputCls } from "./ui";
+import { btnPrimario, btnSecundario, inputCls, chipOn } from "./ui";
 
 const Escaner = lazy(() => import("./Escaner"));
 
@@ -127,7 +127,7 @@ export default function BuscarAlimento({ onAgregar, onBuscando }: { onAgregar: (
         <div className="flex flex-wrap gap-2">
           {[...sel.por, GRAMOS].map((p) => (
             <button key={p.t} onClick={() => cambiarPorcion(p)} aria-pressed={porcion === p}
-              className={`rounded-full border px-3.5 py-1.5 text-sm transition ${porcion === p ? "border-lime bg-lime text-on-lime" : "border-line bg-surface text-muted"}`}>
+              className={`rounded-full border px-3.5 py-1.5 text-sm transition ${porcion === p ? chipOn : "border-line bg-surface text-muted"}`}>
               {p === GRAMOS ? "gramos" : `${p.t} (${p.g} g)`}
             </button>
           ))}

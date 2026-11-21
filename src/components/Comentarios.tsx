@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { nubeDisponible, supabase } from "../lib/supabase";
-import { btnPrimario, inputCls } from "./ui";
+import { btnPrimario, inputCls, chipOn } from "./ui";
 
 const TIPOS = [
   { id: "idea", t: "Tengo una idea" },
@@ -51,7 +51,7 @@ export default function Comentarios() {
     <div className="space-y-3">
       <div className="flex flex-wrap gap-1.5">
         {TIPOS.map((t) => <button key={t.id} onClick={() => setTipo(t.id)} aria-pressed={tipo === t.id}
-          className={`rounded-full border px-3.5 py-1.5 text-sm ${tipo === t.id ? "border-lime bg-lime text-on-lime" : "border-line bg-surface text-muted"}`}>{t.t}</button>)}
+          className={`rounded-full border px-3.5 py-1.5 text-sm ${tipo === t.id ? chipOn : "border-line bg-surface text-muted"}`}>{t.t}</button>)}
       </div>
       <textarea rows={4} maxLength={2000} className={`${inputCls} resize-none`} value={texto} onChange={(e) => setTexto(e.target.value)}
         placeholder={tipo === "error" ? "¿Qué pasó y qué estabas haciendo? Ej. Al registrar una receta no se descontó de la despensa." : tipo === "gusta" ? "¿Qué te gusta? Así sé qué no tocar." : "¿Qué te gustaría que hiciera Brío?"} />

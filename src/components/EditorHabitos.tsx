@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Habito, Perfil } from "../lib/calc";
 import { CATALOGO_HABITOS, MAX_HABITOS, habitosDe, useBrio } from "../lib/store";
-import { btnPrimario, inputCls } from "./ui";
+import { btnPrimario, inputCls, chipOn } from "./ui";
 
 const PASOS = [4000, 6000, 8000, 10000, 12000, 15000];
 const textoPasos = (n: number) => `Caminar ${n.toLocaleString("es-MX")} pasos`;
@@ -35,7 +35,7 @@ export default function EditorHabitos({ perfil, onListo }: { perfil: Perfil; onL
                 <div className="mt-1.5 flex flex-wrap gap-1.5 pl-9">
                   {PASOS.map((n) => (
                     <button key={n} onClick={() => setPasos(n)} aria-pressed={actualPasos === n}
-                      className={`rounded-full border px-3 py-1 text-sm ${actualPasos === n ? "border-lime bg-lime text-on-lime" : "border-line bg-surface text-muted"}`}>{n.toLocaleString("es-MX")}</button>
+                      className={`rounded-full border px-3 py-1 text-sm ${actualPasos === n ? chipOn : "border-line bg-surface text-muted"}`}>{n.toLocaleString("es-MX")}</button>
                   ))}
                 </div>
               )}

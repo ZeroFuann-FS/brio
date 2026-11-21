@@ -5,7 +5,7 @@ import type { Perfil } from "../../lib/calc";
 import { DIAS_SEMANA, SEMANA_LD, diaDeSemana, uidE } from "../../lib/entreno";
 import { habitosDe, useBrio } from "../../lib/store";
 import { SelectorSemana } from "../entreno/ElegirRutina";
-import { btnPrimario, btnSecundario, inputCls } from "../ui";
+import { btnPrimario, btnSecundario, inputCls, chipOn } from "../ui";
 
 function Hora({ label, valor, onCambio }: { label: string; valor: string; onCambio: (v: string) => void }) {
   return (
@@ -56,7 +56,7 @@ export default function EditorAgenda({ perfil, onListo }: { perfil: Perfil; onLi
             <div className="flex flex-wrap gap-1.5">
               {TIPOS.map((t) => (
                 <button key={t} onClick={() => setNuevo({ ...nuevo, tipo: t })} aria-pressed={nuevo.tipo === t}
-                  className={`rounded-full border px-3 py-1 text-sm ${nuevo.tipo === t ? "border-lime bg-lime text-on-lime" : "border-line bg-surface text-muted"}`}>{nombreTipo(t)}</button>
+                  className={`rounded-full border px-3 py-1 text-sm ${nuevo.tipo === t ? chipOn : "border-line bg-surface text-muted"}`}>{nombreTipo(t)}</button>
               ))}
             </div>
             <input className={inputCls} placeholder="Nombre (opcional): Residencia, Uni, Camión…" value={nuevo.titulo} maxLength={30} onChange={(e) => setNuevo({ ...nuevo, titulo: e.target.value })} />

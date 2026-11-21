@@ -2,7 +2,7 @@ import { useState } from "react";
 import { GRUPOS_EQ, sumarEq, totalesEq, type Equivalentes, type GrupoEq } from "../data/equivalentes";
 import { TIEMPOS_PLAN, calcularMetas, hoyISO, menuPlan, tieneEquivalentes, tienePlanMenu, type Metas, type Perfil, type PlanNutriologo, type TiempoPlan } from "../lib/calc";
 import { pesoActual, useBrio, type TipoComida } from "../lib/store";
-import { Hoja, Tarjeta, Toast, btnPrimario, btnSecundario, inputCls, useToast } from "./ui";
+import { Hoja, Tarjeta, Toast, btnPrimario, btnSecundario, inputCls, useToast, chipOn } from "./ui";
 
 const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 const CORTO: Record<string, string> = { Lunes: "Lun", Martes: "Mar", Miércoles: "Mié", Jueves: "Jue", Viernes: "Vie", Sábado: "Sáb", Domingo: "Dom" };
@@ -111,7 +111,7 @@ export function EditorPlan({ perfil, onListo }: { perfil: Perfil; onListo: (msg:
           <div className="flex gap-2">
             {([[true, "El mismo todos los días"], [false, "Cambia por día"]] as const).map(([v, t]) => (
               <button key={t} type="button" onClick={() => setP((x) => ({ ...x, mismoMenu: v }))} aria-pressed={!!p.mismoMenu === v}
-                className={`rounded-full border px-3.5 py-1.5 text-sm ${!!p.mismoMenu === v ? "border-lime bg-lime text-on-lime" : "border-line bg-surface text-muted"}`}>{t}</button>
+                className={`rounded-full border px-3.5 py-1.5 text-sm ${!!p.mismoMenu === v ? chipOn : "border-line bg-surface text-muted"}`}>{t}</button>
             ))}
           </div>
           {!p.mismoMenu && (
