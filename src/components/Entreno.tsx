@@ -13,6 +13,7 @@ import Biblioteca, { DetalleEjercicio } from "./entreno/Biblioteca";
 import MapaMuscular, { FotoEjercicio } from "./entreno/MapaMuscular";
 import SesionActiva from "./entreno/SesionActiva";
 import { Hoja, Tarjeta, Toast, btnPrimario, btnSecundario, ease, useToast } from "./ui";
+import { BarraPestanas, PanelPestana, type Pestana } from "./Pestanas";
 
 const SIN_RUTINAS: Rutina[] = [];
 const fechaCorta = (f: string) => new Date(`${f}T12:00:00`).toLocaleDateString("es-MX", { weekday: "short", day: "numeric", month: "short" });
@@ -66,6 +67,8 @@ function Resumen({ s }: { s: Sesion }) {
   );
 }
 
+const VISTAS_ENTRENO: Pestana<"hoy" | "historial" | "rutinas">[] = [{ id: "hoy", t: "Hoy" }, { id: "historial", t: "Historial" }, { id: "rutinas", t: "Rutinas" }];
+
 export default function Entreno() {
   const perfil = useBrio((s) => s.perfil);
   const sesiones = useBrio((s) => s.sesiones);
@@ -74,6 +77,7 @@ export default function Entreno() {
   const rutinas = perfil?.entreno?.rutinas ?? SIN_RUTINAS;
   const rutina = rutinas.find((r) => r.id === perfil?.entreno?.activa) ?? rutinas[0];
   const [toast, setToast] = useToast();
+  const [vista, setVista] = useState<"hoy" | "historial" | "rutinas">("hoy");
   const [editando, setEditando] = useState<Rutina | null>(null);
   const [asistente, setAsistente] = useState(false);
   const [lugarNuevo, setLugarNuevo] = useState<Lugar | undefined>(perfil?.entreno?.lugar);
@@ -118,8 +122,10 @@ export default function Entreno() {
     <div>
       <h1 className="font-serif text-4xl font-medium tracking-tight">Entreno</h1>
       <p className="mt-1.5 text-muted">Tus rutinas, tus series y lo que trabajaste en la semana.</p>
-
-      <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-12 md:gap-4">
+      <BarraPestanas pestanas={VISTAS_ENTRENO} actual={vista} onCambiar={setVista} grupo="entreno" tour="entreno-tabs" />
+      <PanelPestana pestanas={VISTAS_ENTRENO} actual={vista} grupo="entreno">
+      {vista === "hoy" && (
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-12 md:gap-4">
         {/* Empezar */}
         <Tarjeta tono="habit" className="min-w-0 md:col-span-7" tour="entreno-inicio">
           {rutina && dia ? (
@@ -210,9 +216,13 @@ export default function Entreno() {
             </div>
           )}
         </Tarjeta>
+      </div>
+      )}
 
+      {vista === "historial" && (
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-12 md:gap-4">
         {/* Historial */}
-        <Tarjeta delay={0.1} className="min-w-0 md:col-span-7">
+        <Tarjeta className="min-w-0 md:col-span-7">
           <h2 className="font-serif text-xl font-medium">Historial</h2>
           {recientes.length ? (
             <ul className="mt-2">
@@ -232,8 +242,8 @@ export default function Entreno() {
         </Tarjeta>
 
         <div className="min-w-0 space-y-3 md:col-span-5">
-          {records.length > 0 && (
-            <Tarjeta delay={0.12}>
+          {records.length > 0 ? (
+            <Tarjeta delay={0.04}>
               <h2 className="font-serif text-xl font-medium">Récords recientes</h2>
               <ul className="mt-2">
                 {records.map((id) => {
@@ -242,9 +252,21 @@ export default function Entreno() {
                 })}
               </ul>
             </Tarjeta>
+          ) : (
+            <Tarjeta delay={0.04}>
+              <h2 className="font-serif text-xl font-medium">Récords</h2>
+              <p className="mt-1 text-sm text-muted">Cuando levantes más peso que tu mejor marca en un ejercicio, aquí aparece tu récord.</p>
+            </Tarjeta>
           )}
-          {rutinas.length > 0 && (
-            <Tarjeta delay={0.14}>
+        </div>
+      </div>
+      )}
+
+      {vista === "rutinas" && (
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-12 md:gap-4">
+        <div className="min-w-0 md:col-span-7">
+          {rutinas.length > 0 ? (
+            <Tarjeta>
               <div className="flex items-baseline justify-between">
                 <h2 className="font-serif text-xl font-medium">Mis rutinas</h2>
                 <button onClick={() => setAsistente(true)} className="lab !text-lime-ink hover:underline">+ Nueva</button>
@@ -267,8 +289,16 @@ export default function Entreno() {
                 ))}
               </div>
             </Tarjeta>
+          ) : (
+            <Tarjeta>
+              <h2 className="font-serif text-xl font-medium">Mis rutinas</h2>
+              <p className="mt-1 text-sm text-muted">Todavía no tienes rutina. Elige una en 3 preguntas y aparecerá aquí.</p>
+              <button onClick={() => setAsistente(true)} className={`${btnPrimario} mt-3 w-full`}>Elegir mi rutina</button>
+            </Tarjeta>
           )}
-          <Tarjeta delay={0.16} tour="catalogo">
+        </div>
+        <div className="min-w-0 md:col-span-5">
+          <Tarjeta delay={0.04} tour="catalogo">
             <h2 className="font-serif text-xl font-medium">Catálogo de ejercicios</h2>
             <p className="mt-1 text-sm text-muted">Más de 160 ejercicios con fotos de cómo empezar y terminar, técnica, músculos y video.</p>
             <div className="mt-3 flex -space-x-2">{["press-banca", "sentadilla", "dominadas", "hip-thrust", "curl-mancuernas", "plancha"].map((id) => <FotoEjercicio key={id} id={id} size={40} />)}</div>
@@ -276,6 +306,8 @@ export default function Entreno() {
           </Tarjeta>
         </div>
       </div>
+      )}
+      </PanelPestana>
 
       <Hoja abierta={!!editando} onClose={() => setEditando(null)} titulo={editando && rutinas.some((x) => x.id === editando.id) ? "Editar rutina" : "Revisa tu rutina"} ancha>
         {editando && <div className="md:max-w-2xl"><EditorRutina key={editando.id} inicial={editando} lugar={lugarNuevo ?? lugar} onGuardar={guardarRutina} onBorrar={rutinas.some((x) => x.id === editando.id) ? () => borrarRutina(editando.id) : undefined} /></div>}

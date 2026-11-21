@@ -45,6 +45,7 @@ export default function ElegirRutina({ diasIniciales, lugarInicial, onListo }: {
   const [nivel, setNivel] = useState<"Principiante" | "Intermedio">("Principiante");
   const [elegida, setElegida] = useState<Plantilla | "cero" | null>(null);
   const [semana, setSemana] = useState<number[]>([]);
+  const [verTodas, setVerTodas] = useState(false);
 
   const lista = useMemo(() => [...PLANTILLAS].sort((a, b) => encaje(b, lugar, nDias, nivel) - encaje(a, lugar, nDias, nivel)), [lugar, nDias, nivel]);
   const elegir = (p: Plantilla | "cero") => { setElegida(p); setSemana(semanaSugerida(nDias)); };
@@ -103,7 +104,7 @@ export default function ElegirRutina({ diasIniciales, lugarInicial, onListo }: {
 
       <p className="lab mb-2 mt-6">Rutinas para ti</p>
       <ul className="grid gap-3 md:grid-cols-2">
-        {lista.map((p, i) => {
+        {(verTodas ? lista : lista.slice(0, 3)).map((p, i) => {
           const min = Math.round(p.dias.reduce((a, d) => a + minutosDia(d), 0) / p.dias.length);
           const rec = i === 0;
           return (
@@ -126,6 +127,9 @@ export default function ElegirRutina({ diasIniciales, lugarInicial, onListo }: {
           );
         })}
       </ul>
+      {!verTodas && lista.length > 3 && (
+        <button onClick={() => setVerTodas(true)} className={`${btnSecundario} mt-3 w-full`}>Ver {lista.length - 3} rutinas más</button>
+      )}
       <button onClick={() => elegir("cero")} className="mt-3 w-full rounded-[16px] border border-dashed border-line p-4 text-left">
         <b className="font-medium">Crear la mía desde cero</b><span className="block text-sm text-muted">Elige los días y tus ejercicios del catálogo.</span>
       </button>

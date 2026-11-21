@@ -7,6 +7,7 @@ import { useBrio } from "../lib/store";
 import Gustos from "./Gustos";
 import RecetaDetalle, { MiniReceta, useRegistrarReceta } from "./RecetaDetalle";
 import { Hoja, Tarjeta, Toast, btnPrimario, btnSecundario, ease, inputCls, useToast } from "./ui";
+import { VER_COMIDAS_HOY } from "./Comida";
 
 const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 /** Nombre del día de hoy en el formato del menú ("Miércoles"). */
@@ -238,7 +239,7 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
                     {c.tipo === "colacion" ? "Una fruta, un puño de cacahuates o un yogur." : "Arma tu plato: la mitad verdura, un cuarto proteína (del tamaño de tu palma) y un cuarto tortilla, arroz o pan. Evita repetir y bebe agua."}
                   </p>
                   <div className="mt-2 pl-[56px]">
-                    <button onClick={() => document.getElementById("comidas-dia")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                    <button onClick={() => window.dispatchEvent(new Event(VER_COMIDAS_HOY))}
                       className="rounded-full border border-line px-3 py-1 text-xs text-muted hover:text-ink">Registrar lo que comí</button>
                   </div>
                 </li>

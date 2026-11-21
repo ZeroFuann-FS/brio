@@ -123,14 +123,13 @@ export const RECORRIDOS: Record<Recorrido, PasoTour[]> = {
     { titulo: "¡Listo, a darle con brío!", texto: "Cada sección tiene una mini guía la primera vez que entras. Constancia, no perfección." },
   ],
   comida: [
-    { target: "menu", titulo: "Tu menú de la semana", texto: "Elige días, comidas y quién cocina. Brío arma el menú con tus gustos, tu meta y lo que tienes en casa, y te da la lista del súper." },
-    { target: "despensa", titulo: "Tu despensa", texto: "Anota lo que tienes. El menú lo usa primero y te avisa cuando algo se está acabando." },
-    { target: "recetas", titulo: "Más de 120 recetas", texto: "Mexicanas, económicas y con calorías calculadas. Filtra por rápidas, sin refri o con lo que tienes." },
+    { target: "comida-tabs", titulo: "Todo lo de tu comida", texto: "Hoy: lo que vas comiendo. Menú: Brío arma tu semana y la lista del súper. Recetas: más de 120 mexicanas y económicas. Despensa: lo que tienes en casa (el puntito rojo avisa si algo se acaba)." },
+    { target: "comidas-hoy", titulo: "Registra lo que comes", texto: "Agrega cada comida y Brío lleva la cuenta de calorías y proteína del día." },
   ],
   entreno: [
     { target: "entreno-inicio", titulo: "Tu rutina", texto: "Contesta 3 preguntas, elige tus días y listo. Aquí ves qué te toca hoy y empiezas tu entreno." },
     { target: "mapa", titulo: "Músculos de la semana", texto: "Se pinta según las series que haces. Así sabes qué trabajaste y qué te falta." },
-    { target: "catalogo", titulo: "Catálogo de ejercicios", texto: "Más de 160, con fotos de cómo empezar y terminar, técnica, músculos y video." },
+    { target: "entreno-tabs", titulo: "Historial y rutinas", texto: "En Historial ves tus entrenos y récords. En Rutinas cambias de rutina y abres el catálogo de más de 160 ejercicios." },
   ],
   progreso: [
     { target: "progreso-tabs", titulo: "Tu progreso", texto: "Resumen: cómo te fue en la semana y qué mejorar. Metas: aprender, carrera y dinero. Cuerpo: tu peso y medidas." },

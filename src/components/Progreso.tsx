@@ -3,9 +3,10 @@ import type { Metas, Perfil } from "../lib/calc";
 import Peso from "./Peso";
 import MetasCrecimiento from "./progreso/Metas";
 import ResumenSemana from "./progreso/ResumenSemana";
+import { BarraPestanas, PanelPestana, type Pestana } from "./Pestanas";
 
 type Vista = "resumen" | "metas" | "cuerpo";
-const VISTAS: { id: Vista; t: string }[] = [{ id: "resumen", t: "Resumen" }, { id: "metas", t: "Metas" }, { id: "cuerpo", t: "Cuerpo" }];
+const VISTAS: Pestana<Vista>[] = [{ id: "resumen", t: "Resumen" }, { id: "metas", t: "Metas" }, { id: "cuerpo", t: "Cuerpo" }];
 
 export default function Progreso({ perfil, metas, actual }: { perfil: Perfil; metas: Metas; actual: number }) {
   const [vista, setVista] = useState<Vista>("resumen");
@@ -13,17 +14,12 @@ export default function Progreso({ perfil, metas, actual }: { perfil: Perfil; me
     <div>
       <h1 className="font-serif text-4xl font-medium tracking-tight">Progreso</h1>
       <p className="mt-1.5 text-muted">Tu semana, tus metas y tu cuerpo.</p>
-      <div className="mt-4 flex max-w-md gap-1 rounded-[14px] border border-line bg-surface p-1" data-tour="progreso-tabs">
-        {VISTAS.map((v) => (
-          <button key={v.id} onClick={() => setVista(v.id)} aria-pressed={vista === v.id}
-            className={`h-10 flex-1 rounded-[10px] font-display text-sm font-semibold uppercase tracking-[0.08em] transition ${vista === v.id ? "bg-ink text-bg dark:bg-lime dark:text-on-lime" : "text-muted"}`}>{v.t}</button>
-        ))}
-      </div>
-      <div className="mt-5">
+      <BarraPestanas pestanas={VISTAS} actual={vista} onCambiar={setVista} grupo="progreso" tour="progreso-tabs" />
+      <PanelPestana pestanas={VISTAS} actual={vista} grupo="progreso">
         {vista === "resumen" && <ResumenSemana perfil={perfil} metas={metas} />}
         {vista === "metas" && <MetasCrecimiento perfil={perfil} />}
         {vista === "cuerpo" && <Peso perfil={perfil} metas={metas} actual={actual} sinTitulo />}
-      </div>
+      </PanelPestana>
     </div>
   );
 }
