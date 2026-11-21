@@ -1,0 +1,86 @@
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+
+/** Chispitas lima que salen de un punto cuando `disparo` cambia (por ejemplo, al marcar un hábito). */
+export function Chispas({ disparo, n = 7 }: { disparo: number; n?: number }) {
+  const quieto = useReducedMotion();
+  if (!disparo || quieto) return null;
+  return (
+    <span key={disparo} aria-hidden className="pointer-events-none absolute inset-0 grid place-items-center">
+      {Array.from({ length: n }, (_, i) => {
+        const a = (i / n) * Math.PI * 2 - Math.PI / 2 + (i % 2 ? 0.25 : 0);
+        const d = 24 + (i % 3) * 8;
+        return (
+          <motion.i key={i} className={`absolute rounded-full bg-lime ring-[1.5px] ring-lime-ink/60 shadow-[0_0_8px_2px_rgba(198,244,50,.8)] ${i % 2 ? "h-[6px] w-[6px]" : "h-[8px] w-[8px]"}`}
+            initial={{ x: 0, y: 0, scale: 0.6, opacity: 1 }}
+            animate={{ x: Math.cos(a) * d, y: Math.sin(a) * d, scale: [0.6, 1.2, 0.4], opacity: [1, 1, 0] }}
+            transition={{ duration: 0.7, times: [0, 0.4, 1], ease: [0.2, 0.8, 0.4, 1] }} />
+        );
+      })}
+    </span>
+  );
+}
+
+/** Palomita que se dibuja con trazo. */
+export function Palomita({ visible }: { visible: boolean }) {
+  return (
+    <svg viewBox="0 0 16 16" className="h-[13px] w-[13px]" aria-hidden>
+      <motion.path d="M3 8.5l3.2 3.2L13 4.8" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round"
+        initial={false} animate={{ pathLength: visible ? 1 : 0, opacity: visible ? 1 : 0 }} transition={{ duration: 0.28, ease: "easeOut" }} />
+    </svg>
+  );
+}
+
+/**
+ * Vaso de agua que se llena con una ola. `meta` = es el vaso con el que se llega a la meta;
+ * `cadena` = índice para la ola en cadena cuando se completa la meta.
+ */
+export function Vaso({ lleno, extra, celebrar, i, onClick, etiqueta }: {
+  lleno: boolean; extra: boolean; celebrar: number; i: number; onClick: () => void; etiqueta: string;
+}) {
+  const quieto = useReducedMotion();
+  return (
+    <motion.button whileTap={{ scale: 0.9 }} onClick={onClick} aria-label={etiqueta}
+      className={`relative h-[30px] overflow-hidden rounded-[5px_5px_9px_9px] border transition-colors ${lleno ? (extra ? "border-lime" : "border-water") : "border-line-strong/60"}`}>
+      <motion.span aria-hidden className="absolute inset-x-0 bottom-0 bg-water"
+        initial={false} animate={{ height: lleno ? "100%" : "0%" }}
+        transition={quieto ? { duration: 0 } : { duration: 0.45, ease: [0.3, 0.9, 0.4, 1] }}>
+        {/* la ola en la superficie */}
+        {!quieto && (
+          <motion.svg viewBox="0 0 40 8" preserveAspectRatio="none" className="absolute -top-[5px] left-0 h-[6px] w-[200%] text-water"
+            animate={{ x: ["0%", "-50%"] }} transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}>
+            <path d="M0 4 Q5 0 10 4 T20 4 T30 4 T40 4 V8 H0 Z" fill="currentColor" />
+          </motion.svg>
+        )}
+      </motion.span>
+      {/* ola en cadena al cumplir la meta */}
+      {celebrar > 0 && lleno && !quieto && (
+        <motion.span key={celebrar} aria-hidden className="absolute inset-0 bg-white/70"
+          initial={{ opacity: 0 }} animate={{ opacity: [0, 0.9, 0] }} transition={{ duration: 0.45, delay: i * 0.06 }} />
+      )}
+    </motion.button>
+  );
+}
+
+/** "−390 kcal" que sube y se desvanece cuando cambia un valor (por ejemplo, al registrar una comida). */
+export function DeltaFlotante({ valor, unidad }: { valor: number; unidad: string }) {
+  const previo = useRef(valor);
+  const quieto = useReducedMotion();
+  const [delta, setDelta] = useState<{ n: number; k: number } | null>(null);
+  useEffect(() => {
+    const d = valor - previo.current;
+    previo.current = valor;
+    if (d && !quieto) setDelta({ n: d, k: Date.now() });
+  }, [valor, quieto]);
+  return (
+    <AnimatePresence>
+      {delta && (
+        <motion.span key={delta.k} aria-hidden onAnimationComplete={() => setDelta(null)}
+          className={`pointer-events-none absolute right-2 top-1 font-display text-lg font-semibold ${delta.n > 0 ? "text-ember" : "text-lime-ink"}`}
+          initial={{ y: 8, opacity: 0 }} animate={{ y: -22, opacity: [0, 1, 1, 0] }} transition={{ duration: 1.3, times: [0, 0.15, 0.7, 1] }}>
+          {delta.n > 0 ? "+" : "−"}{Math.abs(delta.n).toLocaleString("es-MX")} {unidad}
+        </motion.span>
+      )}
+    </AnimatePresence>
+  );
+}

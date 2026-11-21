@@ -8,6 +8,7 @@ import { useState } from "react";
 import { TarjetaPlan } from "./PlanNutriologo";
 import TuDia, { AvisoPago } from "./dia/TuDia";
 import { celebrarRacha } from "./LlamaRacha";
+import { Chispas, DeltaFlotante, Palomita, Vaso } from "./anim";
 
 const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
@@ -37,7 +38,10 @@ export default function Hoy({ perfil, metas, onIrComida }: { perfil: Perfil; met
   const faltaMotivo = perfil.motivo ? diasEntre(hoy, perfil.motivo.fecha) : null;
   const fecha = new Date();
 
+  const [chispa, setChispa] = useState<{ id: string; n: number } | null>(null);
+  const [olaAgua, setOlaAgua] = useState(0);
   const marcarHabito = (id: string) => {
+    if (!d.habitos[id]) setChispa({ id, n: Date.now() });
     toggleHabito(hoy, id);
     if (!d.habitos[id] && puntos + 1 === MIN) { setToast("¡Día con brío! Tu racha sigue"); celebrarRacha(hoy); }
   };
@@ -55,6 +59,7 @@ export default function Hoy({ perfil, metas, onIrComida }: { perfil: Perfil; met
     if (!ml) return;
     addAgua(hoy, ml);
     if (d.aguaMl < metas.aguaMl && d.aguaMl + ml >= metas.aguaMl) {
+      setTimeout(() => setOlaAgua(Date.now()), 450);
       setToast(puntos + 1 === MIN ? "¡Día con brío! Tu racha sigue" : "Meta de agua cumplida");
       if (puntos + 1 === MIN) celebrarRacha(hoy);
     }
@@ -87,7 +92,8 @@ export default function Hoy({ perfil, metas, onIrComida }: { perfil: Perfil; met
         {/* Comida: número editorial + barra deportiva */}
         <Tarjeta tono="food" className="md:col-span-7" tour="kcal">
           <div className="flex justify-between"><span className="lab">{restantes >= 0 ? "Te quedan hoy" : "Te pasaste por"}</span><span className="lab">Meta {metas.kcal.toLocaleString("es-MX")}</span></div>
-          <p className="num mt-2 text-[clamp(76px,22vw,120px)] leading-[0.85]">
+          <p className="num relative mt-2 text-[clamp(76px,22vw,120px)] leading-[0.85]">
+            <DeltaFlotante valor={restantes} unidad="kcal" />
             <span className={restantes >= 0 ? "resalta" : "text-ember"}><Numero valor={Math.abs(restantes)} /></span>
             <span className="ml-1.5 font-serif text-xl font-normal italic text-muted">kcal</span>
           </p>
@@ -112,13 +118,8 @@ export default function Hoy({ perfil, metas, onIrComida }: { perfil: Perfil; met
           </div>
           <div className="mt-3.5 grid grid-cols-6 gap-1.5">
             {Array.from({ length: Math.max(vasos, llenos) }, (_, i) => (
-              <motion.button
-                key={i}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => tocarVaso(i)}
-                aria-label={`${i + 1} vasos`}
-                className={`h-[30px] rounded-[5px_5px_9px_9px] border transition-colors ${i < llenos ? (i >= vasos ? "border-lime bg-water" : "border-water bg-water") : "border-line-strong/60"}`}
-              />
+              <Vaso key={i} i={i} lleno={i < llenos} extra={i >= vasos} celebrar={olaAgua}
+                onClick={() => tocarVaso(i)} etiqueta={`${i + 1} vasos`} />
             ))}
           </div>
           <div className="mt-3 flex items-center gap-1.5">
@@ -146,10 +147,11 @@ export default function Hoy({ perfil, metas, onIrComida }: { perfil: Perfil; met
                 <li key={h.id} className="border-b border-line last:border-b-0">
                   <button onClick={() => marcarHabito(h.id)} className="flex w-full items-center gap-3 py-2.5 text-left">
                     <motion.span
-                      className={`grid h-[22px] w-[22px] shrink-0 place-items-center rounded-[7px] border-[1.5px] text-[13px] font-extrabold ${ok ? "border-lime bg-lime text-on-lime" : "border-line-strong"}`}
+                      className={`relative grid h-[22px] w-[22px] shrink-0 place-items-center rounded-[7px] border-[1.5px] text-on-lime transition-colors ${ok ? "border-lime bg-lime" : "border-line-strong"}`}
                       animate={ok ? { scale: [1, 1.25, 1] } : { scale: 1 }}
                     >
-                      {ok ? "✓" : ""}
+                      <Palomita visible={ok} />
+                      <Chispas disparo={chispa?.id === h.id ? chispa.n : 0} />
                     </motion.span>
                     <span className={ok ? "" : "text-ink/90"}>{h.t}</span>
                   </button>
