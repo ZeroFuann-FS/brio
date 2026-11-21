@@ -16,6 +16,8 @@ export default function Peso({ perfil, metas, actual, sinTitulo = false }: { per
   const total = perfil.pesoInicial - perfil.pesoMeta;
   const progreso = total !== 0 ? Math.max(0, Math.min(1, perdido / total)) : 1;
   const hoyRegistrado = pesos.some((p) => p.fecha === hoyISO());
+  // Mismo margen que calcularMetas: a ±0.3 kg ya estás en tu meta.
+  const enMeta = Math.abs(actual - perfil.pesoMeta) <= 0.3;
 
   const guardar = () => {
     const kg = Number(valor.replace(",", "."));
@@ -67,9 +69,20 @@ export default function Peso({ perfil, metas, actual, sinTitulo = false }: { per
 
       <Tarjeta delay={0.1}>
         <h2 className="mb-3 font-serif text-xl font-medium">Tu camino a {perfil.pesoMeta} kg</h2>
-        {metas.fechaEstimada
-          ? <Proyeccion datos={perfil} pesoActual={actual} motivo={perfil.motivo} reales={pesos} />
-          : <p className="py-6 text-center text-sm text-muted">¡Estás en tu meta! Ahora toca mantener.</p>}
+        {enMeta
+          ? <p className="py-6 text-center text-sm text-muted">¡Estás en tu meta! Ahora toca mantener.</p>
+          : metas.fechaEstimada
+            ? <Proyeccion datos={perfil} pesoActual={actual} motivo={perfil.motivo} reales={pesos} />
+            : (
+              <div className="py-6 text-center text-sm text-muted">
+                <p>A tu ritmo actual no podemos estimar cuándo llegas a {perfil.pesoMeta} kg.</p>
+                <p className="mt-1">
+                  {metas.limitadoPorMinimo
+                    ? "Tus calorías ya están en el mínimo seguro; moverte más (más días de entreno o más pasos) es lo que acelera el avance."
+                    : "El avance semanal es muy pequeño. Prueba con un ritmo un poco más rápido o con más días de entreno."}
+                </p>
+              </div>
+            )}
       </Tarjeta>
 
       <Medidas perfil={perfil} pesos={pesos} />

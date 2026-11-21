@@ -113,6 +113,12 @@ export function proyeccion(p: DatosCalculo, pesoInicio: number, maxSemanas = 156
   const bajando = pesoInicio > p.pesoMeta;
   let w = pesoInicio;
   for (let s = 1; s <= maxSemanas; s++) {
+    // A ±0.3 kg energia() ya da mantenimiento (ritmo 0): eso cuenta como llegar.
+    if (Math.abs(w - p.pesoMeta) <= 0.3) {
+      const fecha = sumarDias(hoy, (s - 1) * 7);
+      if (s > 1) puntos.push({ fecha, kg: p.pesoMeta });
+      return { puntos, fechaMeta: fecha };
+    }
     const m = energia(p, w);
     if (Math.abs(m.kgSemana) < 0.02) break;
     const siguiente = w - m.kgSemana;
