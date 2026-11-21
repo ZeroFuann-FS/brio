@@ -84,3 +84,25 @@ export function DeltaFlotante({ valor, unidad }: { valor: number; unidad: string
     </AnimatePresence>
   );
 }
+
+/** Confeti lima y crema que cae desde arriba cuando `disparo` cambia (meta cumplida). */
+export function Confeti({ disparo }: { disparo: number }) {
+  const quieto = useReducedMotion();
+  if (!disparo || quieto) return null;
+  const colores = ["#c6f432", "#f4ffd0", "#17191c", "#9ed0ff", "#c6f432"];
+  return (
+    <div key={disparo} aria-hidden className="pointer-events-none fixed inset-0 z-[70] overflow-hidden">
+      {Array.from({ length: 60 }, (_, i) => {
+        const x = Math.random() * 100, giro = (Math.random() - 0.5) * 720, lado = (Math.random() - 0.5) * 120;
+        const dur = 1.8 + Math.random() * 1.4, retraso = Math.random() * 0.35;
+        return (
+          <motion.i key={i} className="absolute top-0 block rounded-[2px]"
+            style={{ left: `${x}%`, width: i % 3 ? 8 : 6, height: i % 3 ? 14 : 6, background: colores[i % colores.length] }}
+            initial={{ y: -30, x: 0, rotate: 0, opacity: 1 }}
+            animate={{ y: innerHeight + 40, x: lado, rotate: giro, opacity: [1, 1, 0.9, 0] }}
+            transition={{ duration: dur, delay: retraso, ease: [0.25, 0.4, 0.5, 1] }} />
+        );
+      })}
+    </div>
+  );
+}

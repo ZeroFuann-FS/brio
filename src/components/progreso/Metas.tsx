@@ -7,6 +7,7 @@ import {
 } from "../../lib/metas";
 import { habitosDe, useBrio } from "../../lib/store";
 import { Barra, Hoja, Tarjeta, Toast, btnPrimario, btnSecundario, ease, inputCls, useToast, chipOn } from "../ui";
+import { Confeti } from "../anim";
 
 const SIN_METAS: Meta[] = [];
 const dinero = (n: number) => `$${Math.round(n).toLocaleString("es-MX")}`;
@@ -143,6 +144,7 @@ export default function MetasCrecimiento({ perfil }: { perfil: Perfil }) {
   const [toast, setToast] = useToast();
   const hoy = hoyISO();
   const activas = metas.filter((m) => !m.lograda), logradas = metas.filter((m) => m.lograda);
+  const [confeti, setConfeti] = useState(0);
   const habitos = habitosDe(perfil).map((h) => h.id);
 
   const guardar = (m: Meta) => { setMetas(metas.some((x) => x.id === m.id) ? metas.map((x) => (x.id === m.id ? m : x)) : [...metas, m]); setEditando(null); setNueva(false); };
@@ -150,7 +152,8 @@ export default function MetasCrecimiento({ perfil }: { perfil: Perfil }) {
     const completa = avance(m) >= 1 && m.tipo !== "tiempo" && !m.lograda;
     const final = completa ? { ...m, lograda: hoy } : m;
     setMetas(metas.map((x) => (x.id === m.id ? final : x)));
-    setToast(completa ? `¡Lograste "${m.titulo}"! 🎉` : msg ?? "");
+    setToast(completa ? `¡Lograste "${m.titulo}"!` : msg ?? "");
+    if (completa) setConfeti(Date.now());
   };
   const registrar = (m: Meta, v: number) => {
     actualizar({ ...m, registros: [...(m.registros ?? []), { fecha: hoy, v }] }, m.tipo === "monto" ? `${v > 0 ? "+" : ""}${dinero(v)} registrado` : `+${v} min registrados`);
@@ -225,6 +228,7 @@ export default function MetasCrecimiento({ perfil }: { perfil: Perfil }) {
         {editando && <EditorMeta key={editando.id} inicial={editando} onGuardar={guardar} onCerrar={() => setEditando(null)}
           onBorrar={metas.some((x) => x.id === editando.id) ? () => { setMetas(metas.filter((x) => x.id !== editando.id)); setEditando(null); } : undefined} />}
       </Hoja>
+      <Confeti disparo={confeti} />
       <Toast texto={toast} />
     </div>
   );

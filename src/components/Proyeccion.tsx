@@ -83,11 +83,17 @@ export default function Proyeccion({ datos, pesoActual, motivo, reales = [], alt
           </motion.g>
         )}
 
-        {reales.map((r) => (
-          <circle key={r.fecha} cx={x(r.fecha)} cy={y(r.kg)} r={3.5} fill="var(--ink)" opacity={0.55} />
+        {reales.map((r, i) => (
+          <motion.circle key={r.fecha} cx={x(r.fecha)} cy={y(r.kg)} r={3.5} fill="var(--ink)"
+            initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 0.55, scale: 1 }}
+            style={{ transformBox: "fill-box", transformOrigin: "center" }}
+            transition={{ delay: 1.1 + i * 0.07, type: "spring", stiffness: 500, damping: 18 }} />
         ))}
 
         {/* inicio */}
+        <motion.circle cx={x(puntos[0].fecha)} cy={y(pesoActual)} r={4.5} fill="var(--lime)" opacity={0.6}
+          style={{ transformBox: "fill-box", transformOrigin: "center" }}
+          animate={{ scale: [1, 2.6, 1], opacity: [0.6, 0, 0.6] }} transition={{ duration: 2, repeat: Infinity, ease: "easeOut", delay: 1.4 }} />
         <circle cx={x(puntos[0].fecha)} cy={y(pesoActual)} r={4.5} fill="var(--ink)" />
         <text x={x(puntos[0].fecha) + 8} y={y(pesoActual) - 8} fontSize="12" fontWeight="700" fontFamily="Barlow Condensed, sans-serif" fill="var(--ink)">{pesoActual.toFixed(1)} kg hoy</text>
 
