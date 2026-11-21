@@ -22,7 +22,7 @@ import { fotosEjercicio } from "./data/ejercicios";
 import { fotoReceta, fotosIngredientes } from "./data/fotos";
 import Tour, { RECORRIDOS, marcarTutorial, reiniciarTutorial, tutorialVisto, type Recorrido } from "./components/Tour";
 import { habitosDe, pesoActual, racha, useBrio } from "./lib/store";
-import LlamaRacha, { RACHA_SUBE } from "./components/LlamaRacha";
+import LlamaRacha, { IconoLlama, RACHA_SUBE } from "./components/LlamaRacha";
 
 const KEY = "brio:intro-visto-v3";
 // limpia datos de versiones de prueba anteriores
@@ -129,6 +129,7 @@ export default function App() {
 
   const actual = perfil ? pesoActual(pesos, perfil.pesoInicial) : 0;
   const metas = useMemo(() => (perfil ? aplicarPlan(calcularMetas(perfil, actual), perfil) : null), [perfil, actual]);
+  const rachaDias = metas && perfil ? racha(dias, metas.aguaMl, habitosDe(perfil)) : 0;
 
   const terminarIntro = () => {
     try { localStorage.setItem(KEY, "1"); } catch { /* sin storage */ }
@@ -207,8 +208,8 @@ export default function App() {
                   initial={pulsoRacha ? { scale: 1.28, boxShadow: "0 0 0 10px rgba(198,244,50,.55), 0 0 36px 8px rgba(198,244,50,.7)" } : false}
                   animate={{ scale: 1, boxShadow: "0 0 0 0px rgba(198,244,50,0), 0 0 0px 0px rgba(198,244,50,0)" }}
                   transition={{ type: "spring", stiffness: 380, damping: 14, boxShadow: { duration: 1.1 } }}
-                  className="rounded-full bg-t-streak px-3 py-1.5 font-display text-sm font-semibold uppercase tracking-[0.08em] text-ink md:order-first">
-                  Racha · {racha(dias, metas.aguaMl, habitosDe(perfil))} días
+                  className="inline-flex items-center rounded-full bg-t-streak px-3 py-1.5 font-display text-sm font-semibold uppercase tracking-[0.08em] text-ink md:order-first">
+                  <IconoLlama className="-ml-0.5 mr-1 inline-block h-[17px] w-[15px] -translate-y-[1px] align-middle" />Racha · {rachaDias} días
                 </motion.span>
                 <button onClick={alternar} aria-label={oscuro ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
                   className="grid h-10 w-10 place-items-center rounded-full border border-line bg-surface text-ink">
@@ -246,7 +247,7 @@ export default function App() {
         </motion.div>
       )}
     </AnimatePresence>
-    {vista === "app" && llama && <LlamaRacha onPico={picoLlama} onFin={finLlama} />}
+    {vista === "app" && llama && metas && <LlamaRacha dias={rachaDias} onPico={picoLlama} onFin={finLlama} />}
     {vista === "app" && tour && <Tour key={`tour-${tour}`} pasos={RECORRIDOS[tour]} onFin={() => { marcarTutorial(tour); setTour(null); }} />}
     </>
   );
