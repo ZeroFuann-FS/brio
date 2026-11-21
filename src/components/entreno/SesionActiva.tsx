@@ -50,6 +50,7 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
   useEffect(() => { if (!logro) return; const t = setTimeout(() => setLogro(null), 3200); return () => clearTimeout(t); }, [logro]);
   const [, setTick] = useState(0);
   const [descanso, setDescanso] = useState<{ fin: number; total: number; sig?: string } | null>(null);
+  const [avisoFin, setAvisoFin] = useState(0); // pulso de "¡A darle!" al terminar el descanso
   const [agregar, setAgregar] = useState(false);
   const [ver, setVer] = useState<Ejercicio | null>(null);
   const [confirmar, setConfirmar] = useState<"terminar" | "cancelar" | null>(null);
@@ -60,8 +61,10 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
     if (descanso && restante <= 0) {
       if (document.visibilityState === "visible") { try { navigator.vibrate?.([300, 120, 300, 120, 300]); } catch { /* sin vibración */ } pitido(); }
       setDescanso(null);
+      setAvisoFin(Date.now());
     }
   }, [descanso, restante]);
+  useEffect(() => { if (!avisoFin) return; const t = setTimeout(() => setAvisoFin(0), 1500); return () => clearTimeout(t); }, [avisoFin]);
   // El aviso con pantalla bloqueada lo da el service worker: se reprograma si cambias el descanso (±15, saltar).
   const finDescanso = descanso?.fin;
   useEffect(() => {
@@ -241,15 +244,33 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
           <motion.div className="fixed inset-x-3 bottom-[84px] z-40 mx-auto max-w-md rounded-[18px] border border-line bg-ink p-3 text-bg shadow-lg md:bottom-6 dark:bg-surface dark:text-ink"
             initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}>
             <div className="flex items-center gap-3">
-              <span className="lab !text-current opacity-70">Descanso</span>
-              <span className="num text-3xl">{reloj(restante)}</span>
+              <span className="relative grid h-14 w-14 shrink-0 place-items-center">
+                <svg viewBox="0 0 56 56" className="absolute inset-0 -rotate-90" aria-hidden>
+                  <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" strokeOpacity={0.18} strokeWidth="5" />
+                  <motion.circle cx="28" cy="28" r="24" fill="none" stroke="var(--color-lime)" strokeWidth="5" strokeLinecap="round"
+                    initial={false} animate={{ pathLength: Math.max(0.001, restante / descanso.total) }} transition={{ duration: 1, ease: "linear" }} />
+                </svg>
+                <span className="num text-[15px] leading-none">{reloj(restante)}</span>
+              </span>
+              <span className="min-w-0"><span className="lab block !text-current opacity-70">Descanso</span>
+                {descanso.sig && <span className="block truncate text-xs opacity-70">Sigue: {descanso.sig}</span>}</span>
               <span className="ml-auto flex gap-1.5">
                 <button onClick={() => setDescanso((d) => d && { ...d, fin: d.fin - 15000 })} className="rounded-full border border-current/30 px-2.5 py-1 text-sm">−15</button>
                 <button onClick={() => setDescanso((d) => d && { ...d, fin: d.fin + 15000, total: d.total + 15 })} className="rounded-full border border-current/30 px-2.5 py-1 text-sm">+15</button>
                 <button onClick={() => setDescanso(null)} className="rounded-full bg-lime px-3 py-1 text-sm font-semibold text-on-lime">Saltar</button>
               </span>
             </div>
-            <div className="mt-2 h-1 overflow-hidden rounded-full bg-current/20"><div className="h-full bg-lime transition-[width] duration-1000 ease-linear" style={{ width: `${(restante / descanso.total) * 100}%` }} /></div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Fin del descanso: late 3 veces */}
+      <AnimatePresence>
+        {avisoFin > 0 && (
+          <motion.div key={avisoFin} className="pointer-events-none fixed inset-x-3 bottom-[84px] z-40 mx-auto flex max-w-md items-center justify-center gap-2 rounded-[18px] bg-lime p-4 font-display text-xl font-semibold uppercase tracking-[0.1em] text-on-lime shadow-lg md:bottom-6"
+            initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1, scale: [1, 1.06, 1, 1.06, 1, 1.06, 1] }} exit={{ y: 30, opacity: 0 }}
+            transition={{ scale: { duration: 1.2, ease: "easeInOut" }, y: { duration: 0.2 } }}>
+            ¡A darle! Siguiente serie
           </motion.div>
         )}
       </AnimatePresence>
@@ -261,7 +282,26 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
             <motion.button role="status" onClick={() => setLogro(null)} aria-label={`${logro}. Toca para cerrar`}
               className="pointer-events-auto flex w-full max-w-xs flex-col items-center gap-2 rounded-[24px] bg-lime px-6 py-6 text-center text-on-lime shadow-2xl"
               initial={{ scale: 0.6, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ type: "spring", stiffness: 380, damping: 18 }}>
-              <span className="grid h-14 w-14 place-items-center rounded-full bg-on-lime/10 text-3xl" aria-hidden>★</span>
+              <span className="relative grid h-20 w-20 place-items-center" aria-hidden>
+                {/* rayos */}
+                <motion.span className="absolute inset-[-28px]" initial={{ rotate: 0, opacity: 0, scale: 0.6 }} animate={{ rotate: 50, opacity: [0, 1, 0.6], scale: 1 }} transition={{ duration: 1.6, ease: "easeOut" }}>
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <i key={i} className="absolute left-1/2 top-1/2 h-[46%] w-[3px] origin-top -translate-x-1/2 rounded-full bg-gradient-to-b from-on-lime/0 to-on-lime/35" style={{ transform: `rotate(${i * 30}deg)` }} />
+                  ))}
+                </motion.span>
+                {/* medalla */}
+                <motion.svg viewBox="0 0 64 80" className="relative h-20 w-16 drop-shadow-md"
+                  initial={{ y: -90, rotate: -18 }} animate={{ y: 0, rotate: [-18, 10, -5, 0] }}
+                  transition={{ y: { type: "spring", stiffness: 420, damping: 13 }, rotate: { duration: 0.9 } }}>
+                  <path d="M18 0h12l6 22H24zM34 0h12l-6 22H28z" fill="#17191c" opacity=".85" />
+                  <circle cx="32" cy="50" r="24" fill="#17191c" />
+                  <circle cx="32" cy="50" r="19" fill="none" stroke="#c6f432" strokeWidth="3" />
+                  <path d="M32 37l3.8 7.7 8.5 1.2-6.2 6 1.5 8.4L32 56.3l-7.6 4 1.5-8.4-6.2-6 8.5-1.2z" fill="#c6f432" />
+                  <defs><clipPath id="medalla-c"><circle cx="32" cy="50" r="24" /></clipPath></defs>
+                  <motion.rect x="-40" y="20" width="18" height="70" fill="white" opacity=".35" clipPath="url(#medalla-c)" transform="rotate(20 32 50)"
+                    initial={{ x: -40 }} animate={{ x: 110 }} transition={{ delay: 0.55, duration: 0.7, ease: "easeInOut" }} />
+                </motion.svg>
+              </span>
               <span className="font-serif text-xl font-medium leading-snug">{logro}</span>
             </motion.button>
           </motion.div>
