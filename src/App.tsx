@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { configurarRecetas } from "./data/recetas";
 import type { Session } from "@supabase/supabase-js";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Intro from "./components/Intro";
 import Onboarding from "./components/Onboarding";
 import Hoy from "./components/Hoy";
@@ -22,6 +22,7 @@ import { fotosEjercicio } from "./data/ejercicios";
 import { fotoReceta, fotosIngredientes } from "./data/fotos";
 import Tour, { RECORRIDOS, marcarTutorial, reiniciarTutorial, tutorialVisto, type Recorrido } from "./components/Tour";
 import { habitosDe, pesoActual, racha, useBrio } from "./lib/store";
+import LlamaRacha, { RACHA_SUBE } from "./components/LlamaRacha";
 
 const KEY = "brio:intro-visto-v3";
 // limpia datos de versiones de prueba anteriores
@@ -63,6 +64,17 @@ export default function App() {
   const { oscuro, alternar } = useTema();
   useAvisosLocales(!session);
   const [tour, setTour] = useState<Recorrido | null>(null);
+  // Llama verde al completar el día con brío (la manda Hoy con celebrarRacha)
+  const [llama, setLlama] = useState(false);
+  const [pulsoRacha, setPulsoRacha] = useState(0);
+  const quieto = useReducedMotion();
+  useEffect(() => {
+    const encender = () => { if (quieto) setPulsoRacha((n) => n + 1); else setLlama(true); };
+    window.addEventListener(RACHA_SUBE, encender);
+    return () => window.removeEventListener(RACHA_SUBE, encender);
+  }, [quieto]);
+  const picoLlama = useCallback(() => setPulsoRacha((n) => n + 1), []);
+  const finLlama = useCallback(() => setLlama(false), []);
 
   useEffect(() => {
     if (!nubeDisponible) return;
@@ -191,9 +203,13 @@ export default function App() {
               {/* Barra superior */}
               <div className="mb-4 flex items-center justify-between gap-3">
                 <span className="md:hidden"><Logo className="text-[30px]" /></span>
-                <span className="rounded-full bg-t-streak px-3 py-1.5 font-display text-sm font-semibold uppercase tracking-[0.08em] text-ink md:order-first">
+                <motion.span key={`racha-${pulsoRacha}`} data-racha
+                  initial={pulsoRacha ? { scale: 1.28, boxShadow: "0 0 0 10px rgba(198,244,50,.55), 0 0 36px 8px rgba(198,244,50,.7)" } : false}
+                  animate={{ scale: 1, boxShadow: "0 0 0 0px rgba(198,244,50,0), 0 0 0px 0px rgba(198,244,50,0)" }}
+                  transition={{ type: "spring", stiffness: 380, damping: 14, boxShadow: { duration: 1.1 } }}
+                  className="rounded-full bg-t-streak px-3 py-1.5 font-display text-sm font-semibold uppercase tracking-[0.08em] text-ink md:order-first">
                   Racha · {racha(dias, metas.aguaMl, habitosDe(perfil))} días
-                </span>
+                </motion.span>
                 <button onClick={alternar} aria-label={oscuro ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
                   className="grid h-10 w-10 place-items-center rounded-full border border-line bg-surface text-ink">
                   {oscuro ? <IcSol /> : <IcLuna />}
@@ -230,6 +246,7 @@ export default function App() {
         </motion.div>
       )}
     </AnimatePresence>
+    {vista === "app" && llama && <LlamaRacha onPico={picoLlama} onFin={finLlama} />}
     {vista === "app" && tour && <Tour key={`tour-${tour}`} pasos={RECORRIDOS[tour]} onFin={() => { marcarTutorial(tour); setTour(null); }} />}
     </>
   );

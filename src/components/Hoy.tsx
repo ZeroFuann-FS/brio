@@ -7,6 +7,7 @@ import EditorHabitos from "./EditorHabitos";
 import { useState } from "react";
 import { TarjetaPlan } from "./PlanNutriologo";
 import TuDia, { AvisoPago } from "./dia/TuDia";
+import { celebrarRacha } from "./LlamaRacha";
 
 const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
@@ -38,7 +39,7 @@ export default function Hoy({ perfil, metas, onIrComida }: { perfil: Perfil; met
 
   const marcarHabito = (id: string) => {
     toggleHabito(hoy, id);
-    if (!d.habitos[id] && puntos + 1 === MIN) setToast("¡Día con brío! Tu racha sigue");
+    if (!d.habitos[id] && puntos + 1 === MIN) { setToast("¡Día con brío! Tu racha sigue"); celebrarRacha(hoy); }
   };
 
   /** Tocar el vaso i deja el agua en (i+1) vasos; tocar el último lleno lo vacía. */
@@ -53,7 +54,10 @@ export default function Hoy({ perfil, metas, onIrComida }: { perfil: Perfil; met
     if (d.aguaMl + ml < 0) ml = -d.aguaMl;
     if (!ml) return;
     addAgua(hoy, ml);
-    if (d.aguaMl < metas.aguaMl && d.aguaMl + ml >= metas.aguaMl) setToast(puntos + 1 === MIN ? "¡Día con brío! Tu racha sigue" : "Meta de agua cumplida");
+    if (d.aguaMl < metas.aguaMl && d.aguaMl + ml >= metas.aguaMl) {
+      setToast(puntos + 1 === MIN ? "¡Día con brío! Tu racha sigue" : "Meta de agua cumplida");
+      if (puntos + 1 === MIN) celebrarRacha(hoy);
+    }
   };
 
   const macros = [
