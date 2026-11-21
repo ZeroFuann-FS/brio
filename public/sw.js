@@ -6,7 +6,7 @@
  */
 const APP = "brio-app-v1";
 const IMG = "brio-img-v1";
-const EXTERNAS = new Set(["fonts.googleapis.com", "fonts.gstatic.com", "www.themealdb.com", "images.openfoodfacts.org", "static.openfoodfacts.org"]);
+const EXTERNAS = new Set(["www.themealdb.com", "images.openfoodfacts.org", "static.openfoodfacts.org"]);
 /** Rutas de la app de una sola página (todas sirven el mismo index.html). */
 const esSpa = (u) => !/\.[a-z0-9]+$/i.test(u.pathname) && !u.pathname.startsWith("/conoce");
 

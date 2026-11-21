@@ -1,3 +1,4 @@
+import { readdirSync } from "node:fs";
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -9,6 +10,8 @@ function precache(): Plugin {
     apply: "build",
     generateBundle(_, bundle) {
       const archivos = Object.keys(bundle).filter((f) => /\.(js|css|woff2?)$/.test(f)).map((f) => `/${f}`);
+      // Las fuentes viven en public/fuentes (también las usa /conoce), así que se agregan a mano
+      for (const f of readdirSync("public/fuentes")) archivos.push(`/fuentes/${f}`);
       this.emitFile({ type: "asset", fileName: "precache.json", source: JSON.stringify({ version: Date.now(), archivos }) });
     },
   };
