@@ -12,6 +12,7 @@ import { supabase } from "./supabase";
 import { useBrio, type Dia, type ItemDespensa, type MenuGuardado, type RegistroMedidas } from "./store";
 import type { Perfil } from "./calc";
 import type { Sesion } from "./entreno";
+import { registrarConsentimiento } from "./consentimiento";
 
 type Estado = "sin-cuenta" | "sincronizando" | "ok" | "pendiente" | "error";
 export const useSync = create<{ estado: Estado; ultima: number | null }>(() => ({ estado: "sin-cuenta", ultima: null }));
@@ -147,6 +148,7 @@ async function flush() {
   if (!navigator.onLine) { useSync.setState({ estado: "pendiente" }); return; }
   ocupado = true;
   useSync.setState({ estado: "sincronizando" });
+  registrarConsentimiento().catch(() => { /* se reintenta en la próxima sesión */ });
   try {
     await subir(usuario);
     useSync.setState({ estado: pendientes.size ? "pendiente" : "ok", ultima: Date.now() });

@@ -3,6 +3,7 @@ import { motion } from "motion/react";
 import { supabase } from "../lib/supabase";
 import { btnPrimario, ease, inputCls } from "./ui";
 import Logo from "./Logo";
+import { guardarConsentimiento } from "../lib/consentimiento";
 
 function IconoGoogle() {
   return (
@@ -19,9 +20,11 @@ export default function Cuenta({ onOmitir, puedeOmitir = true }: { onOmitir: () 
   const [email, setEmail] = useState("");
   const [estado, setEstado] = useState<"idle" | "enviando" | "enviado" | "google">("idle");
   const [error, setError] = useState<string | null>(null);
+  const [acepto, setAcepto] = useState(false);
 
   const google = async () => {
     setError(null);
+    guardarConsentimiento();
     setEstado("google");
     const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } });
     if (error) {
@@ -34,6 +37,7 @@ export default function Cuenta({ onOmitir, puedeOmitir = true }: { onOmitir: () 
 
   const enviar = async () => {
     setError(null);
+    guardarConsentimiento();
     setEstado("enviando");
     const { error } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { emailRedirectTo: window.location.origin } });
     if (error) {
@@ -68,9 +72,17 @@ export default function Cuenta({ onOmitir, puedeOmitir = true }: { onOmitir: () 
           </motion.div>
         ) : (
           <motion.div className="mt-8 space-y-4" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, ease }}>
+            <label htmlFor="acepto-privacidad" className="flex cursor-pointer items-start gap-3 rounded-[14px] border border-line bg-surface px-4 py-3 text-sm leading-snug text-muted">
+              <input id="acepto-privacidad" type="checkbox" checked={acepto} onChange={(e) => setAcepto(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-lime" />
+              <span>
+                Acepto el <a href="/privacidad.html" target="_blank" rel="noopener" className="text-ink underline">aviso de privacidad</a> y
+                los <a href="/terminos.html" target="_blank" rel="noopener" className="text-ink underline">términos</a>, y doy mi consentimiento
+                para que Brío guarde mis datos de salud (peso, medidas, comidas y entrenos).
+              </span>
+            </label>
             <button
               onClick={google}
-              disabled={estado === "google"}
+              disabled={!acepto || estado === "google"}
               className="flex h-[54px] w-full items-center justify-center gap-2.5 rounded-[14px] border border-line-strong bg-surface font-semibold text-ink transition active:scale-[0.98] disabled:opacity-60 dark:border-white dark:bg-white dark:text-[#1f1f1f]"
             >
               <IconoGoogle /> {estado === "google" ? "Abriendo Google…" : "Continuar con Google"}
@@ -80,7 +92,7 @@ export default function Cuenta({ onOmitir, puedeOmitir = true }: { onOmitir: () 
 
             <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); if (emailValido) enviar(); }}>
               <input className={inputCls} type="email" inputMode="email" autoComplete="email" placeholder="tucorreo@ejemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-              <button type="submit" disabled={!emailValido || estado === "enviando"} className={`${btnPrimario} h-[54px] w-full`}>
+              <button type="submit" disabled={!acepto || !emailValido || estado === "enviando"} className={`${btnPrimario} h-[54px] w-full`}>
                 {estado === "enviando" ? "Enviando…" : "Enviarme un link de acceso"}
               </button>
             </form>
