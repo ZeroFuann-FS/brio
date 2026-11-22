@@ -15,13 +15,13 @@ import Cuenta from "./components/Cuenta";
 import Logo from "./components/Logo";
 import { nubeDisponible, sesionGuardada, supabase } from "./lib/supabase";
 import { iniciarSync, useSync } from "./lib/sync";
-import { aplicarPlan, calcularMetas } from "./lib/calc";
+import { aplicarPlan, calcularMetas, hoyISO } from "./lib/calc";
 import { useAvisosLocales } from "./lib/avisosLocales";
 import { guardarSinRed } from "./lib/push";
 import { fotosEjercicio } from "./data/ejercicios";
 import { fotoReceta, fotosIngredientes } from "./data/fotos";
 import Tour, { RECORRIDOS, marcarTutorial, reiniciarTutorial, tutorialVisto, type Recorrido } from "./components/Tour";
-import { habitosDe, pesoActual, racha, useBrio } from "./lib/store";
+import { diaConBrio, habitosDe, pesoActual, racha, useBrio } from "./lib/store";
 import LlamaRacha, { IconoLlama, RACHA_SUBE } from "./components/LlamaRacha";
 
 const KEY = "brio:intro-visto-v3";
@@ -91,7 +91,9 @@ export default function App() {
       if (data.session || !resuelto) setSession(data.session);
       resuelto = true; clearTimeout(respaldo); setAuthListo(true);
     }).catch(() => { if (!resuelto) { resuelto = true; clearTimeout(respaldo); setSession(sesionGuardada()); setAuthListo(true); } });
-    const { data } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    // Solo se sale si la sesión de verdad terminó (SIGNED_OUT). Otros eventos sin sesión
+    // (renovar el token sin señal, iOS al volver del fondo) no deben mandarte al login.
+    const { data } = supabase.auth.onAuthStateChange((e, s) => { if (s || e === "SIGNED_OUT") setSession(s); });
     return () => { clearTimeout(respaldo); data.subscription.unsubscribe(); };
   }, []);
 
@@ -130,6 +132,17 @@ export default function App() {
   const actual = perfil ? pesoActual(pesos, perfil.pesoInicial) : 0;
   const metas = useMemo(() => (perfil ? aplicarPlan(calcularMetas(perfil, actual), perfil) : null), [perfil, actual]);
   const rachaDias = metas && perfil ? racha(dias, metas.aguaMl, habitosDe(perfil)) : 0;
+
+  // Guarda en el día de hoy si ya cumplió, con las reglas de hoy: así, si mañana cambias tus
+  // hábitos o tu meta de agua, los días que ya contaban no se caen de tu racha.
+  const hoyFecha = hoyISO();
+  const diaHoy = dias[hoyFecha];
+  const marcarConBrio = useBrio((s) => s.marcarConBrio);
+  useEffect(() => {
+    if (!metas || !perfil || !diaHoy) return;
+    const cumple = diaConBrio(hoyFecha, { ...diaHoy, extra: { ...diaHoy.extra, conBrio: undefined } }, metas.aguaMl, habitosDe(perfil));
+    if (diaHoy.extra?.conBrio !== cumple) marcarConBrio(hoyFecha, cumple);
+  }, [diaHoy, metas, perfil, hoyFecha, marcarConBrio]);
 
   const terminarIntro = () => {
     try { localStorage.setItem(KEY, "1"); } catch { /* sin storage */ }

@@ -27,7 +27,11 @@ export interface Dia {
   comidas: Comida[];
   aguaMl: number;
   habitos: Record<string, boolean>;
-  extra?: { eq?: Equivalentes };   // ajustes manuales de equivalentes
+  extra?: {
+    eq?: Equivalentes;      // ajustes manuales de equivalentes
+    conBrio?: boolean;      // si el día cumplió, con las reglas que había ESE día (cambiar hábitos o meta de agua después no lo borra)
+    salvado?: string;       // racha restaurada a mano (motivo)
+  };
 }
 
 export interface Peso {
@@ -113,6 +117,7 @@ interface Estado {
   copiarDia: (desde: string, hacia: string) => number;
   addAgua: (fecha: string, ml: number) => void;
   toggleHabito: (fecha: string, id: string) => void;
+  marcarConBrio: (fecha: string, conBrio: boolean) => void;
   addPeso: (kg: number, fecha?: string) => void;
   removePeso: (fecha: string) => void;
   addMedidas: (m: RegistroMedidas) => void;
@@ -194,6 +199,7 @@ export const useBrio = create<Estado>()(
         },
         addAgua: (fecha, ml) => editarDia(fecha, (d) => ({ ...d, aguaMl: Math.max(0, d.aguaMl + ml) })),
         toggleHabito: (fecha, id) => editarDia(fecha, (d) => ({ ...d, habitos: { ...d.habitos, [id]: !d.habitos[id] } })),
+        marcarConBrio: (fecha, conBrio) => editarDia(fecha, (d) => ({ ...d, extra: { ...d.extra, conBrio } })),
         addPeso: (kg, fecha = hoyISO()) =>
           set((s) => ({
             pesos: [...s.pesos.filter((p) => p.fecha !== fecha), { fecha, kg }].sort((a, b) => a.fecha.localeCompare(b.fecha)),
@@ -234,13 +240,23 @@ export function puntosDia(d: Dia | undefined, aguaMeta: number, habitos: Habito[
   return habitos.filter((h) => d.habitos[h.id]).length + (d.aguaMl >= aguaMeta ? 1 : 0);
 }
 
+/**
+ * ¿El día cuenta para la racha? Hoy se calcula en vivo; los días pasados usan la marca que
+ * quedó guardada ese día (o se calculan, si son de antes de que existiera la marca).
+ */
+export function diaConBrio(fecha: string, d: Dia | undefined, aguaMeta: number, habitos: Habito[]) {
+  if (!d) return false;
+  if (d.extra?.salvado) return true;
+  if (fecha !== hoyISO() && d.extra?.conBrio !== undefined) return d.extra.conBrio;
+  return puntosDia(d, aguaMeta, habitos) >= minBrio(habitos.length);
+}
+
 /** Días seguidos con brío. Si hoy aún no se completa, cuenta desde ayer. */
 export function racha(dias: Record<string, Dia>, aguaMeta: number, habitos: Habito[]) {
-  const min = minBrio(habitos.length);
   let fecha = hoyISO();
-  if (puntosDia(dias[fecha], aguaMeta, habitos) < min) fecha = sumarDias(fecha, -1);
+  if (!diaConBrio(fecha, dias[fecha], aguaMeta, habitos)) fecha = sumarDias(fecha, -1);
   let n = 0;
-  while (puntosDia(dias[fecha], aguaMeta, habitos) >= min) {
+  while (diaConBrio(fecha, dias[fecha], aguaMeta, habitos)) {
     n++;
     fecha = sumarDias(fecha, -1);
   }

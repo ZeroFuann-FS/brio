@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { supabase } from "../lib/supabase";
 import { btnPrimario, ease, inputCls } from "./ui";
@@ -21,6 +21,17 @@ export default function Cuenta({ onOmitir, puedeOmitir = true }: { onOmitir: () 
   const [estado, setEstado] = useState<"idle" | "enviando" | "enviado" | "google">("idle");
   const [error, setError] = useState<string | null>(null);
   const [acepto, setAcepto] = useState(false);
+
+  // En iPhone (app instalada) Google a veces no abre o regresas sin entrar: que el botón no se quede trabado.
+  useEffect(() => {
+    if (estado !== "google") return;
+    const soltar = () => setEstado("idle");
+    const alVolver = () => { if (document.visibilityState === "visible") setTimeout(soltar, 1500); };
+    const t = setTimeout(soltar, 12000);
+    document.addEventListener("visibilitychange", alVolver);
+    window.addEventListener("pageshow", alVolver);
+    return () => { clearTimeout(t); document.removeEventListener("visibilitychange", alVolver); window.removeEventListener("pageshow", alVolver); };
+  }, [estado]);
 
   const google = async () => {
     setError(null);

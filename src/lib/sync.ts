@@ -133,7 +133,10 @@ async function subir(uid: string) {
   const res = await Promise.all(ops);
   const fallo = res.find((r) => r.error);
   if (fallo) throw fallo.error;
-  for (const k of lote) pendientes.delete(k);
+  // Si algo cambió mientras se subía, sigue pendiente: si no, la nube se queda con la versión vieja
+  // y al volver a la app la vieja pisaría lo local (así se podían perder palomitas y agua).
+  const ahoraLocal = snapshot();
+  for (const k of lote) if (JSON.stringify(ahoraLocal.get(k)) === JSON.stringify(local.get(k))) pendientes.delete(k);
   guardarPendientes();
 }
 
@@ -152,6 +155,7 @@ async function flush() {
   try {
     await subir(usuario);
     useSync.setState({ estado: pendientes.size ? "pendiente" : "ok", ultima: Date.now() });
+    if (pendientes.size) programar();
   } catch {
     useSync.setState({ estado: "error" });
   } finally {
@@ -260,6 +264,6 @@ export async function eliminarCuenta() {
 export async function cerrarSesion() {
   try { await flush(); } catch { /* lo intentamos */ }
   detenerSync();
-  await supabase.auth.signOut();
+  await supabase.auth.signOut({ scope: "local" }); // solo este dispositivo: los demás siguen con su sesión
   limpiarDispositivo();
 }

@@ -2,7 +2,7 @@
 import { sumarDias, type Metas, type Perfil } from "./calc";
 import { seriesHechas, volumen, type Sesion } from "./entreno";
 import { sumaEntre, type Meta } from "./metas";
-import { habitosDe, minBrio, puntosDia, type Dia, type Peso } from "./store";
+import { diaConBrio, habitosDe, puntosDia, type Dia, type Peso } from "./store";
 
 export interface DiaResumen { fecha: string; brio: boolean; puntos: number; kcal: number; proteina: number; agua: number; registro: boolean; entreno: boolean }
 export interface Resumen {
@@ -16,13 +16,13 @@ export interface Resumen {
 
 export function resumenSemana(o: { perfil: Perfil; metas: Metas; dias: Record<string, Dia>; sesiones: Sesion[]; pesos: Peso[] }, lunes: string): Resumen {
   const { perfil, metas, dias, sesiones, pesos } = o;
-  const hab = habitosDe(perfil), min = minBrio(hab.length);
+  const hab = habitosDe(perfil);
   const hasta = sumarDias(lunes, 6);
   const lista: DiaResumen[] = Array.from({ length: 7 }, (_, i) => {
     const f = sumarDias(lunes, i), d = dias[f];
     const puntos = puntosDia(d, metas.aguaMl, hab);
     return {
-      fecha: f, puntos, brio: puntos >= min,
+      fecha: f, puntos, brio: diaConBrio(f, d, metas.aguaMl, hab),
       kcal: d?.comidas.reduce((a, c) => a + c.kcal, 0) ?? 0, proteina: d?.comidas.reduce((a, c) => a + c.proteina, 0) ?? 0,
       agua: d?.aguaMl ?? 0, registro: !!d?.comidas.length, entreno: sesiones.some((s) => s.fecha === f),
     };
