@@ -263,6 +263,7 @@ export function listaSuper(m: MenuGuardado, despensa: ItemDespensa[]): { items: 
     const falta = Math.max(0, g - enCasa);
     // Lo que se vende por peso (kg) se compra por cuartos de kilo; lo demás por pieza o paquete completo
     const porPeso = k.unidad.startsWith("kg");
+    const contable = /^(pzas|latas|medias)/.test(k.unidad);
     // Si lo que falta es muy poquito (menos del 15% de un paquete o pieza), alcanza con lo que tienes
     const unidades = falta <= 0 || (!porPeso && enCasa > 0 && falta < k.g * 0.15) ? 0 : porPeso
       ? Math.max(0.25, Math.ceil((falta / k.g) * 4) / 4)
@@ -272,8 +273,9 @@ export function listaSuper(m: MenuGuardado, despensa: ItemDespensa[]): { items: 
       unidad: porPeso ? k.unidad.replace(/^kg/, "kg") : k.unidad, costo: Math.round(unidades * k.precio),
       necesita: Math.round(g), enCasa: Math.round(Math.min(g, enCasa)),
       // en unidades de compra (latas, kg, paquetes) para mostrar "tienes 3 de 10"
-      necesitaU: porPeso ? Math.round((g / k.g) * 4) / 4 : Math.round((g / k.g) * 10) / 10,
-      enCasaU: porPeso ? Math.round((Math.min(g, enCasa) / k.g) * 4) / 4 : Math.round((Math.min(g, enCasa) / k.g) * 10) / 10,
+      // Lo que se cuenta (latas, piezas, medias pechugas) va entero: necesitas hacia arriba, tienes hacia abajo
+      necesitaU: porPeso ? Math.round((g / k.g) * 4) / 4 : contable ? Math.ceil(g / k.g - 0.15) : Math.round((g / k.g) * 4) / 4,
+      enCasaU: porPeso ? Math.round((Math.min(g, enCasa) / k.g) * 4) / 4 : contable ? Math.floor(Math.min(g, enCasa) / k.g + 0.15) : Math.round((Math.min(g, enCasa) / k.g) * 4) / 4,
     });
   }
   items.sort((a, b) => (b.unidades > 0 ? 1 : 0) - (a.unidades > 0 ? 1 : 0) || a.nombre.localeCompare(b.nombre));

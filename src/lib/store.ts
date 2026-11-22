@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { consumo, mismoProducto, normalizarCantidad, unificarDespensa } from "./despensa";
 import { persist } from "zustand/middleware";
 import { hoyISO, sumarDias, type Habito, type Perfil, type PlanNutriologo, type PrefsComida } from "./calc";
 import type { Equivalentes, GrupoEq } from "../data/equivalentes";
@@ -127,6 +128,7 @@ interface Estado {
   removeItem: (id: string) => void;
   setMinimo: (id: string, minimo: number) => void;
   descontar: (id: string, cantidad: number) => void;
+  unificarDespensa: () => void;
   reset: () => void;
 }
 
@@ -214,16 +216,22 @@ export const useBrio = create<Estado>()(
         removePeso: (fecha) => set((s) => ({ pesos: s.pesos.filter((p) => p.fecha !== fecha) })),
         addItem: (i) =>
           set((s) => {
-            const existe = s.despensa.find((x) => x.nombre.toLowerCase() === i.nombre.toLowerCase());
-            if (existe) return { despensa: s.despensa.map((x) => (x === existe ? { ...x, cantidad: x.cantidad + i.cantidad } : x)) };
-            return { despensa: [...s.despensa, { ...i, id: uid() }] };
+            const existe = s.despensa.find((x) => x.nombre.toLowerCase() === i.nombre.toLowerCase() && x.unidad === i.unidad) ?? s.despensa.find((x) => mismoProducto(x, i));
+            if (existe) return { despensa: s.despensa.map((x) => (x === existe ? { ...x, cantidad: normalizarCantidad(x.cantidad + i.cantidad, x.unidad) } : x)) };
+            return { despensa: [...s.despensa, { ...i, cantidad: normalizarCantidad(i.cantidad, i.unidad), id: uid() }] };
           }),
         cambiarCantidad: (id, delta) =>
-          set((s) => ({ despensa: s.despensa.map((x) => (x.id === id ? { ...x, cantidad: Math.max(0, x.cantidad + delta) } : x)) })),
+          set((s) => ({ despensa: s.despensa.map((x) => (x.id === id ? { ...x, cantidad: normalizarCantidad(x.cantidad + delta, x.unidad) } : x)) })),
         removeItem: (id) => set((s) => ({ despensa: s.despensa.filter((x) => x.id !== id) })),
         setMinimo: (id, minimo) => set((s) => ({ despensa: s.despensa.map((x) => (x.id === id ? { ...x, minimo } : x)) })),
         descontar: (id, cantidad) =>
-          set((s) => ({ despensa: s.despensa.map((x) => (x.id === id ? { ...x, cantidad: Math.max(0, Math.round((x.cantidad - cantidad) * 100) / 100) } : x)) })),
+          set((s) => ({ despensa: s.despensa.map((x) => (x.id === id ? { ...x, cantidad: normalizarCantidad(x.cantidad - consumo(cantidad, x.unidad), x.unidad) } : x)) })),
+        unificarDespensa: () =>
+          set((s) => {
+            const u = unificarDespensa(s.despensa);
+            const igual = u.length === s.despensa.length && u.every((x, i) => JSON.stringify(x) === JSON.stringify(s.despensa[i]));
+            return igual ? {} : { despensa: u };
+          }),
         reset: () => set({ perfil: null, dias: {}, pesos: [], despensa: [], medidas: [], menu: null, sesiones: [], sesionActiva: null }),
       };
     },

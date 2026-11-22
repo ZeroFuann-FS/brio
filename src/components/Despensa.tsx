@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { fmtCantidad } from "../lib/despensa";
 import { minimoDe, seAcaban, useBrio } from "../lib/store";
 import { Tarjeta, btnPrimario, inputCls } from "./ui";
 
@@ -17,11 +18,14 @@ const SUGERENCIAS: { n: string; u: string }[] = [
 ];
 
 const inicial = (nombre: string) => nombre.trim().charAt(0).toUpperCase();
-const paso = (u: string) => (u === "g" ? 50 : 1);
+// kg, L y paquetes van de cuarto en cuarto; gramos de 50 en 50; lo demás de uno en uno
+const paso = (u: string) => (u === "g" ? 50 : ["pzas", "latas", "rebanadas"].includes(u) ? 1 : 0.25);
 
 export default function Despensa() {
   const despensa = useBrio((s) => s.despensa);
-  const { addItem, cambiarCantidad, removeItem, setMinimo } = useBrio();
+  const { addItem, cambiarCantidad, removeItem, setMinimo, unificarDespensa } = useBrio();
+  // Junta repetidos ("Atún en lata" y "Atún en lata Mar Alta") y quita decimales que quedaron de antes
+  useEffect(() => { unificarDespensa(); }, [unificarDespensa]);
   const [editar, setEditar] = useState<string | null>(null);
   const [f, setF] = useState({ nombre: "", cantidad: "", unidad: "pzas" });
 
@@ -70,7 +74,7 @@ export default function Despensa() {
           <ul className="mt-1">
             {pocos.map((i) => (
               <li key={i.id} className="flex items-baseline justify-between border-b border-line py-2 last:border-b-0">
-                <span>{i.nombre}</span><span className="num text-lg">{i.cantidad} <small className="text-sm font-medium text-muted">{i.unidad}</small></span>
+                <span>{i.nombre}</span><span className="num text-lg">{fmtCantidad(i.cantidad, i.unidad)}</span>
               </li>
             ))}
           </ul>
@@ -88,7 +92,7 @@ export default function Despensa() {
                 <span className="num grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-t-food text-lg">{inicial(i.nombre)}</span>
                 <button className="min-w-0 flex-1 text-left" onClick={() => setEditar(editar === i.id ? null : i.id)}>
                   <p className="truncate font-medium">{i.nombre}</p>
-                  <p className={`text-xs ${i.cantidad <= minimoDe(i) ? "text-ember" : "text-muted"}`}>{i.cantidad} {i.unidad}{i.cantidad <= minimoDe(i) ? " · se está acabando" : ""}</p>
+                  <p className={`text-xs ${i.cantidad <= minimoDe(i) ? "text-ember" : "text-muted"}`}>{fmtCantidad(i.cantidad, i.unidad)}{i.cantidad <= minimoDe(i) ? " · se está acabando" : ""}</p>
                 </button>
                 <div className="flex items-center gap-1">
                   <button onClick={() => cambiarCantidad(i.id, -paso(i.unidad))} className="grid h-9 w-9 place-items-center rounded-xl border border-line text-lg" aria-label={`Quitar ${i.nombre}`}>−</button>
@@ -99,7 +103,7 @@ export default function Despensa() {
                     <span className="text-muted">Avisarme cuando queden</span>
                     <span className="flex items-center gap-1.5">
                       <button onClick={() => setMinimo(i.id, Math.max(0, minimoDe(i) - paso(i.unidad)))} className="grid h-8 w-8 place-items-center rounded-lg border border-line">−</button>
-                      <span className="num w-14 text-center text-lg">{minimoDe(i)} <small className="text-xs text-muted">{i.unidad}</small></span>
+                      <span className="num min-w-14 text-center text-lg">{fmtCantidad(minimoDe(i), i.unidad)}</span>
                       <button onClick={() => setMinimo(i.id, minimoDe(i) + paso(i.unidad))} className="grid h-8 w-8 place-items-center rounded-lg border border-line">+</button>
                     </span>
                     <button onClick={() => { removeItem(i.id); setEditar(null); }} className="text-ember hover:underline">Quitar</button>

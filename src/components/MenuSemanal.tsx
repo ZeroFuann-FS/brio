@@ -30,7 +30,8 @@ const CELDA: Record<QuienCocina, { t: string; cls: string }> = {
   no: { t: "—", cls: "border-dashed border-line bg-transparent text-muted" },
 };
 const dinero = (n: number) => `$${Math.round(n).toLocaleString("es-MX")}`;
-const cant = (n: number) => n.toLocaleString("es-MX", { maximumFractionDigits: 2 });
+const CUARTO: Record<number, string> = { 0.25: "¼", 0.5: "½", 0.75: "¾" };
+const cant = (n: number) => { const e = Math.floor(n), r = Math.round((n - e) * 4) / 4; return r && CUARTO[r] ? `${e || ""}${CUARTO[r]}` : String(Math.round(n)); };
 /** Qué tomar con cada comida para que no sea solo el plato (bebidas sin azúcar, casi sin calorías). */
 const BEBIDA: Record<TipoReceta, string | null> = {
   desayuno: "Acompaña con café o té sin azúcar (o con canela).",
@@ -290,7 +291,7 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
               <li key={it.nombre} className="border-b border-line last:border-b-0">
                 <button onClick={() => marcarComprado(it.nombre)} className="grid w-full grid-cols-[22px_1fr_auto] items-center gap-3 py-2.5 text-left">
                   <span className={`grid h-[22px] w-[22px] place-items-center rounded-[7px] border-[1.5px] text-[13px] font-extrabold ${ok ? "border-lime bg-lime text-on-lime" : "border-line-strong"}`}>{ok ? "✓" : ""}</span>
-                  <span className={ok ? "text-muted line-through" : ""}>{it.nombre}<span className="lab mt-0.5 block !tracking-[0.06em]">{it.unidad.startsWith("kg") ? `${it.unidades.toLocaleString("es-MX")} kg${it.unidad.slice(2)}` : `${it.unidades} ${it.unidad}`}{it.enCasa > 0 ? ` · necesitas ${cant(it.necesitaU)}, ya tienes ${cant(it.enCasaU)}` : ""}</span></span>
+                  <span className={ok ? "text-muted line-through" : ""}>{it.nombre}<span className="lab mt-0.5 block !tracking-[0.06em]">{it.unidad.startsWith("kg") ? `${cant(it.unidades)} kg${it.unidad.slice(2)}` : `${it.unidades} ${it.unidad}`}{it.enCasa > 0 ? ` · necesitas ${cant(it.necesitaU)}, ya tienes ${cant(it.enCasaU)}` : ""}</span></span>
                   <span className="num text-[17px]">{dinero(it.costo)}</span>
                 </button>
               </li>
