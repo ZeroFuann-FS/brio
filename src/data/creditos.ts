@@ -1232,6 +1232,1518 @@ export const CREDITOS: Credito[] = [
   "autor": "Missvain",
   "licencia": "CC BY 4.0",
   "pagina": "https://commons.wikimedia.org/wiki/File:Granola_and_yogurt_-_Bubbles_%2B_Brunch_2018_-_Sarah_Stierch_02_cropped.jpg"
+ },
+ {
+  "id": "hotcakes-avena",
+  "tipo": "r",
+  "titulo": "Banana Pancakes Pk021.jpg",
+  "autor": "PallaviKhale",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Banana_Pancakes_Pk021.jpg"
+ },
+ {
+  "id": "pechuga-arroz-verduras",
+  "tipo": "r",
+  "titulo": "Liat Portal for Foodie Disorder - Roasted chicken with vegetables and white rice.jpg",
+  "autor": "HaJunkiyada",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Liat_Portal_for_Foodie_Disorder_-_Roasted_chicken_with_vegetables_and_white_rice.jpg"
+ },
+ {
+  "id": "pasta-atun",
+  "tipo": "r",
+  "titulo": "Tuna pasta salad.jpg",
+  "autor": "FotoosVanRobin from Netherlands",
+  "licencia": "CC BY-SA 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Tuna_pasta_salad.jpg"
+ },
+ {
+  "id": "ensalada-garbanzo-atun",
+  "tipo": "r",
+  "titulo": "Ensalada de Garbanzos.jpg",
+  "autor": "Juan Emilio Prades Bel",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Ensalada_de_Garbanzos.jpg"
+ },
+ {
+  "id": "tacos-frijol-nopal",
+  "tipo": "r",
+  "titulo": "Tacos de aguja (costilla) con nopales.jpg",
+  "autor": "Alejandra Mendoza Santillan",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Tacos_de_aguja_(costilla)_con_nopales.jpg"
+ },
+ {
+  "id": "papaya-yogur",
+  "tipo": "r",
+  "titulo": "Daily rooftop breakfast (yogurt with papaya) (50954631371).jpg",
+  "autor": "Sharon Hahn Darlin",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Daily_rooftop_breakfast_(yogurt_with_papaya)_(50954631371).jpg"
+ },
+ {
+  "id": "avena-fria-durazno",
+  "tipo": "r",
+  "titulo": "Protein overnight oats.jpg",
+  "autor": "Nervy8924",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Protein_overnight_oats.jpg"
+ },
+ {
+  "id": "tostadas-requeson",
+  "tipo": "r",
+  "titulo": "Tostadas de Frijol.jpg",
+  "autor": "Dahyana Yasada R. R.",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Tostadas_de_Frijol.jpg"
+ },
+ {
+  "id": "huevo-ejotes",
+  "tipo": "r",
+  "titulo": "Bratkartoffeln mit Rührei und Bohnen.jpg",
+  "autor": "Desconocido",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Bratkartoffeln_mit_R%C3%BChrei_und_Bohnen.jpg"
+ },
+ {
+  "id": "milanesa-res-nopales",
+  "tipo": "r",
+  "titulo": "Milanesa de res y tallarines al pesto 14062011.jpg",
+  "autor": "Dtarazona",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Milanesa_de_res_y_tallarines_al_pesto_14062011.jpg"
+ },
+ {
+  "id": "ensalada-espinaca-pera",
+  "tipo": "r",
+  "titulo": "Spinach pear salad with chocolate vinaigrette (8463884226).jpg",
+  "autor": "Karen and Brad Emerson",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Spinach_pear_salad_with_chocolate_vinaigrette_(8463884226).jpg"
+ },
+ {
+  "id": "mango-chile",
+  "tipo": "r",
+  "titulo": "Mango con chile.jpg",
+  "autor": "Kevin212926",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Mango_con_chile.jpg"
+ },
+ {
+  "id": "coctel-citricos",
+  "tipo": "r",
+  "titulo": "Fruit salad (1).jpg",
+  "autor": "Renee Comet (Photographer)",
+  "licencia": "Public domain",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Fruit_salad_(1).jpg"
+ },
+ {
+  "id": "yogur-ciruela-amaranto",
+  "tipo": "r",
+  "titulo": "Apples,plums and yogurt.jpg",
+  "autor": "Chandapiwa Malema",
+  "licencia": "CC0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Apples,plums_and_yogurt.jpg"
+ },
+ {
+  "id": "uvas-panela",
+  "tipo": "r",
+  "titulo": "Five Cheese with Green Grapes from The Astor.jpg",
+  "autor": "Peachyeung316",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Five_Cheese_with_Green_Grapes_from_The_Astor.jpg"
+ },
+ {
+  "id": "yogur",
+  "tipo": "a",
+  "titulo": "Joghurt.jpg",
+  "autor": "No machine-readable author provided. Rainer Zenz assumed (based on copyright cla",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Joghurt.jpg"
+ },
+ {
+  "id": "yogur-griego",
+  "tipo": "a",
+  "titulo": "Turkish strained yogurt.jpg",
+  "autor": "Takeaway",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Turkish_strained_yogurt.jpg"
+ },
+ {
+  "id": "pollo-rostizado",
+  "tipo": "a",
+  "titulo": "Max's Roasted Chicken - Evan Swigart.jpg",
+  "autor": "Evan Swigart from Chicago, USA",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Max%27s_Roasted_Chicken_-_Evan_Swigart.jpg"
+ },
+ {
+  "id": "frijol-bayo",
+  "tipo": "a",
+  "titulo": "Šareni pasulj obrok (pinto beans).jpg",
+  "autor": "Petar Milošević",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:%C5%A0areni_pasulj_obrok_(pinto_beans).jpg"
+ },
+ {
+  "id": "frijol-lata",
+  "tipo": "a",
+  "titulo": "Baked beans and canned fish at night.jpg",
+  "autor": "JIP",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Baked_beans_and_canned_fish_at_night.jpg"
+ },
+ {
+  "id": "tostada-horneada",
+  "tipo": "a",
+  "titulo": "Tostadas mexicanas 1245.jpg",
+  "autor": "David Boté Estrada",
+  "licencia": "CC BY-SA 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Tostadas_mexicanas_1245.jpg"
+ },
+ {
+  "id": "tostada-frita",
+  "tipo": "a",
+  "titulo": "Tostada de tinga de pollo.jpg",
+  "autor": "Valemvglez",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Tostada_de_tinga_de_pollo.jpg"
+ },
+ {
+  "id": "pan-dulce",
+  "tipo": "a",
+  "titulo": "Concha (pan dulce mexicano) 02.JPG",
+  "autor": "ProtoplasmaKid",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Concha_(pan_dulce_mexicano)_02.JPG"
+ },
+ {
+  "id": "cereal",
+  "tipo": "a",
+  "titulo": "Liat Portal for Foodie Disorder - Cornflakes with milk.jpg",
+  "autor": "HaJunkiyada",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Liat_Portal_for_Foodie_Disorder_-_Cornflakes_with_milk.jpg"
+ },
+ {
+  "id": "uvas",
+  "tipo": "a",
+  "titulo": "Green grapes in Tashkent Region.jpg",
+  "autor": "Sevayuu",
+  "licencia": "CC BY 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Green_grapes_in_Tashkent_Region.jpg"
+ },
+ {
+  "id": "nopales",
+  "tipo": "a",
+  "titulo": "\"Nopales\" tradicionales.jpg",
+  "autor": "Pilyorlo",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:%22Nopales%22_tradicionales.jpg"
+ },
+ {
+  "id": "pico-gallo",
+  "tipo": "a",
+  "titulo": "Mmm... Pico de Gallo (5923456035).jpg",
+  "autor": "jeffreyw",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Mmm..._Pico_de_Gallo_(5923456035).jpg"
+ },
+ {
+  "id": "amaranto",
+  "tipo": "a",
+  "titulo": "Popped Amaranth.jpg",
+  "autor": "John Lambert Pearson from San Francisco, CA, United States",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Popped_Amaranth.jpg"
+ },
+ {
+  "id": "cerveza-light",
+  "tipo": "a",
+  "titulo": "Lav beer and glass - 2012-10-12 - Andy Mabbett.jpg",
+  "autor": "Andy Mabbett",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Lav_beer_and_glass_-_2012-10-12_-_Andy_Mabbett.jpg"
+ },
+ {
+  "id": "michelada",
+  "tipo": "a",
+  "titulo": "Michelada at Mitote Food Park - April 2023 - Sarah Stierch.jpg",
+  "autor": "Missvain",
+  "licencia": "CC BY 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Michelada_at_Mitote_Food_Park_-_April_2023_-_Sarah_Stierch.jpg"
+ },
+ {
+  "id": "tequila",
+  "tipo": "a",
+  "titulo": "Tequila shots.jpg",
+  "autor": "Prayitno / Thank you for (8 millions +) views from Los Angeles, USA",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Tequila_shots.jpg"
+ },
+ {
+  "id": "cuba",
+  "tipo": "a",
+  "titulo": "Cuba Libre 00.jpg",
+  "autor": "Arnaud 25",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Cuba_Libre_00.jpg"
+ },
+ {
+  "id": "vino",
+  "tipo": "a",
+  "titulo": "Red and white wine in glass.jpg",
+  "autor": "André Karwath",
+  "licencia": "CC BY-SA 2.5",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Red_and_white_wine_in_glass.jpg"
+ },
+ {
+  "id": "agua-jamaica",
+  "tipo": "a",
+  "titulo": "Homemade sorrel drink.jpg",
+  "autor": "stu_spivack",
+  "licencia": "CC BY-SA 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Homemade_sorrel_drink.jpg"
+ },
+ {
+  "id": "chocomilk",
+  "tipo": "a",
+  "titulo": "Chocolate milk.JPG",
+  "autor": "stevepb",
+  "licencia": "CC0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Chocolate_milk.JPG"
+ },
+ {
+  "id": "taco-bistec",
+  "tipo": "a",
+  "titulo": "Tacos de bistec de Tacos Franc - 1.jpg",
+  "autor": "ProtoplasmaKid",
+  "licencia": "CC BY 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Tacos_de_bistec_de_Tacos_Franc_-_1.jpg"
+ },
+ {
+  "id": "taco-pastor",
+  "tipo": "a",
+  "titulo": "Tacos 2.jpg",
+  "autor": "Popo le Chien",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Tacos_2.jpg"
+ },
+ {
+  "id": "taco-carnitas",
+  "tipo": "a",
+  "titulo": "001 Tacos de carnitas, carne asada y al pastor.jpg",
+  "autor": "Larry Miller",
+  "licencia": "CC BY-SA 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:001_Tacos_de_carnitas,_carne_asada_y_al_pastor.jpg"
+ },
+ {
+  "id": "quesadilla",
+  "tipo": "a",
+  "titulo": "Quesadilla sincronizada.JPG",
+  "autor": "Netoloco",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Quesadilla_sincronizada.JPG"
+ },
+ {
+  "id": "enchilada-verde",
+  "tipo": "a",
+  "titulo": "Enchiladas verdes caseras.jpg",
+  "autor": "Luis Alvaz",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Enchiladas_verdes_caseras.jpg"
+ },
+ {
+  "id": "enfrijolada",
+  "tipo": "a",
+  "titulo": "Enfrijoladas con queso.jpg",
+  "autor": "Dahyana Yasada R. R.",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Enfrijoladas_con_queso.jpg"
+ },
+ {
+  "id": "chilaquiles",
+  "tipo": "a",
+  "titulo": "01 Chilaquiles verdes con frijoles chinos.jpg",
+  "autor": "ismael villafranco",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:01_Chilaquiles_verdes_con_frijoles_chinos.jpg"
+ },
+ {
+  "id": "huevos-mexicana",
+  "tipo": "a",
+  "titulo": "Huevos à la Mexicana. (6571912625).jpg",
+  "autor": "Connie Ma from United States of America",
+  "licencia": "CC BY-SA 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Huevos_%C3%A0_la_Mexicana._(6571912625).jpg"
+ },
+ {
+  "id": "albondigas-caldillo",
+  "tipo": "a",
+  "titulo": "Albondigas en Chipotle.jpg",
+  "autor": "https://www.flickr.com/photos/24062889@N00/",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Albondigas_en_Chipotle.jpg"
+ },
+ {
+  "id": "albondigas",
+  "tipo": "a",
+  "titulo": "Albóndigas con puré de papas (plato).jpg",
+  "autor": "Horacio Cambeiro",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Alb%C3%B3ndigas_con_pur%C3%A9_de_papas_(plato).jpg"
+ },
+ {
+  "id": "picadillo",
+  "tipo": "a",
+  "titulo": "Picadillo and rice.jpg",
+  "autor": "Cary Bass",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Picadillo_and_rice.jpg"
+ },
+ {
+  "id": "tinga",
+  "tipo": "a",
+  "titulo": "Tinga.jpg",
+  "autor": "El Mono Español",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Tinga.jpg"
+ },
+ {
+  "id": "milanesa-empanizada",
+  "tipo": "a",
+  "titulo": "Milanesa.jpg",
+  "autor": "mteson Marcelo Teson Los Angeles, CA, USA",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Milanesa.jpg"
+ },
+ {
+  "id": "pollo-mole",
+  "tipo": "a",
+  "titulo": "Pollo en mole - Mayo 2019.jpg",
+  "autor": "MX",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Pollo_en_mole_-_Mayo_2019.jpg"
+ },
+ {
+  "id": "flauta",
+  "tipo": "a",
+  "titulo": "Flautas en aceite.jpg",
+  "autor": "Luiz Eduardo",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Flautas_en_aceite.jpg"
+ },
+ {
+  "id": "sope",
+  "tipo": "a",
+  "titulo": "Antojitos Mexicanos.jpg",
+  "autor": "Dahyana Yasada R. R.",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Antojitos_Mexicanos.jpg"
+ },
+ {
+  "id": "huarache",
+  "tipo": "a",
+  "titulo": "Comida Mexicana.JPG",
+  "autor": "Victorcinco523",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Comida_Mexicana.JPG"
+ },
+ {
+  "id": "huarache-carne",
+  "tipo": "a",
+  "titulo": "Sopes y Huaraches.jpg",
+  "autor": "Daani tru",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Sopes_y_Huaraches.jpg"
+ },
+ {
+  "id": "gordita",
+  "tipo": "a",
+  "titulo": "Gorditas caseras mexicanas.jpg",
+  "autor": "Ix kimiaranda",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Gorditas_caseras_mexicanas.jpg"
+ },
+ {
+  "id": "frijoles-charros",
+  "tipo": "a",
+  "titulo": "Frijoles charros.jpg",
+  "autor": "Christa Reyes",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Frijoles_charros.jpg"
+ },
+ {
+  "id": "empanada-queso",
+  "tipo": "a",
+  "titulo": "Empanadas argentinas fritas de jamón y queso (Argentina).jpg",
+  "autor": "Horacio Cambeiro",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Empanadas_argentinas_fritas_de_jam%C3%B3n_y_queso_(Argentina).jpg"
+ },
+ {
+  "id": "empanada-carne",
+  "tipo": "a",
+  "titulo": "Empanada (versión argentina) de carne dulce.jpg",
+  "autor": "Ezarate",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Empanada_(versi%C3%B3n_argentina)_de_carne_dulce.jpg"
+ },
+ {
+  "id": "empanada-horneada",
+  "tipo": "a",
+  "titulo": "Empanadas de carne con tapas \"Don Yeyo\" (horneadas).jpg",
+  "autor": "Horacio Cambeiro",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Empanadas_de_carne_con_tapas_%22Don_Yeyo%22_(horneadas).jpg"
+ },
+ {
+  "id": "picada",
+  "tipo": "a",
+  "titulo": "Picadas Veracruzanas.JPG",
+  "autor": "Wikilario",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Picadas_Veracruzanas.JPG"
+ },
+ {
+  "id": "garnacha",
+  "tipo": "a",
+  "titulo": "Garnachas en rinconada.jpg",
+  "autor": "Koffermejia",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Garnachas_en_rinconada.jpg"
+ },
+ {
+  "id": "memela",
+  "tipo": "a",
+  "titulo": "Memelas Oaxaquenos.jpg",
+  "autor": "Nsaum75",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Memelas_Oaxaquenos.jpg"
+ },
+ {
+  "id": "molote",
+  "tipo": "a",
+  "titulo": "Molotes.jpg",
+  "autor": "Conrad and Peter",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Molotes.jpg"
+ },
+ {
+  "id": "tamal-elote",
+  "tipo": "a",
+  "titulo": "Tamal de elote con nieve de leche quemada.jpg",
+  "autor": "Wotancito",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Tamal_de_elote_con_nieve_de_leche_quemada.jpg"
+ },
+ {
+  "id": "tlayuda",
+  "tipo": "a",
+  "titulo": "Tlayuda12-05oaxaca013x.jpg",
+  "autor": "The original uploader was Bobak at English Wikipedia.",
+  "licencia": "CC BY-SA 2.5",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Tlayuda12-05oaxaca013x.jpg"
+ },
+ {
+  "id": "taco-canasta",
+  "tipo": "a",
+  "titulo": "Puesto de tacos de canasta \"atrás de correos\" 02.jpg",
+  "autor": "B.jars",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Puesto_de_tacos_de_canasta_%22atr%C3%A1s_de_correos%22_02.jpg"
+ },
+ {
+  "id": "burrito",
+  "tipo": "a",
+  "titulo": "Burrito chihuahuense de chile verde.jpg",
+  "autor": "Levi bernardo",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Burrito_chihuahuense_de_chile_verde.jpg"
+ },
+ {
+  "id": "hot-dog",
+  "tipo": "a",
+  "titulo": "My hot dog at Hot Doug's.jpg",
+  "autor": "Benimoto",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:My_hot_dog_at_Hot_Doug%27s.jpg"
+ },
+ {
+  "id": "sincronizada",
+  "tipo": "a",
+  "titulo": "Quesadillas Laguneras.jpg",
+  "autor": "Ana Isabel Gallardo Coria",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Quesadillas_Laguneras.jpg"
+ },
+ {
+  "id": "torta-milanesa",
+  "tipo": "a",
+  "titulo": "TortaCuernavaca.JPG",
+  "autor": "AlejandroLinaresGarcia",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:TortaCuernavaca.JPG"
+ },
+ {
+  "id": "elote-preparado",
+  "tipo": "a",
+  "titulo": "Elote preparado de Elotes La Purisima.jpg",
+  "autor": "Samiiboy",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Elote_preparado_de_Elotes_La_Purisima.jpg"
+ },
+ {
+  "id": "esquite",
+  "tipo": "a",
+  "titulo": "Esquites in the streets of Coyoacan, Mexico.jpg",
+  "autor": "Melissa Guadalupe Huertas",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Esquites_in_the_streets_of_Coyoacan,_Mexico.jpg"
+ },
+ {
+  "id": "alitas",
+  "tipo": "a",
+  "titulo": "Homemade buffalo wings.jpg",
+  "autor": "stef yau",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Homemade_buffalo_wings.jpg"
+ },
+ {
+  "id": "boneless",
+  "tipo": "a",
+  "titulo": "Buffalo Wild Wings Parmesan Garlic Boneless Wings (16083476037).jpg",
+  "autor": "Willis Lam",
+  "licencia": "CC BY-SA 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Buffalo_Wild_Wings_Parmesan_Garlic_Boneless_Wings_(16083476037).jpg"
+ },
+ {
+  "id": "sushi",
+  "tipo": "a",
+  "titulo": "Sushi rolls (3273983262).jpg",
+  "autor": "Geoff Peters from Vancouver, BC, Canada",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Sushi_rolls_(3273983262).jpg"
+ },
+ {
+  "id": "concha",
+  "tipo": "a",
+  "titulo": "Concha (pan dulce mexicano) 02.JPG",
+  "autor": "ProtoplasmaKid",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Concha_(pan_dulce_mexicano)_02.JPG"
+ },
+ {
+  "id": "dona",
+  "tipo": "a",
+  "titulo": "Round Rock Glazed Donuts.jpg",
+  "autor": "TerraFrost",
+  "licencia": "CC BY 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Round_Rock_Glazed_Donuts.jpg"
+ },
+ {
+  "id": "flan",
+  "tipo": "a",
+  "titulo": "Flan Napolitano, Restaurante Kinich, Izamal, Yucatan, Mexico.jpg",
+  "autor": "Sharon Hahn Darlin",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Flan_Napolitano,_Restaurante_Kinich,_Izamal,_Yucatan,_Mexico.jpg"
+ },
+ {
+  "id": "arroz-leche",
+  "tipo": "a",
+  "titulo": "Arroz con leche, postre.jpg",
+  "autor": "Juan Emilio Prades Bel",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Arroz_con_leche,_postre.jpg"
+ },
+ {
+  "id": "atole",
+  "tipo": "a",
+  "titulo": "Atole de puscua Guanajuatense.jpg",
+  "autor": "Juan Carlos Fonseca Mata",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Atole_de_puscua_Guanajuatense.jpg"
+ },
+ {
+  "id": "tamal",
+  "tipo": "a",
+  "titulo": "Tamales Mexicanos sweet corn tamales 06.jpg",
+  "autor": "Usernet123u",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Tamales_Mexicanos_sweet_corn_tamales_06.jpg"
+ },
+ {
+  "id": "torta-jamon",
+  "tipo": "a",
+  "titulo": "Torta de perote.jpg",
+  "autor": "Koffermejia",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Torta_de_perote.jpg"
+ },
+ {
+  "id": "pozole",
+  "tipo": "a",
+  "titulo": "Pozole rojo flickr.jpg",
+  "autor": "Martha Silva",
+  "licencia": "CC BY-SA 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Pozole_rojo_flickr.jpg"
+ },
+ {
+  "id": "caldo-pollo",
+  "tipo": "a",
+  "titulo": "Caldo de Pollo (2411932823).jpg",
+  "autor": "El Gran Dee",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Caldo_de_Pollo_(2411932823).jpg"
+ },
+ {
+  "id": "sopa-lentejas",
+  "tipo": "a",
+  "titulo": "Homemade Lentil Soup - Lavash 2025-02-10.jpg",
+  "autor": "Andy Li",
+  "licencia": "CC0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Homemade_Lentil_Soup_-_Lavash_2025-02-10.jpg"
+ },
+ {
+  "id": "pizza",
+  "tipo": "a",
+  "titulo": "Giorgio's Pizzeria Slice of Pepperoni Pizza (transparent background).png",
+  "autor": "Willis Lam",
+  "licencia": "CC BY-SA 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Giorgio%27s_Pizzeria_Slice_of_Pepperoni_Pizza_(transparent_background).png"
+ },
+ {
+  "id": "pizza-pepperoni-champinones",
+  "tipo": "a",
+  "titulo": "Pepperoni & mushroom pizza.jpg",
+  "autor": "Dean Beeler",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Pepperoni_%26_mushroom_pizza.jpg"
+ },
+ {
+  "id": "pizza-hawaiana",
+  "tipo": "a",
+  "titulo": "Hawaiian pizza 1.jpg",
+  "autor": "@joefoodie from USA",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Hawaiian_pizza_1.jpg"
+ },
+ {
+  "id": "pizza-mexicana",
+  "tipo": "a",
+  "titulo": "Splizza Mexina - Opera.jpg",
+  "autor": "JIP",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Splizza_Mexina_-_Opera.jpg"
+ },
+ {
+  "id": "pizza-carnes",
+  "tipo": "a",
+  "titulo": "Sammy's Pizza Falher Alberta Meat Lovers Pizza (10354092396).jpg",
+  "autor": "Elsie Hui",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Sammy%27s_Pizza_Falher_Alberta_Meat_Lovers_Pizza_(10354092396).jpg"
+ },
+ {
+  "id": "pizza-vegetariana",
+  "tipo": "a",
+  "titulo": "Vegetarian pizza.jpg",
+  "autor": "Food Recipes",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Vegetarian_pizza.jpg"
+ },
+ {
+  "id": "pizza-orilla-queso",
+  "tipo": "a",
+  "titulo": "Cheese stuffed crust.jpg",
+  "autor": "jeffreyw",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Cheese_stuffed_crust.jpg"
+ },
+ {
+  "id": "crazy-bread",
+  "tipo": "a",
+  "titulo": "2023-03-15 12 01 22 Garlic breadsticks at Clayton Hall on the campus of the University of Delaware in Newark, New Castle County, Delaware.jpg",
+  "autor": "Famartin",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:2023-03-15_12_01_22_Garlic_breadsticks_at_Clayton_Hall_on_the_campus_of_the_University_of_Delaware_in_Newark,_New_Castle_County,_Delaware.jpg"
+ },
+ {
+  "id": "volovan-jamon",
+  "tipo": "a",
+  "titulo": "Volovanes en plato.jpg",
+  "autor": "Koffermejia",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Volovanes_en_plato.jpg"
+ },
+ {
+  "id": "volovan-pollo",
+  "tipo": "a",
+  "titulo": "DFC 2103 Golden flaky croissant pockets filled with creamy chicken and corn finished with a sprig of parsley.jpg",
+  "autor": "PattayaPatrol",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:DFC_2103_Golden_flaky_croissant_pockets_filled_with_creamy_chicken_and_corn_finished_with_a_sprig_of_parsley.jpg"
+ },
+ {
+  "id": "volovan-atun",
+  "tipo": "a",
+  "titulo": "Volovanes rellenos.jpg",
+  "autor": "Juan Emilio Prades Bel",
+  "licencia": "CC BY 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Volovanes_rellenos.jpg"
+ },
+ {
+  "id": "volovan-picadillo",
+  "tipo": "a",
+  "titulo": "Volovanes en plato.jpg",
+  "autor": "Koffermejia",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Volovanes_en_plato.jpg"
+ },
+ {
+  "id": "volovan-queso",
+  "tipo": "a",
+  "titulo": "Volovanes en plato.jpg",
+  "autor": "Koffermejia",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Volovanes_en_plato.jpg"
+ },
+ {
+  "id": "volovan-frijol",
+  "tipo": "a",
+  "titulo": "Volovanes en plato.jpg",
+  "autor": "Koffermejia",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Volovanes_en_plato.jpg"
+ },
+ {
+  "id": "volovan-tinga",
+  "tipo": "a",
+  "titulo": "Volovanes rellenos.jpg",
+  "autor": "Juan Emilio Prades Bel",
+  "licencia": "CC BY 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Volovanes_rellenos.jpg"
+ },
+ {
+  "id": "volovan-champinon",
+  "tipo": "a",
+  "titulo": "Vol-au-vents aux champignons.jpg",
+  "autor": "Peter Fritz Walter",
+  "licencia": "CC BY-SA 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Vol-au-vents_aux_champignons.jpg"
+ },
+ {
+  "id": "volovan-dulce",
+  "tipo": "a",
+  "titulo": "Buffalo Pastry Heart.jpg",
+  "autor": "Altoid52",
+  "licencia": "CC0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Buffalo_Pastry_Heart.jpg"
+ },
+ {
+  "id": "mole-salsa",
+  "tipo": "a",
+  "titulo": "Mole in Puebla.JPG",
+  "autor": "Elelicht",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Mole_in_Puebla.JPG"
+ },
+ {
+  "id": "enmoladas",
+  "tipo": "a",
+  "titulo": "Enmoladas rojas.jpg",
+  "autor": "Dahyana Yasada R. R.",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Enmoladas_rojas.jpg"
+ },
+ {
+  "id": "plato-mole",
+  "tipo": "a",
+  "titulo": "Mole con arroz de la feria del mole.jpg",
+  "autor": "Elizabethcasasola",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Mole_con_arroz_de_la_feria_del_mole.jpg"
+ },
+ {
+  "id": "tamal-oaxaqueno",
+  "tipo": "a",
+  "titulo": "Tamale Oaxaqueño.jpg",
+  "autor": "Nsaum75",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Tamale_Oaxaque%C3%B1o.jpg"
+ },
+ {
+  "id": "hamburguesa-cadena",
+  "tipo": "a",
+  "titulo": "Big Mac hamburger.jpg",
+  "autor": "Evan-Amos",
+  "licencia": "CC0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Big_Mac_hamburger.jpg"
+ },
+ {
+  "id": "pollo-frito",
+  "tipo": "a",
+  "titulo": "Fried Chicken (Unsplash).jpg",
+  "autor": "Brian Chan tigerrulezzz",
+  "licencia": "CC0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Fried_Chicken_(Unsplash).jpg"
+ },
+ {
+  "id": "sandwich-subway",
+  "tipo": "a",
+  "titulo": "6 inch Subway turkey sandwich - September 2022 - Sarah Stierch.jpg",
+  "autor": "Missvain",
+  "licencia": "CC BY 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:6_inch_Subway_turkey_sandwich_-_September_2022_-_Sarah_Stierch.jpg"
+ },
+ {
+  "id": "taco-suadero",
+  "tipo": "a",
+  "titulo": "Suadero, sesos (41205623390).jpg",
+  "autor": "T.Tseng",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Suadero,_sesos_(41205623390).jpg"
+ },
+ {
+  "id": "taco-birria",
+  "tipo": "a",
+  "titulo": "Quesabirria at Taqueria La Hacienda, Sonoma, California - Sarah Stierch.jpg",
+  "autor": "Missvain",
+  "licencia": "CC BY 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Quesabirria_at_Taqueria_La_Hacienda,_Sonoma,_California_-_Sarah_Stierch.jpg"
+ },
+ {
+  "id": "taco-barbacoa",
+  "tipo": "a",
+  "titulo": "Tacos de barbacoa con salsa de chile rayado.jpg",
+  "autor": "Daniela Gomez",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Tacos_de_barbacoa_con_salsa_de_chile_rayado.jpg"
+ },
+ {
+  "id": "taco-pescado",
+  "tipo": "a",
+  "titulo": "Fish tacos in Pittsburg.jpg",
+  "autor": "Douglas Muth",
+  "licencia": "CC BY-SA 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Fish_tacos_in_Pittsburg.jpg"
+ },
+ {
+  "id": "taco-cochinita",
+  "tipo": "a",
+  "titulo": "Cochinita pibil, Mazatlán, 22 de marzo de 2023 02.jpg",
+  "autor": "El Nuevo Doge",
+  "licencia": "CC0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Cochinita_pibil,_Mazatl%C3%A1n,_22_de_marzo_de_2023_02.jpg"
+ },
+ {
+  "id": "gringa",
+  "tipo": "a",
+  "titulo": "Gringas - Tamaulipas, Mexico.jpg",
+  "autor": "MX",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Gringas_-_Tamaulipas,_Mexico.jpg"
+ },
+ {
+  "id": "quesadilla-frita",
+  "tipo": "a",
+  "titulo": "Mujer preparando quesadillas.jpg",
+  "autor": "Eduardo Garcia",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Mujer_preparando_quesadillas.jpg"
+ },
+ {
+  "id": "tlacoyo",
+  "tipo": "a",
+  "titulo": "Tlacoyos 1.jpg",
+  "autor": "Wotancito",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Tlacoyos_1.jpg"
+ },
+ {
+  "id": "chalupas",
+  "tipo": "a",
+  "titulo": "Chalupas poblanas en Vittorio's.jpg",
+  "autor": "Luis Alvaz",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Chalupas_poblanas_en_Vittorio%27s.jpg"
+ },
+ {
+  "id": "guajolota",
+  "tipo": "a",
+  "titulo": "Guajolota.jpg",
+  "autor": "Ukaizen",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Guajolota.jpg"
+ },
+ {
+  "id": "tamal-dulce",
+  "tipo": "a",
+  "titulo": "Tamal de zarzamoras.png",
+  "autor": "Nsaum75",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Tamal_de_zarzamoras.png"
+ },
+ {
+  "id": "torta-ahogada",
+  "tipo": "a",
+  "titulo": "Torta Ahogada & Radish.jpg",
+  "autor": "El Gran Dee",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Torta_Ahogada_%26_Radish.jpg"
+ },
+ {
+  "id": "torta-cubana",
+  "tipo": "a",
+  "titulo": "Torta Cubana.jpg",
+  "autor": "Jose Nicdao",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Torta_Cubana.jpg"
+ },
+ {
+  "id": "enchiladas-suizas",
+  "tipo": "a",
+  "titulo": "The original enchiladas suizas at the first Sanborn's restaurant venue.jpg",
+  "autor": "Jj saezdeo",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:The_original_enchiladas_suizas_at_the_first_Sanborn%27s_restaurant_venue.jpg"
+ },
+ {
+  "id": "enchiladas-rojas",
+  "tipo": "a",
+  "titulo": "Enchiladas-rojas.jpg",
+  "autor": "ChefCarlsson",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Enchiladas-rojas.jpg"
+ },
+ {
+  "id": "chilaquiles-rojos",
+  "tipo": "a",
+  "titulo": "Portada-chilaquiles-rojos.jpg",
+  "autor": "Victorsmb",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Portada-chilaquiles-rojos.jpg"
+ },
+ {
+  "id": "arroz-tumbada",
+  "tipo": "a",
+  "titulo": "Arroz a la tumbada, platillo veracruzano.jpg",
+  "autor": "Isaacvp",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Arroz_a_la_tumbada,_platillo_veracruzano.jpg"
+ },
+ {
+  "id": "pescado-veracruzana",
+  "tipo": "a",
+  "titulo": "Pescado blanco a la veracruzana.jpg",
+  "autor": "HuachinangoALaVeracruzana",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Pescado_blanco_a_la_veracruzana.jpg"
+ },
+ {
+  "id": "chilpachole",
+  "tipo": "a",
+  "titulo": "Chilpachole de mariscos.jpg",
+  "autor": "Koffermejia",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Chilpachole_de_mariscos.jpg"
+ },
+ {
+  "id": "bocoles",
+  "tipo": "a",
+  "titulo": "Orden de bocoles surtidos.jpg",
+  "autor": "Koffermejia",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Orden_de_bocoles_surtidos.jpg"
+ },
+ {
+  "id": "huevos-tirados",
+  "tipo": "a",
+  "titulo": "Frijoles con huevo plate.jpg",
+  "autor": "Mahanga",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Frijoles_con_huevo_plate.jpg"
+ },
+ {
+  "id": "birria",
+  "tipo": "a",
+  "titulo": "Birria de Mexico.jpg",
+  "autor": "Janeefun",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Birria_de_Mexico.jpg"
+ },
+ {
+  "id": "mixiote",
+  "tipo": "a",
+  "titulo": "RedMixioteTlax.JPG",
+  "autor": "Thelmadatter",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:RedMixioteTlax.JPG"
+ },
+ {
+  "id": "ensalada-cesar",
+  "tipo": "a",
+  "titulo": "Chicken Caesar salad - Auckland, New Zealand.jpg",
+  "autor": "Daderot",
+  "licencia": "CC0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Chicken_Caesar_salad_-_Auckland,_New_Zealand.jpg"
+ },
+ {
+  "id": "espagueti-bolonesa",
+  "tipo": "a",
+  "titulo": "Spaghetti Bolognese Lokal K.jpg",
+  "autor": "Superbass",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Spaghetti_Bolognese_Lokal_K.jpg"
+ },
+ {
+  "id": "arroz-frito",
+  "tipo": "a",
+  "titulo": "Fried rice in home.jpg",
+  "autor": "Peachyeung316",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Fried_rice_in_home.jpg"
+ },
+ {
+  "id": "pollo-naranja",
+  "tipo": "a",
+  "titulo": "Orange chicken (4363046795).jpg",
+  "autor": "jeffreyw",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Orange_chicken_(4363046795).jpg"
+ },
+ {
+  "id": "ceviche",
+  "tipo": "a",
+  "titulo": "Ceviche del Perú.jpg",
+  "autor": "No machine-readable author provided. Manuel González Olaechea assumed (based on ",
+  "licencia": "CC BY 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Ceviche_del_Per%C3%BA.jpg"
+ },
+ {
+  "id": "coctel-camaron",
+  "tipo": "a",
+  "titulo": "Coctel de camaron.jpg",
+  "autor": "MrXYZ9x",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Coctel_de_camaron.jpg"
+ },
+ {
+  "id": "cuerno",
+  "tipo": "a",
+  "titulo": "Croissants au beurre (18953292873).jpg",
+  "autor": "Herry Wibisono (herryway)",
+  "licencia": "CC0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Croissants_au_beurre_(18953292873).jpg"
+ },
+ {
+  "id": "pan-muerto",
+  "tipo": "a",
+  "titulo": "Miquiztlaxcalli.JPG",
+  "autor": "Fluence",
+  "licencia": "Public domain",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Miquiztlaxcalli.JPG"
+ },
+ {
+  "id": "chocolate-caliente",
+  "tipo": "a",
+  "titulo": "Hot chocolate mug with whipped cream.jpg",
+  "autor": "User Jonik on en.wikipedia",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Hot_chocolate_mug_with_whipped_cream.jpg"
+ },
+ {
+  "id": "pay-queso",
+  "tipo": "a",
+  "titulo": "Raised slice of cheesecake.jpg",
+  "autor": "Sirabellas",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Raised_slice_of_cheesecake.jpg"
+ },
+ {
+  "id": "churros",
+  "tipo": "a",
+  "titulo": "Churros en vasos en Londres - A Taste of Spain.jpg",
+  "autor": "Garry Knight from London, England",
+  "licencia": "CC BY-SA 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Churros_en_vasos_en_Londres_-_A_Taste_of_Spain.jpg"
+ },
+ {
+  "id": "paleta-agua",
+  "tipo": "a",
+  "titulo": "Paleta de hielo de sandía.jpg",
+  "autor": "Ehécatl Cabrera",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Paleta_de_hielo_de_sand%C3%ADa.jpg"
+ },
+ {
+  "id": "hamburguesa",
+  "tipo": "a",
+  "titulo": "NCI Visuals Food Hamburger.jpg",
+  "autor": "Len Rizzi (photographer)",
+  "licencia": "Public domain",
+  "pagina": "https://commons.wikimedia.org/wiki/File:NCI_Visuals_Food_Hamburger.jpg"
+ },
+ {
+  "id": "tostadas-huevo-frijol",
+  "tipo": "r",
+  "titulo": "Huevos rancheros.jpg",
+  "autor": "1000b",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Huevos_rancheros.jpg"
+ },
+ {
+  "id": "ensalada-atun-papa",
+  "tipo": "r",
+  "titulo": "Warm potato salad with ham.jpg",
+  "autor": "jules",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Warm_potato_salad_with_ham.jpg"
+ },
+ {
+  "id": "pollo-nopales",
+  "tipo": "r",
+  "titulo": "Mexican Taco.jpg",
+  "autor": "EmilioMV11",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Mexican_Taco.jpg"
+ },
+ {
+  "id": "sardinas-mexicana",
+  "tipo": "r",
+  "titulo": "Sardines in olive oil & tomato sauce.JPG",
+  "autor": "BrokenSphere",
+  "licencia": "CC BY 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Sardines_in_olive_oil_%26_tomato_sauce.JPG"
+ },
+ {
+  "id": "quesadillas-pollo",
+  "tipo": "r",
+  "titulo": "At Long Island 2023 267.jpg",
+  "autor": "Photograph by Mike Peel (www.mikepeel.net).",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:At_Long_Island_2023_267.jpg"
+ },
+ {
+  "id": "calabacitas-panela",
+  "tipo": "r",
+  "titulo": "Smoked and sauteed squash and zucchini with tomatoes.jpg",
+  "autor": "Wesley Fryer",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Smoked_and_sauteed_squash_and_zucchini_with_tomatoes.jpg"
+ },
+ {
+  "id": "manzana-cacahuate",
+  "tipo": "r",
+  "titulo": "AppleCorer&Slicer.JPG",
+  "autor": "Vicki Nunn",
+  "licencia": "Public domain",
+  "pagina": "https://commons.wikimedia.org/wiki/File:AppleCorer%26Slicer.JPG"
+ },
+ {
+  "id": "pepino-zanahoria",
+  "tipo": "r",
+  "titulo": "Car sticks lg.jpg",
+  "autor": "Simon P.W",
+  "licencia": "Public domain",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Car_sticks_lg.jpg"
+ },
+ {
+  "id": "platano-cacahuates",
+  "tipo": "r",
+  "titulo": "Trail Mix The Elvis peanuts banana chips beef jerky peanut butter chips snack treat (28356695581).jpg",
+  "autor": "Personal Creations",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Trail_Mix_The_Elvis_peanuts_banana_chips_beef_jerky_peanut_butter_chips_snack_treat_(28356695581).jpg"
+ },
+ {
+  "id": "yogur-mango-chia",
+  "tipo": "r",
+  "titulo": "Mango with yogurt (42753192754).jpg",
+  "autor": "Vee Satayamas from Bangkok, Thailand",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Mango_with_yogurt_(42753192754).jpg"
+ },
+ {
+  "id": "camote-yogur",
+  "tipo": "r",
+  "titulo": "Baked potato, baked sweet potato, and steamed kale.jpg",
+  "autor": "User:O'Dea",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Baked_potato,_baked_sweet_potato,_and_steamed_kale.jpg"
+ },
+ {
+  "id": "salchichas-mexicana",
+  "tipo": "r",
+  "titulo": "Sausage with garlic and cheese, roasted with broccoli and plum tomato, on sliced potato, with raw onion - Massachusetts.jpg",
+  "autor": "Daderot",
+  "licencia": "CC0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Sausage_with_garlic_and_cheese,_roasted_with_broccoli_and_plum_tomato,_on_sliced_potato,_with_raw_onion_-_Massachusetts.jpg"
+ },
+ {
+  "id": "amaranto-leche-fresas",
+  "tipo": "r",
+  "titulo": "Cereal, Bananas and Strawberry (6766518197).jpg",
+  "autor": "Ralph Daily from Birmingham, United States",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Cereal,_Bananas_and_Strawberry_(6766518197).jpg"
+ },
+ {
+  "id": "sardinas-nopales",
+  "tipo": "r",
+  "titulo": "Nopalitos (cactus salad).jpg",
+  "autor": "Madman2001",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Nopalitos_(cactus_salad).jpg"
+ },
+ {
+  "id": "vaso-fruta",
+  "tipo": "r",
+  "titulo": "Fruit salad in tezpur university.jpg",
+  "autor": "Akashdoley13",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Fruit_salad_in_tezpur_university.jpg"
+ },
+ {
+  "id": "pina-pepino",
+  "tipo": "r",
+  "titulo": "1611Del Monte Pineapple Chunks 03.jpg",
+  "autor": "Judgefloro",
+  "licencia": "CC0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:1611Del_Monte_Pineapple_Chunks_03.jpg"
+ },
+ {
+  "id": "hummus-verduras",
+  "tipo": "r",
+  "titulo": "Hummus from The Nile.jpg",
+  "autor": "Paul Goyette",
+  "licencia": "CC BY-SA 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Hummus_from_The_Nile.jpg"
+ },
+ {
+  "id": "jicama-pepino-naranja",
+  "tipo": "r",
+  "titulo": "Rujak manis.jpg",
+  "autor": "Sakurai Midori",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Rujak_manis.jpg"
+ },
+ {
+  "id": "crema",
+  "tipo": "a",
+  "titulo": "Sour Cream.jpg",
+  "autor": "jules",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Sour_Cream.jpg"
+ },
+ {
+  "id": "salchicha-pavo",
+  "tipo": "a",
+  "titulo": "Wiener Wuerstchen (fcm).jpg",
+  "autor": "Frank C. Müller",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Wiener_Wuerstchen_(fcm).jpg"
+ },
+ {
+  "id": "chorizo",
+  "tipo": "a",
+  "titulo": "Chorizo sausage.JPG",
+  "autor": "Jaydoo",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Chorizo_sausage.JPG"
+ },
+ {
+  "id": "jicama",
+  "tipo": "a",
+  "titulo": "Pachyrhizus erosus 2.jpg",
+  "autor": "Eric in SF",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Pachyrhizus_erosus_2.jpg"
+ },
+ {
+  "id": "azucar",
+  "tipo": "a",
+  "titulo": "Sugar on a blue plate (close up).jpg",
+  "autor": "User:Lcarsdata",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Sugar_on_a_blue_plate_(close_up).jpg"
+ },
+ {
+  "id": "pambazo",
+  "tipo": "a",
+  "titulo": "Pambazo.jpg",
+  "autor": "No machine-readable author provided. AluK4rd assumed (based on copyright claims)",
+  "licencia": "Public domain",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Pambazo.jpg"
+ },
+ {
+  "id": "hot-cakes",
+  "tipo": "a",
+  "titulo": "The Smoking Stack Pancakes - Laughing Dog 2026-08-25.jpg",
+  "autor": "Andy Li",
+  "licencia": "CC0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:The_Smoking_Stack_Pancakes_-_Laughing_Dog_2026-08-25.jpg"
+ },
+ {
+  "id": "pastel",
+  "tipo": "a",
+  "titulo": "Piece of chocolate cake on a white plate decorated with chocolate sauce.jpg",
+  "autor": "Daria YakovlevaMinor edits made by Subsidiary account",
+  "licencia": "CC0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Piece_of_chocolate_cake_on_a_white_plate_decorated_with_chocolate_sauce.jpg"
+ },
+ {
+  "id": "gelatina",
+  "tipo": "a",
+  "titulo": "Coffee Jelly 02.jpg",
+  "autor": "ノボホショコロトソ",
+  "licencia": "CC BY 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Coffee_Jelly_02.jpg"
+ },
+ {
+  "id": "pizza-queso",
+  "tipo": "a",
+  "titulo": "Two slices of deep dish cheese pizza from Armand's.jpg",
+  "autor": "Ser Amantio di Nicolao",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Two_slices_of_deep_dish_cheese_pizza_from_Armand%27s.jpg"
+ },
+ {
+  "id": "mole-verde",
+  "tipo": "a",
+  "titulo": "Bugambilias Mexican Cuisine - October 2023 - Sarah Stierch 10.jpg",
+  "autor": "Missvain",
+  "licencia": "CC BY 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Bugambilias_Mexican_Cuisine_-_October_2023_-_Sarah_Stierch_10.jpg"
+ },
+ {
+  "id": "taco-chorizo",
+  "tipo": "a",
+  "titulo": "Antojitos Victoria chorizo taco.jpg",
+  "autor": "Missvain",
+  "licencia": "CC BY 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Antojitos_Victoria_chorizo_taco.jpg"
+ },
+ {
+  "id": "molletes",
+  "tipo": "a",
+  "titulo": "Molletes mexicanos.jpg",
+  "autor": "Locker233",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Molletes_mexicanos.jpg"
+ },
+ {
+  "id": "zacahuil",
+  "tipo": "a",
+  "titulo": "Zacahuil1.jpg",
+  "autor": "Tekyta",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Zacahuil1.jpg"
+ },
+ {
+  "id": "menudo",
+  "tipo": "a",
+  "titulo": "Bowl of menudo stew.jpg",
+  "autor": "David Martin Davies",
+  "licencia": "CC BY-SA 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Bowl_of_menudo_stew.jpg"
+ },
+ {
+  "id": "espagueti-blanco",
+  "tipo": "a",
+  "titulo": "Chicken fettuccine alfredo.JPG",
+  "autor": "Dllu",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Chicken_fettuccine_alfredo.JPG"
+ },
+ {
+  "id": "helado",
+  "tipo": "a",
+  "titulo": "Crumble and ice cream at Black Horse Inn, Nuthurst, West Sussex, England.jpg",
+  "autor": "Acabashi",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Crumble_and_ice_cream_at_Black_Horse_Inn,_Nuthurst,_West_Sussex,_England.jpg"
+ },
+ {
+  "id": "mole-olla",
+  "tipo": "a",
+  "titulo": "Mole de olla 1.jpg",
+  "autor": "Wotancito",
+  "licencia": "CC BY 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Mole_de_olla_1.jpg"
+ },
+ {
+  "id": "caldo-res",
+  "tipo": "r",
+  "titulo": "Mole de olla 1.jpg",
+  "autor": "Wotancito",
+  "licencia": "CC BY 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Mole_de_olla_1.jpg"
+ },
+ {
+  "id": "caldo-res",
+  "tipo": "a",
+  "titulo": "Mole de olla 1.jpg",
+  "autor": "Wotancito",
+  "licencia": "CC BY 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Mole_de_olla_1.jpg"
+ },
+ {
+  "id": "licuado-guayaba",
+  "tipo": "r",
+  "titulo": "Orange Passion Fruit Guava Pineapple Cashew Mix Drink (140907957).jpg",
+  "autor": "Dan Zen from Dundas, Canada",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Orange_Passion_Fruit_Guava_Pineapple_Cashew_Mix_Drink_(140907957).jpg"
+ },
+ {
+  "id": "licuado-mamey",
+  "tipo": "r",
+  "titulo": "Orange Passion Fruit Guava Pineapple Cashew Mix Drink (140907957).jpg",
+  "autor": "Dan Zen from Dundas, Canada",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Orange_Passion_Fruit_Guava_Pineapple_Cashew_Mix_Drink_(140907957).jpg"
+ },
+ {
+  "id": "pollo-verde-chayote",
+  "tipo": "r",
+  "titulo": "Bugambilias Mexican Cuisine - October 2023 - Sarah Stierch 10.jpg",
+  "autor": "Missvain",
+  "licencia": "CC BY 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Bugambilias_Mexican_Cuisine_-_October_2023_-_Sarah_Stierch_10.jpg"
+ },
+ {
+  "id": "chuleta-salsa-verde",
+  "tipo": "r",
+  "titulo": "Bugambilias Mexican Cuisine - October 2023 - Sarah Stierch 10.jpg",
+  "autor": "Missvain",
+  "licencia": "CC BY 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Bugambilias_Mexican_Cuisine_-_October_2023_-_Sarah_Stierch_10.jpg"
+ },
+ {
+  "id": "chile-relleno",
+  "tipo": "a",
+  "titulo": "Chile Rellenos.jpg",
+  "autor": "Skyler Lewis (w:en:User:Double.reed)",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Chile_Rellenos.jpg"
+ },
+ {
+  "id": "tortitas-coliflor",
+  "tipo": "r",
+  "titulo": "Chile Rellenos.jpg",
+  "autor": "Skyler Lewis (w:en:User:Double.reed)",
+  "licencia": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Chile_Rellenos.jpg"
+ },
+ {
+  "id": "bistec-mexicana",
+  "tipo": "a",
+  "titulo": "Feria Gastronomica de la Enchilada 48.jpg",
+  "autor": "Fer.goiba",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Feria_Gastronomica_de_la_Enchilada_48.jpg"
  }
 ];
 export const FOTOS_ALIMENTOS = new Set(CREDITOS.filter((c) => c.tipo === "a").map((c) => c.id));
