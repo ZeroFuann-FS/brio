@@ -22,6 +22,8 @@ export const PUNTO: Record<TipoBloque, string> = {
   cocinar: "bg-fat", comer: "bg-lime/60", bano: "bg-water/70", habito: "bg-ember/70", otro: "bg-muted",
 };
 
+const duracion = (m: number) => (m < 60 ? `${m} min` : `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60}` : ""}`);
+
 /** Reparte eventos encimados en columnas. */
 function carriles(ev: Evento[]) {
   const fin: number[] = [];
@@ -36,6 +38,8 @@ export default function AgendaDia({ perfil, onEditar }: { perfil: Perfil; onEdit
   const menu = useBrio((s) => s.menu);
   const hoy = hoyISO();
   const [fecha, setFecha] = useState(hoy);
+  const [vista, setVistaRaw] = useState<"lista" | "horario">(() => { try { return localStorage.getItem("brio:vista-dia") === "horario" ? "horario" : "lista"; } catch { return "lista"; } });
+  const setVista = (v: "lista" | "horario") => { setVistaRaw(v); try { localStorage.setItem("brio:vista-dia", v); } catch { /* sin storage */ } };
   const ev = agendaDelDia(perfil, menu, fecha);
   const ag = agendaDe(perfil);
   const visibles = ev.filter((e) => e.tipo !== "dormir");
@@ -61,7 +65,15 @@ export default function AgendaDia({ perfil, onEditar }: { perfil: Perfil; onEdit
       </div>
       <div className="mt-3 flex items-baseline justify-between">
         <p className="font-serif text-xl font-medium">{fecha === hoy ? "Hoy" : DIAS_SEMANA[new Date(`${fecha}T12:00:00`).getDay()]}</p>
-        <button onClick={onEditar} className="lab !text-lime-ink hover:underline">Editar horario</button>
+        <div className="flex items-center gap-3">
+          <div role="group" aria-label="Vista" className="flex rounded-full border border-line p-0.5 text-xs">
+            {(["lista", "horario"] as const).map((v) => (
+              <button key={v} aria-pressed={vista === v} onClick={() => setVista(v)}
+                className={`rounded-full px-2.5 py-1 ${vista === v ? "bg-ink text-bg dark:bg-lime dark:text-on-lime" : "text-muted"}`}>{v === "lista" ? "Lista" : "Horario"}</button>
+            ))}
+          </div>
+          <button onClick={onEditar} className="lab !text-lime-ink hover:underline">Editar horario</button>
+        </div>
       </div>
 
       {(ch.length > 0 || sueno < 7) && (
@@ -71,6 +83,27 @@ export default function AgendaDia({ perfil, onEditar }: { perfil: Perfil; onEdit
         </div>
       )}
 
+      {vista === "lista" ? (
+        <ol className="mt-3 divide-y divide-line">
+          {visibles.map((e) => {
+            const choca = ch.some((x) => x.a.id === e.id || x.b.id === e.id);
+            const ya = fecha === hoy && ahora >= e.inicio && ahora < e.fin;
+            return (
+              <li key={e.id} className={`grid grid-cols-[4.6rem_1fr] gap-3 py-2.5 ${ya ? "rounded-[12px] bg-lime/10 px-2 -mx-2" : ""}`}>
+                <span className="num pt-0.5 text-right text-[13px] leading-tight text-muted">{hora12(e.inicio)}<br /><span className="text-[11px] opacity-75">{duracion(e.fin - e.inicio)}</span></span>
+                <span className="min-w-0">
+                  <span className="flex items-center gap-2">
+                    <i className={`h-2.5 w-2.5 shrink-0 rounded-full ${PUNTO[e.tipo]}`} />
+                    <b className={`text-[15px] font-semibold leading-tight ${choca ? "text-ember" : ""}`}>{e.titulo}</b>
+                    {ya && <span className="lab !text-lime-ink">Ahora</span>}
+                  </span>
+                  {e.detalle && <span className="mt-0.5 block pl-[18px] text-[13px] leading-snug text-muted">{e.detalle}</span>}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+      ) : (
       <div className="relative mt-3" style={{ height: (fin - ini) * PX }}>
         {Array.from({ length: Math.ceil((fin - ini) / 60) + 1 }, (_, k) => Math.ceil(ini / 60) * 60 + k * 60).filter((m) => m <= fin).map((m) => (
           <div key={m} className="absolute left-0 right-0 flex items-start gap-2" style={{ top: (m - ini) * PX }}>
@@ -96,6 +129,7 @@ export default function AgendaDia({ perfil, onEditar }: { perfil: Perfil; onEdit
           )}
         </div>
       </div>
+      )}
       <p className="mt-3 text-xs text-muted">Despiertas {hora12(desp)} · duermes {hora12(dorm)}. El gym sale de tu rutina y las comidas de tu menú (con el tiempo que toma cocinar).</p>
     </div>
   );

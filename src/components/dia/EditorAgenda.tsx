@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { horasSueno, nombreTipo, type Agenda, type BloqueFijo, type TipoComidaAgenda } from "../../lib/agenda";
+import { horasSueno, nombreTipo, type Actividad, type Agenda, type BloqueFijo, type Momento, type Pasos, type TipoComidaAgenda } from "../../lib/agenda";
 import { agendaDe } from "../../lib/agendaDatos";
 import type { Perfil } from "../../lib/calc";
 import { DIAS_SEMANA, SEMANA_LD, diaDeSemana, uidE } from "../../lib/entreno";
@@ -18,6 +18,45 @@ function Hora({ label, valor, onCambio }: { label: string; valor: string; onCamb
 
 const TIPOS: BloqueFijo["tipo"][] = ["trabajo", "escuela", "traslado", "otro"];
 const CUANDO_BANO = [["despertar", "Al despertar"], ["gym", "Después del gym"], ["noche", "En la noche"]] as const;
+const MOMENTOS: [Momento, string][] = [["manana", "Mañana"], ["tarde", "Tarde"], ["noche", "Noche"]];
+const soloNum = (v: string) => Number(v.replace(/\D/g, "")) || 0;
+
+function Minutos({ label, valor, onCambio }: { label: string; valor: number | undefined; onCambio: (v: number) => void }) {
+  return (
+    <label className="block"><span className="lab mb-1 block">{label}</span>
+      <input className={`${inputCls} num py-2.5 text-lg`} inputMode="numeric" value={valor || ""} placeholder="0" onChange={(e) => onCambio(soloNum(e.target.value))} /></label>
+  );
+}
+
+/** Bloque con lista de pasos (antes del gym, antes de salir). */
+function EditorPasos({ titulo, ayuda, valor, ejemplo, onCambio }: { titulo: string; ayuda: string; valor?: Pasos; ejemplo: string[]; onCambio: (v: Pasos | undefined) => void }) {
+  const [paso, setPaso] = useState("");
+  const v = valor ?? { min: 0, pasos: [] };
+  const agregar = () => { const t = paso.trim(); if (t) { onCambio({ ...v, pasos: [...v.pasos, t].slice(0, 12) }); setPaso(""); } };
+  return (
+    <section>
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <p className="lab">{titulo}</p>
+        <label className="flex shrink-0 items-center gap-1.5 text-sm text-muted">
+          <input aria-label={`Minutos: ${titulo}`} inputMode="numeric" className={`${inputCls} num !w-16 px-2 py-1.5 text-center`} placeholder="0" value={v.min || ""}
+            onChange={(e) => { const min = soloNum(e.target.value); onCambio(min || v.pasos.length ? { ...v, min } : undefined); }} /> min
+        </label>
+      </div>
+      <p className="mb-2 text-xs text-muted">{ayuda}</p>
+      <ul className="flex flex-wrap gap-1.5">
+        {v.pasos.map((p, i) => (
+          <li key={`${p}-${i}`} className="flex items-center gap-1 rounded-full border border-line bg-surface py-1 pl-3 pr-1.5 text-sm">
+            {p}<button aria-label={`Quitar ${p}`} onClick={() => onCambio({ ...v, pasos: v.pasos.filter((_, j) => j !== i) })} className="px-1 text-muted hover:text-ember">×</button>
+          </li>
+        ))}
+      </ul>
+      <form className="mt-2 flex gap-2" onSubmit={(e) => { e.preventDefault(); agregar(); }}>
+        <input className={`${inputCls} py-2 text-sm`} placeholder={`Ej. ${ejemplo.join(", ")}`} maxLength={40} value={paso} onChange={(e) => setPaso(e.target.value)} />
+        <button type="submit" disabled={!paso.trim()} className={`${btnSecundario} px-4`}>+</button>
+      </form>
+    </section>
+  );
+}
 
 export default function EditorAgenda({ perfil, onListo }: { perfil: Perfil; onListo: () => void }) {
   const setAgenda = useBrio((s) => s.setAgenda);
@@ -84,7 +123,37 @@ export default function EditorAgenda({ perfil, onListo }: { perfil: Perfil; onLi
           <label className="block"><span className="lab mb-1 block">Traslado (min)</span>
             <input className={`${inputCls} num py-2.5 text-lg`} inputMode="numeric" value={a.gym.traslado || ""} placeholder="0" onChange={(e) => set("gym", { ...a.gym, traslado: Number(e.target.value.replace(/\D/g, "")) || 0 })} /></label>
         </div>
-        <p className="mt-1.5 text-xs text-muted">{diasGym.length ? `Días: ${diasGym.join(", ")} (de tu rutina en Entreno).` : "Elige tus días de gym en Entreno para que aparezcan aquí."}</p>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <Minutos label="Cardio extra (min)" valor={a.gym.extra} onCambio={(v) => set("gym", { ...a.gym, extra: v })} />
+          <Minutos label="Descanso al llegar (min)" valor={a.llegada} onCambio={(v) => set("llegada", v || undefined)} />
+        </div>
+        <p className="mt-1.5 text-xs text-muted">{diasGym.length ? `Días: ${diasGym.join(", ")} (de tu rutina en Entreno). El cardio (caminadora) se suma al tiempo de tu rutina.` : "Elige tus días de gym en Entreno para que aparezcan aquí."}</p>
+      </section>
+
+      <EditorPasos titulo="Antes del gym" ayuda="Lo que haces al despertar antes de irte. Termina justo cuando sales al gym."
+        valor={a.preGym} ejemplo={["Tenis", "Café preentreno"]} onCambio={(v) => set("preGym", v)} />
+
+      <EditorPasos titulo="Antes de salir" ayuda="Lo que haces antes de irte al trabajo o la escuela. Termina justo cuando sales (agrega tu traslado arriba)."
+        valor={a.salida} ejemplo={["Lonchera", "Mochila", "Trastes"]} onCambio={(v) => set("salida", v)} />
+
+      <section>
+        <p className="lab mb-1">Súper de la semana</p>
+        <p className="mb-2 text-xs text-muted">Un día a la semana compras todo. Si ese día vas al gym, va saliendo de ahí.</p>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {SEMANA_LD.map((w) => {
+            const on = a.superSemanal?.dia === w;
+            return (
+              <button key={w} aria-pressed={on} onClick={() => set("superSemanal", on ? undefined : { dia: w, min: a.superSemanal?.min || 30 })}
+                className={`rounded-full border px-2.5 py-1.5 text-sm ${on ? chipOn : "border-line bg-surface text-muted"}`}>{DIAS_SEMANA[w].slice(0, 3)}</button>
+            );
+          })}
+          {a.superSemanal && (
+            <label className="ml-auto flex shrink-0 items-center gap-1.5 text-sm text-muted">
+              <input aria-label="Minutos del súper" inputMode="numeric" className={`${inputCls} num !w-16 px-2 py-1.5 text-center`} value={a.superSemanal.min || ""}
+                onChange={(e) => set("superSemanal", { ...a.superSemanal!, min: soloNum(e.target.value) })} /> min
+            </label>
+          )}
+        </div>
       </section>
 
       <section>
@@ -124,14 +193,16 @@ export default function EditorAgenda({ perfil, onListo }: { perfil: Perfil; onLi
             );
           })}
           {a.bano && (
-            <label className="ml-auto flex items-center gap-1.5 text-sm text-muted">
-              <input aria-label="Minutos de baño" inputMode="numeric" className={`${inputCls} num w-16 px-2 py-1.5 text-center`} value={a.bano.min || ""}
+            <label className="ml-auto flex shrink-0 items-center gap-1.5 text-sm text-muted">
+              <input aria-label="Minutos de baño" inputMode="numeric" className={`${inputCls} num !w-16 px-2 py-1.5 text-center`} value={a.bano.min || ""}
                 onChange={(e) => set("bano", { ...a.bano!, min: Number(e.target.value.replace(/\D/g, "")) || 0 })} /> min
             </label>
           )}
         </div>
         <p className="mt-1.5 text-xs text-muted">Brío lo acomoda solo en el primer hueco libre.</p>
       </section>
+
+      <TiempoParaTi valor={a.actividades ?? []} onCambio={(v) => set("actividades", v)} />
 
       <section>
         <p className="lab mb-2">Hábitos con hora (opcional)</p>
@@ -154,5 +225,51 @@ export default function EditorAgenda({ perfil, onListo }: { perfil: Perfil; onLi
 
       <button onClick={() => { setAgenda(a); onListo(); }} className={`${btnPrimario} w-full`}>Guardar mi horario</button>
     </div>
+  );
+}
+
+/** Actividades flexibles (leer, llamada, aprender…): Brío las acomoda en un hueco libre. */
+function TiempoParaTi({ valor, onCambio }: { valor: Actividad[]; onCambio: (v: Actividad[]) => void }) {
+  const [nueva, setNueva] = useState<Actividad | null>(null);
+  const momento = (m: Momento) => MOMENTOS.find((x) => x[0] === m)?.[1].toLowerCase();
+  return (
+    <section>
+      <p className="lab mb-1">Tiempo para ti</p>
+      <p className="mb-2 text-xs text-muted">Leer, una llamada, aprender algo… Dime cuánto tiempo y en qué parte del día; Brío lo acomoda en un hueco libre.</p>
+      <ul className="space-y-2">
+        {valor.map((x) => (
+          <li key={x.id} className="flex items-center gap-2 rounded-[14px] border border-line bg-surface px-3 py-2">
+            <span className="min-w-0 flex-1"><b className="block truncate text-sm font-medium">{x.titulo}</b>
+              <span className="lab !tracking-[0.05em]">{x.min} min · en la {momento(x.cuando)} · {x.dias.length === 7 ? "diario" : SEMANA_LD.filter((w) => x.dias.includes(w)).map((w) => DIAS_SEMANA[w].slice(0, 3)).join(" ")}</span></span>
+            <button onClick={() => setNueva(x)} className="rounded-full border border-line px-3 py-1 text-xs text-muted">Editar</button>
+            <button onClick={() => onCambio(valor.filter((y) => y.id !== x.id))} aria-label={`Quitar ${x.titulo}`} className="px-1 text-lg text-muted hover:text-ember">×</button>
+          </li>
+        ))}
+      </ul>
+      {nueva ? (
+        <div className="mt-2 space-y-2 rounded-[14px] border border-lime/60 bg-lime/5 p-3">
+          <input className={inputCls} placeholder="Ej. Llamada con mi novia, Leer, Aprender inglés" maxLength={40} value={nueva.titulo} onChange={(e) => setNueva({ ...nueva, titulo: e.target.value })} />
+          <div className="flex flex-wrap items-center gap-1.5">
+            {MOMENTOS.map(([k, t]) => (
+              <button key={k} aria-pressed={nueva.cuando === k} onClick={() => setNueva({ ...nueva, cuando: k })}
+                className={`rounded-full border px-3 py-1.5 text-sm ${nueva.cuando === k ? chipOn : "border-line bg-surface text-muted"}`}>{t}</button>
+            ))}
+            <label className="ml-auto flex shrink-0 items-center gap-1.5 text-sm text-muted">
+              <input aria-label="Minutos" inputMode="numeric" className={`${inputCls} num !w-16 px-2 py-1.5 text-center`} value={nueva.min || ""} onChange={(e) => setNueva({ ...nueva, min: soloNum(e.target.value) })} /> min
+            </label>
+          </div>
+          <SelectorSemana valor={nueva.dias} onCambio={(v) => setNueva({ ...nueva, dias: v })} />
+          <div className="flex gap-2">
+            <button onClick={() => setNueva(null)} className={`${btnSecundario} flex-1`}>Cancelar</button>
+            <button disabled={!nueva.titulo.trim() || !nueva.min || !nueva.dias.length}
+              onClick={() => { onCambio(valor.some((y) => y.id === nueva.id) ? valor.map((y) => (y.id === nueva.id ? nueva : y)) : [...valor, nueva]); setNueva(null); }}
+              className={`${btnPrimario} flex-1`}>Listo</button>
+          </div>
+        </div>
+      ) : (
+        <button onClick={() => setNueva({ id: uidE(), titulo: "", min: 30, cuando: "noche", dias: [0, 1, 2, 3, 4, 5, 6] })}
+          className="mt-2 w-full rounded-[12px] border border-dashed border-line py-2 text-sm text-muted hover:text-ink">+ Agregar tiempo para ti</button>
+      )}
+    </section>
   );
 }
