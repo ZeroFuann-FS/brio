@@ -68,6 +68,7 @@ export const ALIMENTOS: Alimento[] = [
   A("jamon-cerdo", "Jamón de cerdo", "Carnes y pescado", 145, 18, 2, 7, [{ t: "rebanada", g: 20 }], "jamon virginia"),
   A("salchicha-pavo", "Salchicha de pavo", "Carnes y pescado", 220, 12, 4, 17, [{ t: "pieza", g: 45 }]),
   A("chorizo", "Chorizo", "Carnes y pescado", 455, 24, 2, 38, [{ t: "porción", g: 40 }]),
+  A("tocino", "Tocino frito", "Carnes y pescado", 541, 37, 1.4, 42, [{ t: "rebanada", g: 8 }], "bacon tocineta"),
   A("atun-agua", "Atún en lata (en agua)", "Carnes y pescado", 116, 25.5, 0, 0.8, [{ t: "lata", g: 100 }], "lata mar alta dolores"),
   A("atun-aceite", "Atún en lata (en aceite)", "Carnes y pescado", 198, 29, 0, 8.2, [{ t: "lata", g: 100 }]),
   A("sardina", "Sardinas en lata (en tomate)", "Carnes y pescado", 186, 16.4, 0.7, 12.5, [{ t: "porción", g: 100 }]),
@@ -200,7 +201,17 @@ export const ALIMENTOS: Alimento[] = [
   A("enchilada-verde", "Enchilada verde de pollo", "Platillos", 170, 10, 14, 8, [{ t: "pieza", g: 110 }], "enchiladas"),
   A("enfrijolada", "Enfrijolada", "Platillos", 165, 7, 20, 6, [{ t: "pieza", g: 110 }]),
   A("chilaquiles", "Chilaquiles verdes", "Platillos", 180, 5, 20, 9, [{ t: "plato", g: 250 }]),
-  A("huevos-mexicana", "Huevos a la mexicana", "Platillos", 140, 9, 3, 10, [{ t: "porción (2 huevos)", g: 150 }]),
+  C("huevos-mexicana", "Huevos a la mexicana", "Platillos", "porción (2 huevos)", [["huevo", 100], ["jitomate", 60], ["cebolla", 20], ["aceite", 5]]),
+  // Huevos caseros: al registrarlos cambias cuántos huevos, el jamón, el aceite…
+  C("huevos-jamon", "Huevos con jamón", "Platillos", "porción (2 huevos)", [["huevo", 100], ["jamon-pavo", 40], ["aceite", 5]], "huevo revuelto jamon"),
+  C("huevos-salchicha", "Huevos con salchicha", "Platillos", "porción (2 huevos)", [["huevo", 100], ["salchicha-pavo", 45], ["aceite", 5]], "huevo revuelto salchicha"),
+  C("huevos-chorizo", "Huevos con chorizo", "Platillos", "porción (2 huevos)", [["huevo", 100], ["chorizo", 30]], "huevo revuelto chorizo"),
+  C("huevos-tocino", "Huevos con tocino", "Platillos", "porción (2 huevos)", [["huevo", 100], ["tocino", 16]], "huevo revuelto tocino bacon"),
+  C("huevos-revueltos", "Huevos revueltos", "Platillos", "porción (2 huevos)", [["huevo", 100], ["aceite", 5]], "huevo revuelto"),
+  C("huevos-estrellados", "Huevos estrellados", "Platillos", "porción (2 huevos)", [["huevo", 100], ["aceite", 7]], "huevo estrellado frito fritos"),
+  C("huevos-rancheros-casa", "Huevos rancheros", "Platillos", "porción (2 huevos)", [["huevo", 100], ["tortilla-maiz", 60], ["salsa-roja", 60], ["aceite", 7]], "huevo ranchero"),
+  C("huevos-papa", "Huevos con papa", "Platillos", "porción (2 huevos)", [["huevo", 100], ["papa", 75], ["aceite", 5]], "huevo revuelto papa"),
+  C("huevos-nopales", "Huevos con nopales", "Platillos", "porción (2 huevos)", [["huevo", 100], ["nopales", 75], ["aceite", 5]], "huevo revuelto nopal"),
   A("albondigas-caldillo", "Albóndigas en caldillo", "Platillos", 120, 8, 6, 7, [{ t: "plato (4 albóndigas)", g: 320 }, { t: "albóndiga con caldillo", g: 80 }], "albondiga"),
   A("albondigas", "Albóndigas de res (sin caldillo)", "Platillos", 200, 14, 6, 13, [{ t: "albóndiga", g: 40 }], "albondiga"),
   A("picadillo", "Picadillo de res con verduras", "Platillos", 150, 12, 6, 9, [{ t: "taza", g: 200 }]),
@@ -333,8 +344,8 @@ export const ALIMENTOS: Alimento[] = [
 /* Caseros: kcal y macros por 100 g salen de sus ingredientes. */
 const POR_ID = new Map(ALIMENTOS.map((a) => [a.id, a]));
 export const alimentoPorId = (id: string) => POR_ID.get(id);
-for (const a of ALIMENTOS) {
-  if (!a.ing) continue;
+function calcularCasero(a: Alimento) {
+  if (!a.ing) return;
   let gr = 0, kcal = 0, p = 0, c = 0, g = 0;
   for (const [id, x] of a.ing) {
     const i = POR_ID.get(id);
@@ -345,6 +356,7 @@ for (const a of ALIMENTOS) {
   Object.assign(a, { kcal: Math.round(kcal / gr * 100), p: r(p), c: r(c), g: r(g) });
   a.por[0].g = Math.round(gr);
 }
+ALIMENTOS.forEach(calcularCasero);
 
 const normalizar = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
@@ -369,3 +381,28 @@ export function buscarLocal(q: string, max = 30): Alimento[] {
 }
 
 export { normalizar };
+
+/**
+ * "huevo con jamón y queso" no existe como platillo: se arma con el mejor ingrediente de cada palabra
+ * (huevo + jamón + queso) para ajustarlo al registrar. null si ya hay un alimento con todas las palabras.
+ */
+export function armarDesdeTexto(q: string): Alimento | null {
+  const palabras = normalizar(q).split(/\s+/).filter((w) => w.length > 1 && !VACIAS.has(w));
+  if (palabras.length < 2) return null;
+  const singular = (w: string) => (w.length > 4 && w.endsWith("s") ? w.slice(0, -1) : w);
+  const yaExiste = ALIMENTOS.some((a) => { const t = normalizar(`${a.n} ${a.alias ?? ""}`); return palabras.every((w) => t.includes(singular(w))); });
+  if (yaExiste) return null;
+  const elegidos: Alimento[] = [];
+  for (const w of palabras) {
+    const a = buscarLocal(w, 8).find((x) => !x.ing && !elegidos.includes(x));
+    if (a) elegidos.push(a);
+  }
+  if (elegidos.length < 2) return null;
+  const nombre = q.trim().replace(/\s+/g, " ");
+  const armado: Alimento = {
+    id: `armado-${palabras.join("-")}`, n: nombre.charAt(0).toUpperCase() + nombre.slice(1), cat: "Platillos",
+    kcal: 0, p: 0, c: 0, g: 0, por: [{ t: "porción", g: 0 }], ing: elegidos.map((a) => [a.id, a.por[0].g]),
+  };
+  calcularCasero(armado);
+  return armado;
+}

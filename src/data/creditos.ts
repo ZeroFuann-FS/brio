@@ -2800,6 +2800,30 @@ export const CREDITOS: Credito[] = [
   "autor": "Desconocido",
   "licencia": "Public domain",
   "pagina": "https://commons.wikimedia.org/wiki/File:ARS-_Pouteria_sapota.jpg"
+ },
+ {
+  "id": "huevos-jamon",
+  "tipo": "a",
+  "titulo": "Ham steak and scrambled eggs.jpg",
+  "autor": "Nathan Yergler from San Francisco, CA, USA",
+  "licencia": "CC BY-SA 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Ham_steak_and_scrambled_eggs.jpg"
+ },
+ {
+  "id": "huevos-nopales",
+  "tipo": "a",
+  "titulo": "Nopales con huevo (33798458511).jpg",
+  "autor": "T.Tseng",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Nopales_con_huevo_(33798458511).jpg"
+ },
+ {
+  "id": "huevos-rancheros-casa",
+  "tipo": "a",
+  "titulo": "Huevos Rancheros (11494813583).jpg",
+  "autor": "Luca Nebuloni from Milan, Italy",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Huevos_Rancheros_(11494813583).jpg"
  }
 ];
 export const FOTOS_ALIMENTOS = new Set(CREDITOS.filter((c) => c.tipo === "a").map((c) => c.id));

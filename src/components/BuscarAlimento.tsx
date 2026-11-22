@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { alimentoPorId, buscarLocal, type Alimento, type Porcion } from "../data/alimentos";
+import { alimentoPorId, armarDesdeTexto, buscarLocal, type Alimento, type Porcion } from "../data/alimentos";
 import { fotoDe } from "../data/fotos";
 import { buscarOFF, porCodigoOFF } from "../lib/off";
 import { buscarComunidad, porCodigoComunidad } from "../lib/comunidad";
@@ -69,6 +69,7 @@ export default function BuscarAlimento({ onAgregar, onBuscando }: { onAgregar: (
   const abort = useRef<AbortController | null>(null);
 
   const locales = q.trim().length >= 2 ? buscarLocal(q) : [];
+  const armado = q.trim().length >= 5 ? armarDesdeTexto(q) : null;
   const ocupado = q.trim().length > 0 || !!sel || vista !== "buscar";
   useEffect(() => { onBuscando?.(ocupado); }, [ocupado, onBuscando]);
 
@@ -210,6 +211,15 @@ export default function BuscarAlimento({ onAgregar, onBuscando }: { onAgregar: (
               <p className="lab mt-3">Capturados en Brío</p>
               <ul>{comunidad.map((a) => <Fila key={a.id} a={a} />)}</ul>
             </>
+          )}
+          {armado && (
+            <button onClick={() => elegir(armado)} className="mt-3 flex w-full items-center gap-3 rounded-[14px] border border-dashed border-line-strong/60 bg-surface p-3 text-left transition hover:border-line-strong">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[10px] bg-lime text-xl font-bold text-on-lime" aria-hidden>+</span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-medium">Armar «{armado.n}»</span>
+                <span className="block truncate text-xs text-muted">{(armado.ing ?? []).map(([id]) => alimentoPorId(id)?.n.replace(/\s*\(.*\)\s*$/, "")).join(" + ")} · ajustas las cantidades</span>
+              </span>
+            </button>
           )}
           {locales.length > 0 && (
             <>
