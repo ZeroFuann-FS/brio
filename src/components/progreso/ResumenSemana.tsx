@@ -56,7 +56,7 @@ export default function ResumenSemana({ perfil, metas }: { perfil: Perfil; metas
       <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
         <Dato t="Días con brío" v={`${r.diasBrio}/7`} sub={`${r.habitosPct}% de hábitos y agua`} ok={r.diasBrio >= 5 ? true : null} />
         <Dato t="Entrenos" v={`${r.entrenos}/${r.metaEntrenos}`} sub={r.series ? `${r.series} series · ${r.volumen.toLocaleString("es-MX")} kg` : "Sin series registradas"} ok={r.entrenos >= r.metaEntrenos ? true : null} />
-        <Dato t="Calorías promedio" v={r.diasRegistro ? r.kcalProm.toLocaleString("es-MX") : "—"} sub={r.diasRegistro ? `meta ${metas.kcal.toLocaleString("es-MX")} · ${r.diasRegistro} días registrados` : "Registra tus comidas"}
+        <Dato t="Calorías promedio" v={r.diasRegistro ? r.kcalProm.toLocaleString("es-MX") : "—"} sub={r.diasRegistro ? `meta ${metas.kcal.toLocaleString("es-MX")} · ${r.diasRegistro} ${r.diasRegistro === 1 ? "día registrado" : "días registrados"}` : "Registra tus comidas"}
           ok={r.diasRegistro ? Math.abs(r.kcalProm - metas.kcal) <= metas.kcal * 0.1 : null} />
         <Dato t="Proteína promedio" v={r.diasRegistro ? `${r.protProm} g` : "—"} sub={`meta ${metas.proteina} g`} ok={r.diasRegistro ? r.protProm >= metas.proteina * 0.85 : null} />
         <Dato t="Agua promedio" v={`${(r.aguaProm / 1000).toFixed(1)} L`} sub={`meta ${(metas.aguaMl / 1000).toFixed(1)} L`} ok={r.aguaProm >= metas.aguaMl * 0.9 ? true : null} />

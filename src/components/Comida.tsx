@@ -38,9 +38,9 @@ export default function Comida({ perfil, metas }: { perfil: Perfil; metas: Metas
             <div className="min-w-0 md:col-span-5"><TarjetaPlan perfil={perfil} metas={metas} enComida delay={0.04} /></div>
           </div>
         )}
-        {vista === "menu" && <div className="max-w-3xl"><MenuSemanal perfil={perfil} metas={metas} /></div>}
+        {vista === "menu" && <div className="max-w-3xl lg:max-w-none"><MenuSemanal perfil={perfil} metas={metas} /></div>}
         {vista === "recetas" && <Recetas />}
-        {vista === "despensa" && <div className="max-w-2xl"><Despensa /></div>}
+        {vista === "despensa" && <div className="max-w-2xl lg:max-w-none"><Despensa /></div>}
       </PanelPestana>
     </div>
   );

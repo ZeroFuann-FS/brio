@@ -45,6 +45,8 @@ export default function Despensa() {
         <p className="mt-1 text-muted">Lo que tienes en casa. Brío lo usa primero al armar tu menú y tu lista del súper.</p>
       </div>
 
+      <div className="space-y-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:items-start lg:gap-4 lg:space-y-0">
+        <div className="space-y-4">
       <Tarjeta>
         <form
           className="space-y-2"
@@ -82,6 +84,25 @@ export default function Despensa() {
         </Tarjeta>
       )}
 
+      {agotados.length > 0 && (
+        <Tarjeta delay={0.1}>
+          <h2 className="font-serif text-xl font-medium">Se acabó · para tu lista</h2>
+          <ul className="mt-3 space-y-2">
+            {agotados.map((i) => (
+              <li key={i.id} className="flex items-center justify-between rounded-2xl bg-bg px-3 py-2.5">
+                <span className="text-muted line-through">{i.nombre}</span>
+                <span className="flex gap-3 text-sm">
+                  <button onClick={() => cambiarCantidad(i.id, paso(i.unidad))} className="text-lime-ink">Lo compré</button>
+                  <button onClick={() => removeItem(i.id)} className="text-muted hover:text-ember">Quitar</button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Tarjeta>
+      )}
+
+        </div>
+        <div>
       <Tarjeta delay={0.05}>
         <h2 className="font-serif text-xl font-medium">En casa <span className="text-sm font-normal text-muted">· {conStock.length}</span></h2>
         <ul className="mt-3 space-y-2">
@@ -116,22 +137,8 @@ export default function Despensa() {
         </ul>
       </Tarjeta>
 
-      {agotados.length > 0 && (
-        <Tarjeta delay={0.1}>
-          <h2 className="font-serif text-xl font-medium">Se acabó · para tu lista</h2>
-          <ul className="mt-3 space-y-2">
-            {agotados.map((i) => (
-              <li key={i.id} className="flex items-center justify-between rounded-2xl bg-bg px-3 py-2.5">
-                <span className="text-muted line-through">{i.nombre}</span>
-                <span className="flex gap-3 text-sm">
-                  <button onClick={() => cambiarCantidad(i.id, paso(i.unidad))} className="text-lime-ink">Lo compré</button>
-                  <button onClick={() => removeItem(i.id)} className="text-muted hover:text-ember">Quitar</button>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </Tarjeta>
-      )}
+        </div>
+      </div>
 
       <p className="px-2 text-center text-xs text-muted">Tu menú semanal usa primero lo que hay aquí y no te lo vuelve a pedir en la lista del súper.</p>
     </div>

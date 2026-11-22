@@ -225,6 +225,7 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
 
   return (
     <>
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-start lg:gap-4">
       <Tarjeta tono="food" tour="menu">
         <div className="flex items-baseline justify-between">
           <h2 className="font-serif text-xl font-medium">Tu menú</h2>
@@ -315,7 +316,7 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
               <li key={it.nombre} className="border-b border-line last:border-b-0">
                 <button onClick={() => marcarComprado(it.nombre)} className="grid w-full grid-cols-[22px_1fr_auto] items-center gap-3 py-2.5 text-left">
                   <span className={`grid h-[22px] w-[22px] place-items-center rounded-[7px] border-[1.5px] text-[13px] font-extrabold ${ok ? "border-lime bg-lime text-on-lime" : "border-line-strong"}`}>{ok ? "✓" : ""}</span>
-                  <span className={ok ? "text-muted line-through" : ""}>{it.nombre}<span className="lab mt-0.5 block !tracking-[0.06em]">{it.unidad.startsWith("kg") ? `${cant(it.unidades)} kg${it.unidad.slice(2)}` : `${it.unidades} ${it.unidad}`}{it.enCasa > 0 ? ` · necesitas ${cant(it.necesitaU)}, ya tienes ${cant(it.enCasaU)}` : ""}</span></span>
+                  <span className={ok ? "text-muted line-through" : ""}>{it.nombre}<span className="lab mt-0.5 block !tracking-[0.06em]">{it.unidad.startsWith("kg") ? `${cant(it.unidades)} kg${it.unidad.slice(2)}` : `${it.unidades} ${it.unidades === 1 ? it.unidad.replace(/^pzas\b/, "pza").replace(/^latas\b/, "lata") : it.unidad}`}{it.enCasa > 0 ? ` · necesitas ${cant(it.necesitaU)}, ya tienes ${cant(it.enCasaU)}` : ""}</span></span>
                   <span className="num text-[17px]">{dinero(it.costo)}</span>
                 </button>
               </li>
@@ -327,6 +328,7 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
         <p className="mt-2 text-xs text-muted">Precios aproximados de tiendas como 3B, Aurrera y mercados; pueden variar.</p>
       </Tarjeta>
 
+      </div>
       <Hoja abierta={!!receta} onClose={() => setReceta(null)} titulo="Receta">
         {receta && <RecetaDetalle r={receta.r} factorInicial={receta.factor} ajustesIniciales={m.dias[receta.di]?.comidas[receta.ci]?.ajustes}
           onAjustes={(a) => {

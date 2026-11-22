@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
 import { diasEntre, hoyISO, type Metas, type Perfil } from "../lib/calc";
 import { habitosDe, minBrio, puntosDia, seAcaban, useBrio } from "../lib/store";
+import { fmtCantidad } from "../lib/despensa";
 import { Barra, Hoja, Numero, Segmentos, Tarjeta, Toast, ease, useToast } from "./ui";
 import ComidasDia from "./ComidasDia";
 import EditorHabitos from "./EditorHabitos";
@@ -83,7 +84,7 @@ export default function Hoy({ perfil, metas, onIrComida }: { perfil: Perfil; met
       {pocos.length > 0 && (
         <button onClick={onIrComida} className="mt-4 flex w-full items-center justify-between gap-3 rounded-[14px] border border-line bg-surface px-4 py-3 text-left">
           <span className="min-w-0"><span className="lab block !text-ember">Se te está acabando</span>
-            <span className="block truncate text-sm">{pocos.map((i) => `${i.nombre.toLowerCase()} (${i.cantidad} ${i.unidad})`).join(", ")}</span></span>
+            <span className="block truncate text-sm">{pocos.map((i) => `${i.nombre.toLowerCase()} (${fmtCantidad(i.cantidad, i.unidad)})`).join(", ")}</span></span>
           <span className="lab shrink-0">Ver →</span>
         </button>
       )}

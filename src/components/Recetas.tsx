@@ -30,7 +30,7 @@ function TarjetaReceta({ r, fav, onAbrir, i }: { r: Receta; fav: boolean; onAbri
   const n = nutricion(r);
   const e = etiquetas(r);
   return (
-    <motion.button onClick={onAbrir} className="group min-w-0 text-left"
+    <motion.button onClick={onAbrir} className="group min-w-0 self-start text-left"
       initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i, 8) * 0.03, duration: 0.35, ease }}>
       <div className="relative aspect-[4/3] overflow-hidden rounded-[16px] border border-line bg-white">
         <div className="h-full w-full transition duration-300 group-hover:scale-[1.04]"><PortadaReceta r={r} /></div>

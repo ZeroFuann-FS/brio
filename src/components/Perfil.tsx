@@ -37,8 +37,9 @@ export default function Perfil({ perfil, metas, onEditar, onVerIntro, onVerTutor
   const [confirmar, setConfirmar] = useState(false);
 
   return (
-    <div className="space-y-4 md:max-w-3xl">
-      <h1 className="font-serif text-4xl font-medium tracking-tight">Perfil</h1>
+    // En laptop: dos columnas tipo mosaico (cada tarjeta entera en una columna)
+    <div className="space-y-4 md:max-w-3xl lg:max-w-none lg:columns-2 lg:gap-4 lg:space-y-0 lg:[&>*]:mb-4 lg:[&>*]:break-inside-avoid">
+      <h1 className="font-serif text-4xl font-medium tracking-tight lg:[column-span:all]">Perfil</h1>
 
       <Tarjeta>
         <p className="font-serif text-xl font-medium">{perfil.nombre}</p>
@@ -174,7 +175,7 @@ export default function Perfil({ perfil, metas, onEditar, onVerIntro, onVerTutor
           </>
         )}
       </Tarjeta>
-      <p className="text-center text-xs text-muted">
+      <p className="text-center text-xs text-muted lg:[column-span:all]">
         Brío v0.4 · Ponle brío a tu vida. · <a href="/conoce/" className="underline">Conoce Brío</a> · <a href="/privacidad.html" className="underline">Privacidad</a> · <a href="/terminos.html" className="underline">Términos</a> · <button onClick={() => setCreditos(true)} className="underline">Créditos de fotos</button>
       </p>
       <Hoja abierta={creditos} onClose={() => setCreditos(false)} titulo="Créditos de fotos">

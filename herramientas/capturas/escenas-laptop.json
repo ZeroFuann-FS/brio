@@ -1,0 +1,15 @@
+[
+  { "nombre": "01-hoy", "tab": "hoy" },
+  { "nombre": "02-mi-dia", "tab": "hoy", "pasos": [{ "clic": "Ver mi día →", "esperar": 1200 }] },
+  { "nombre": "03-comida-hoy", "tab": "comida" },
+  { "nombre": "04-comida-menu", "tab": "comida", "pasos": [{ "clic": "Menú", "esperar": 1200 }] },
+  { "nombre": "05-comida-recetas", "tab": "comida", "pasos": [{ "clic": "Recetas", "esperar": 1500 }] },
+  { "nombre": "06-receta", "tab": "comida", "pasos": [{ "clic": "Recetas", "esperar": 1200 }, { "js": "document.querySelector('main button.group, button.group')?.click()", "esperar": 1500 }] },
+  { "nombre": "07-comida-despensa", "tab": "comida", "pasos": [{ "clic": "Despensa", "esperar": 1200 }] },
+  { "nombre": "08-entreno-hoy", "tab": "entreno" },
+  { "nombre": "09-entreno-historial", "tab": "entreno", "pasos": [{ "clic": "Historial", "esperar": 1200 }] },
+  { "nombre": "10-entreno-rutinas", "tab": "entreno", "pasos": [{ "clic": "Rutinas", "esperar": 1200 }] },
+  { "nombre": "11-progreso", "tab": "progreso" },
+  { "nombre": "12-progreso-2", "tab": "progreso", "pasos": [{ "bajar": 900 }] },
+  { "nombre": "13-perfil", "tab": "perfil" }
+]

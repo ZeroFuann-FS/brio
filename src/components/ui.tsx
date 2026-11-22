@@ -88,7 +88,7 @@ function bloquearScroll() {
   };
 }
 
-export function Hoja({ abierta, onClose, titulo, children, ancha = false }: { abierta: boolean; onClose: () => void; titulo: string; children: ReactNode; ancha?: boolean }) {
+export function Hoja({ abierta, onClose, titulo, children, ancha = false, media = false }: { abierta: boolean; onClose: () => void; titulo: string; children: ReactNode; ancha?: boolean; media?: boolean }) {
   useEffect(() => (abierta ? bloquearScroll() : undefined), [abierta]);
   return (
     <AnimatePresence>
@@ -98,7 +98,7 @@ export function Hoja({ abierta, onClose, titulo, children, ancha = false }: { ab
           <motion.div
             role="dialog"
             aria-label={titulo}
-            className={`relative max-h-[92dvh] w-full overflow-y-auto overscroll-contain ${ancha ? "max-w-md md:max-w-4xl" : "max-w-md"} rounded-t-[24px] border border-line bg-bg p-5 pb-[max(env(safe-area-inset-bottom),1.25rem)] md:mb-[4vh] md:rounded-[24px]`}
+            className={`relative max-h-[92dvh] w-full overflow-y-auto overscroll-contain ${ancha ? "max-w-md md:max-w-4xl" : media ? "max-w-md md:max-w-xl" : "max-w-md"} rounded-t-[24px] border border-line bg-bg p-5 pb-[max(env(safe-area-inset-bottom),1.25rem)] md:mb-[4vh] md:rounded-[24px]`}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}

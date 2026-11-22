@@ -91,14 +91,14 @@ export default function TuDia({ perfil, className = "", delay = 0, tour }: { per
         )}
       </Tarjeta>
 
-      <Hoja abierta={vista === "dia"} onClose={() => setVista(null)} titulo="Mi día" ancha>
-        <div className="md:max-w-xl"><AgendaDia perfil={perfil} onEditar={() => setVista("editar")} /></div>
+      <Hoja abierta={vista === "dia"} onClose={() => setVista(null)} titulo="Mi día" media>
+        <div><AgendaDia perfil={perfil} onEditar={() => setVista("editar")} /></div>
       </Hoja>
-      <Hoja abierta={vista === "editar"} onClose={() => setVista(null)} titulo="Mi horario" ancha>
-        <div className="md:max-w-xl"><EditorAgenda perfil={perfil} onListo={() => setVista("dia")} /></div>
+      <Hoja abierta={vista === "editar"} onClose={() => setVista(null)} titulo="Mi horario" media>
+        <div><EditorAgenda perfil={perfil} onListo={() => setVista("dia")} /></div>
       </Hoja>
-      <Hoja abierta={vista === "avisos"} onClose={() => setVista(null)} titulo="Avisos" ancha>
-        <div className="md:max-w-xl"><Recordatorios perfil={perfil} /></div>
+      <Hoja abierta={vista === "avisos"} onClose={() => setVista(null)} titulo="Avisos" media>
+        <div><Recordatorios perfil={perfil} /></div>
       </Hoja>
     </>
   );
