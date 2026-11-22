@@ -1,0 +1,1 @@
+[{"nombre":"sesion","tab":"entreno","pasos":[{"js":"(() => { const b = document.querySelector(\"button[aria-label^=\\\"Serie \\\"][aria-pressed=\\\"false\\\"]\"); b?.scrollIntoView({block:\"center\"}); b?.click(); return !!b; })()","esperar":1600},{"js":"window.scrollTo(0, 0)","esperar":600}]}]

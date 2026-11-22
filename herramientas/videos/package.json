@@ -1,0 +1,7 @@
+{
+  "name": "brio-videos",
+  "private": true,
+  "type": "module",
+  "description": "Grabador de videos de Brío (no se publica con la app)",
+  "devDependencies": { "playwright": "1.49.1" }
+}

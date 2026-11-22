@@ -1,0 +1,174 @@
+[
+ {
+  "nombre": "hoy",
+  "tab": "hoy"
+ },
+ {
+  "nombre": "habitos",
+  "tab": "hoy",
+  "pasos": [
+   {
+    "js": "(() => { const e = [...document.querySelectorAll('h1,h2,h3,p,span,button')].find((x) => x.textContent.trim() === \"H\\u00e1bitos\"); e?.scrollIntoView({ block: 'start' }); window.scrollBy(0, -16); return !!e; })()",
+    "esperar": 900
+   }
+  ]
+ },
+ {
+  "nombre": "buscar",
+  "tab": "comida",
+  "pasos": [
+   {
+    "clic": "+ Registrar comida",
+    "esperar": 1200
+   },
+   {
+    "escribir": "volovan",
+    "en": "input[placeholder^='Busca']",
+    "esperar": 1200
+   }
+  ]
+ },
+ {
+  "nombre": "receta",
+  "tab": "comida",
+  "pasos": [
+   {
+    "clic": "Recetas",
+    "esperar": 1200
+   },
+   {
+    "escribir": "tinga",
+    "en": "input[placeholder^='Busca:']",
+    "esperar": 900
+   },
+   {
+    "js": "document.querySelector('button.group')?.click()",
+    "esperar": 1500
+   }
+  ]
+ },
+ {
+  "nombre": "menu",
+  "tab": "comida",
+  "pasos": [
+   {
+    "clic": "Menú",
+    "esperar": 1300
+   }
+  ]
+ },
+ {
+  "nombre": "super",
+  "tab": "comida",
+  "pasos": [
+   {
+    "clic": "Menú",
+    "esperar": 1300
+   },
+   {
+    "js": "(() => { const e = [...document.querySelectorAll('h1,h2,h3,p,span,button')].find((x) => x.textContent.trim() === \"Lista del s\\u00faper\"); e?.scrollIntoView({ block: 'start' }); window.scrollBy(0, -16); return !!e; })()",
+    "esperar": 900
+   }
+  ]
+ },
+ {
+  "nombre": "menu-config",
+  "tab": "comida",
+  "pasos": [
+   {
+    "clic": "Menú",
+    "esperar": 1200
+   },
+   {
+    "clic": "Ajustar",
+    "esperar": 1300
+   }
+  ]
+ },
+ {
+  "nombre": "recetas",
+  "tab": "comida",
+  "pasos": [
+   {
+    "clic": "Recetas",
+    "esperar": 1800
+   }
+  ]
+ },
+ {
+  "nombre": "entreno",
+  "tab": "entreno"
+ },
+ {
+  "nombre": "musculos",
+  "tab": "entreno",
+  "pasos": [
+   {
+    "js": "(() => { const e = [...document.querySelectorAll('h1,h2,h3,p,span,button')].find((x) => x.textContent.trim() === \"M\\u00fasculos de la semana\"); e?.scrollIntoView({ block: 'start' }); window.scrollBy(0, -16); return !!e; })()",
+    "esperar": 900
+   }
+  ]
+ },
+ {
+  "nombre": "ejercicio",
+  "tab": "entreno",
+  "pasos": [
+   {
+    "clic": "Rutinas",
+    "esperar": 1000
+   },
+   {
+    "clic": "Ver el catálogo",
+    "esperar": 1300
+   },
+   {
+    "js": "(() => { const b = [...document.querySelectorAll('[role=dialog] button')].find((x) => x.querySelector('img')); b?.click(); return !!b; })()",
+    "esperar": 1500
+   }
+  ]
+ },
+ {
+  "nombre": "resumen",
+  "tab": "progreso"
+ },
+ {
+  "nombre": "metas",
+  "tab": "progreso",
+  "pasos": [
+   {
+    "clic": "Metas",
+    "esperar": 1300
+   }
+  ]
+ },
+ {
+  "nombre": "peso",
+  "tab": "progreso",
+  "pasos": [
+   {
+    "clic": "Cuerpo",
+    "esperar": 1500
+   }
+  ]
+ },
+ {
+  "nombre": "mi-dia",
+  "tab": "hoy",
+  "pasos": [
+   {
+    "clic": "Ver mi día →",
+    "esperar": 1400
+   }
+  ]
+ },
+ {
+  "nombre": "avisos",
+  "tab": "hoy",
+  "pasos": [
+   {
+    "clic": "Avisos ✓",
+    "esperar": 1400
+   }
+  ]
+ }
+]

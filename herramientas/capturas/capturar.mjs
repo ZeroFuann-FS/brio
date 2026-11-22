@@ -54,8 +54,12 @@ await cmd("browsingContext.setViewport", { context: ctx, viewport: { width: ANCH
 const ev = async (expression) => (await cmd("script.evaluate", { expression, target: { context: ctx }, awaitPromise: true })).result?.value;
 const ir = (url) => cmd("browsingContext.navigate", { context: ctx, url, wait: "complete" });
 
-// Cargar los datos de demostración
-await ir(URL_APP);
+// Cargar los datos de demostración (a veces la primera carga se queda en blanco: reintentar)
+for (let i = 0; i < 5; i++) {
+  await ir(URL_APP).catch(() => {});
+  if ((await ev(`location.origin`)) === new URL(URL_APP).origin) break;
+  await dormir(1500);
+}
 const ok = await ev(`(() => { try {
   localStorage.clear();
   localStorage.setItem("brio:intro-visto-v3", "1"); localStorage.setItem("brio:sin-cuenta", "1");

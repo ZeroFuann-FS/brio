@@ -54,6 +54,8 @@ export default function App() {
     try { const t = new URLSearchParams(location.search).get("tab"); if (t && ["hoy", "comida", "entreno", "progreso", "perfil"].includes(t)) { history.replaceState(null, "", "/"); return t as Tab; } } catch { /* sin URL */ }
     return "hoy";
   });
+  // Cada pestaña abre desde arriba (si no, se queda en el scroll de la pestaña anterior)
+  useEffect(() => { window.scrollTo({ top: 0 }); }, [tab]);
   const [session, setSession] = useState<Session | null>(null);
   const [authListo, setAuthListo] = useState(!nubeDisponible);
   const [syncListo, setSyncListo] = useState(true);

@@ -182,6 +182,18 @@ export function crearDemo(hoy = hoyISO()) {
   return { perfil, dias, pesos, despensa, medidas, menu, sesiones, sesionActiva: null };
 }
 
+/** Variante con un entreno a medias (para capturas de la sesión y el descanso). */
+export function conSesionActiva(d: ReturnType<typeof crearDemo>) {
+  const r = d.perfil.entreno!.rutinas[0], dia = r.dias[0];
+  const inicio = Date.now() - 24 * 60000;
+  const ejercicios = dia.ejercicios.slice(0, 5).map((x, i) => ({
+    ej: x.ej, reps: x.reps, descanso: x.descanso,
+    series: Array.from({ length: x.series }, (_, k) => ({ kg: [65, 60, 20, 55, 12][i] ?? 10, reps: Number((x.reps.match(/\d+/g) ?? ["10"]).slice(-1)[0]) || 10, hecha: i < 1 || (i === 1 && k < 2) })),
+  }));
+  return { ...d, sesionActiva: { id: "demo-sesion", fecha: hoyISO(), inicio, nombre: dia.nombre, rutinaId: r.id, diaId: dia.id, ejercicios } };
+}
+
 if (process.argv[1]?.endsWith("datos-demo.ts")) {
-  process.stdout.write(JSON.stringify(crearDemo()));
+  const d = crearDemo();
+  process.stdout.write(JSON.stringify(process.argv.includes("--sesion") ? conSesionActiva(d) : d));
 }

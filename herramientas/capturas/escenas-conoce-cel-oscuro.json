@@ -1,0 +1,20 @@
+[
+ {
+  "nombre": "hoy-oscuro",
+  "tab": "hoy"
+ },
+ {
+  "nombre": "recetas-oscuro",
+  "tab": "comida",
+  "pasos": [
+   {
+    "clic": "Recetas",
+    "esperar": 1800
+   }
+  ]
+ },
+ {
+  "nombre": "entreno-oscuro",
+  "tab": "entreno"
+ }
+]
