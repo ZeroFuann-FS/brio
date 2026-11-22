@@ -13,12 +13,13 @@ export const COLOR: Record<TipoBloque, string> = {
   gym: "bg-lime text-on-lime border-lime",
   cocinar: "bg-t-food text-ink border-lime/40",
   comer: "bg-lime/35 text-ink border-lime/60",
+  bano: "bg-t-water text-ink border-water/40",
   habito: "bg-t-habit text-ink border-line",
   otro: "bg-surface text-ink border-line",
 };
 export const PUNTO: Record<TipoBloque, string> = {
   dormir: "bg-water", trabajo: "bg-ink dark:bg-[#f2f3f0]", escuela: "bg-ink dark:bg-[#f2f3f0]", traslado: "bg-line-strong", gym: "bg-lime",
-  cocinar: "bg-fat", comer: "bg-lime/60", habito: "bg-ember/70", otro: "bg-muted",
+  cocinar: "bg-fat", comer: "bg-lime/60", bano: "bg-water/70", habito: "bg-ember/70", otro: "bg-muted",
 };
 
 /** Reparte eventos encimados en columnas. */

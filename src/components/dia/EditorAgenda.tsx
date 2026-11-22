@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { horasSueno, nombreTipo, type Agenda, type BloqueFijo } from "../../lib/agenda";
+import { horasSueno, nombreTipo, type Agenda, type BloqueFijo, type TipoComidaAgenda } from "../../lib/agenda";
 import { agendaDe } from "../../lib/agendaDatos";
 import type { Perfil } from "../../lib/calc";
 import { DIAS_SEMANA, SEMANA_LD, diaDeSemana, uidE } from "../../lib/entreno";
@@ -17,6 +17,7 @@ function Hora({ label, valor, onCambio }: { label: string; valor: string; onCamb
 }
 
 const TIPOS: BloqueFijo["tipo"][] = ["trabajo", "escuela", "traslado", "otro"];
+const CUANDO_BANO = [["despertar", "Al despertar"], ["gym", "Después del gym"], ["noche", "En la noche"]] as const;
 
 export default function EditorAgenda({ perfil, onListo }: { perfil: Perfil; onListo: () => void }) {
   const setAgenda = useBrio((s) => s.setAgenda);
@@ -99,13 +100,48 @@ export default function EditorAgenda({ perfil, onListo }: { perfil: Perfil; onLi
       </section>
 
       <section>
+        <p className="lab mb-1">¿Qué cocinas en la mañana?</p>
+        <p className="mb-2 text-xs text-muted">Lo que elijas se prepara junto en un solo bloque antes del desayuno; lo demás te lo llevas hecho (por ejemplo, a la residencia).</p>
+        <div className="flex flex-wrap gap-1.5">
+          {(["desayuno", "comida", ...(colaciones ? ["colacion"] : []), "cena"] as TipoComidaAgenda[]).map((t) => {
+            const on = a.cocinaManana?.includes(t) ?? false;
+            return (
+              <button key={t} aria-pressed={on} onClick={() => set("cocinaManana", on ? (a.cocinaManana ?? []).filter((x) => x !== t) : [...(a.cocinaManana ?? []), t])}
+                className={`rounded-full border px-3 py-1.5 text-sm ${on ? chipOn : "border-line bg-surface text-muted"}`}>{t === "colacion" ? "Colaciones" : t.charAt(0).toUpperCase() + t.slice(1)}</button>
+            );
+          })}
+        </div>
+      </section>
+
+      <section>
+        <p className="lab mb-2">Baño</p>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {CUANDO_BANO.map(([k, t]) => {
+            const on = a.bano?.cuando === k;
+            return (
+              <button key={k} aria-pressed={on} onClick={() => set("bano", on ? undefined : { min: a.bano?.min || 20, cuando: k })}
+                className={`rounded-full border px-3 py-1.5 text-sm ${on ? chipOn : "border-line bg-surface text-muted"}`}>{t}</button>
+            );
+          })}
+          {a.bano && (
+            <label className="ml-auto flex items-center gap-1.5 text-sm text-muted">
+              <input aria-label="Minutos de baño" inputMode="numeric" className={`${inputCls} num w-16 px-2 py-1.5 text-center`} value={a.bano.min || ""}
+                onChange={(e) => set("bano", { ...a.bano!, min: Number(e.target.value.replace(/\D/g, "")) || 0 })} /> min
+            </label>
+          )}
+        </div>
+        <p className="mt-1.5 text-xs text-muted">Brío lo acomoda solo en el primer hueco libre.</p>
+      </section>
+
+      <section>
         <p className="lab mb-2">Hábitos con hora (opcional)</p>
         <ul className="space-y-2">
           {habitosDe(perfil).map((h) => {
             const cfg = a.habitos?.[h.id];
             return (
               <li key={h.id} className="grid grid-cols-[1fr_110px_70px] items-center gap-2">
-                <span className="truncate text-sm">{h.t}</span>
+                <span className="min-w-0 text-sm"><span className="block truncate">{h.t}</span>
+                  {h.id === "entreno" && diasGym.length > 0 && <span className="lab block !tracking-[0.04em]">Los días de gym ya cuenta tu gym</span>}</span>
                 <input type="time" aria-label={`Hora de ${h.t}`} className={`${inputCls} campo-fecha px-2 py-2 text-sm`} value={cfg?.hora ?? ""}
                   onChange={(e) => setA((x) => ({ ...x, habitos: { ...x.habitos, [h.id]: { hora: e.target.value, min: cfg?.min ?? 15 } } }))} />
                 <input aria-label={`Minutos de ${h.t}`} inputMode="numeric" className={`${inputCls} num px-2 py-2 text-center`} placeholder="min" value={cfg?.hora ? cfg.min : ""}

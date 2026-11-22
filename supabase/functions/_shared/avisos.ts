@@ -54,11 +54,18 @@ export function avisosDelMinuto(e: EntradaAvisos, ventana = 5): Aviso[] {
     const antes = Number(r.comidas.antes ?? 30);
     const plan = p.plan?.activo ? (p.plan.menu?.[p.plan.mismoMenu ? "todos" : DIAS[wd]] ?? {}) : {};
     const comidas = ag.comidas ?? { desayuno: "07:30", comida: "14:30", cena: "20:30" };
+    const manana: string[] = ag.cocinaManana ?? [];
+    const llevas = manana.filter((x) => x !== "desayuno" && x !== "colacion");
     for (const [k, nombre, pk] of [["desayuno", "desayuno", "desayuno"], ["comida", "comida", "comida"], ["cena", "cena", "cena"]] as const) {
-      const m = aMin(comidas[k]) - antes;
+      // Si ya la preparaste en la mañana, se avisa a la hora de comer (no antes para cocinar)
+      const hecha = k !== "desayuno" && manana.includes(k);
+      const m = aMin(comidas[k]) - (hecha ? 0 : antes);
       if (!en(m)) continue;
       const txt = plan[pk]?.trim();
-      out.push({ clave: `comida:${e.hoy}:${k}`, titulo: antes ? `En ${antes} min: ${nombre}` : `Hora de tu ${nombre}`, cuerpo: txt ? `Te toca: ${txt}` : antes >= 20 ? "Buen momento para empezar a prepararla. Revisa tu menú en Brío." : "Registra lo que comas en Brío.", url: "/?tab=comida" });
+      const tambien = k === "desayuno" && llevas.length ? ` Prepara también tu ${llevas.join(" y ")} para llevar.` : "";
+      const cuerpo = hecha ? `Ya la llevas hecha${txt ? `: ${txt}` : ""}. Registra lo que comas en Brío.`
+        : txt ? `Te toca: ${txt}.${tambien}` : antes >= 20 ? `Buen momento para empezar a prepararla.${tambien || " Revisa tu menú en Brío."}` : `Registra lo que comas en Brío.${tambien}`;
+      out.push({ clave: `comida:${e.hoy}:${k}`, titulo: hecha || !antes ? `Hora de tu ${nombre}` : `En ${antes} min: ${nombre}`, cuerpo, url: "/?tab=comida" });
     }
   }
 

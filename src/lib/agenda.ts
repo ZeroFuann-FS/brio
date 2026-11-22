@@ -3,7 +3,8 @@
  * las comidas del menú (y el tiempo de cocina) y los hábitos con hora. Detecta choques.
  * Este archivo no depende de React: también lo usa la función de recordatorios del servidor (copiado allá).
  */
-export type TipoBloque = "dormir" | "trabajo" | "escuela" | "traslado" | "gym" | "cocinar" | "comer" | "habito" | "otro";
+export type TipoBloque = "dormir" | "trabajo" | "escuela" | "traslado" | "gym" | "cocinar" | "comer" | "bano" | "habito" | "otro";
+export type TipoComidaAgenda = "desayuno" | "comida" | "cena" | "colacion";
 
 export interface BloqueFijo { id: string; tipo: "trabajo" | "escuela" | "traslado" | "otro"; titulo: string; inicio: string; fin: string; dias: number[] }
 export interface Agenda {
@@ -13,6 +14,10 @@ export interface Agenda {
   gym: { hora: string; traslado: number };   // días: los de la rutina
   comidas: { desayuno: string; comida: string; cena: string; colacion1?: string; colacion2?: string };
   habitos?: Record<string, { hora: string; min: number }>;
+  /** Comidas que se preparan juntas en la mañana (las que no son el desayuno se llevan hechas). */
+  cocinaManana?: TipoComidaAgenda[];
+  /** Baño: cuánto tarda y cuándo; Brío lo acomoda en un hueco libre. */
+  bano?: { min: number; cuando: "despertar" | "gym" | "noche" };
 }
 
 export interface PagoGym { activo: boolean; dia: number; monto: number; hora: string; pagadoHasta?: string /* yyyy-mm del último mes pagado */ }
@@ -26,7 +31,7 @@ export interface Recordatorios {
   resumen?: { activo: boolean; hora: string };
 }
 
-export interface Evento { inicio: number; fin: number; tipo: TipoBloque; titulo: string; detalle?: string; id: string }
+export interface Evento { inicio: number; fin: number; tipo: TipoBloque; titulo: string; detalle?: string; id: string; llevar?: boolean }
 
 export const AGENDA_BASE: Agenda = {
   despertar: "06:30", dormir: "23:00", bloques: [],
@@ -67,21 +72,69 @@ export function armarDia(d: DatosDia): Evento[] {
     if (t) ev.push({ id: "gym-vuelta", inicio: i + d.gym.min, fin: i + d.gym.min + t, tipo: "traslado", titulo: "Regreso del gym" });
   }
   const horaDe: Record<string, string | undefined> = { desayuno: a.comidas.desayuno, comida: a.comidas.comida, cena: a.comidas.cena };
-  let col = 0;
+  const lote = new Set(a.cocinaManana ?? []);
+  const enLote: { titulo: string; cocinar: number; tipo: TipoComidaAgenda }[] = [];
+  let col = 0, horaDesayuno: number | null = null;
   for (const c of d.comidas) {
     const h = c.tipo === "colacion" ? (col++ === 0 ? a.comidas.colacion1 ?? "11:00" : a.comidas.colacion2 ?? "17:30") : horaDe[c.tipo];
     if (!h) continue;
     const i = aMin(h), dur = c.tipo === "colacion" ? 10 : 30;
-    if (c.cocinar > 0 && !c.casa) ev.push({ id: `cocinar-${c.tipo}-${i}`, inicio: i - c.cocinar, fin: i, tipo: "cocinar", titulo: `Preparar ${c.tipo === "colacion" ? "colación" : c.tipo}`, detalle: c.titulo });
-    ev.push({ id: `comer-${c.tipo}-${i}`, inicio: i, fin: i + dur, tipo: "comer", titulo: c.tipo === "colacion" ? "Colación" : cap(c.tipo), detalle: c.titulo });
+    if (c.tipo === "desayuno") horaDesayuno = i;
+    const preparada = lote.has(c.tipo) && !c.casa;
+    if (preparada && c.cocinar > 0) enLote.push({ titulo: c.titulo, cocinar: c.cocinar, tipo: c.tipo });
+    else if (c.cocinar > 0 && !c.casa) ev.push({ id: `cocinar-${c.tipo}-${i}`, inicio: i - c.cocinar, fin: i, tipo: "cocinar", titulo: `Preparar ${nombreComida(c.tipo)}`, detalle: c.titulo });
+    const llevar = preparada && c.tipo !== "desayuno";
+    ev.push({ id: `comer-${c.tipo}-${i}`, inicio: i, fin: i + dur, tipo: "comer", titulo: `${cap(nombreComida(c.tipo))}${llevar ? " (la llevas hecha)" : ""}`, detalle: c.titulo, ...(llevar ? { llevar: true } : {}) });
+  }
+  const finGym = d.gym ? aMin(a.gym.hora) + d.gym.min + (a.gym.traslado ?? 0) : null;
+  // Cocina de la mañana: un solo bloque (se cocina en paralelo: el platillo más largo + la mitad de los demás)
+  if (enLote.length) {
+    const tiempos = enLote.map((x) => x.cocinar).sort((x, y) => y - x);
+    const dur = Math.ceil((tiempos[0] + tiempos.slice(1).reduce((s, t) => s + t / 2, 0)) / 5) * 5;
+    const tope = horaDesayuno ?? primerFijo(ev, desp) ?? desp + 120;
+    const desde = Math.max(desp, finGym != null && finGym <= tope - dur ? finGym : desp);
+    const i = acomodar(ev, dur, tope - dur, desde, tope);
+    ev.push({ id: "cocinar-manana", inicio: i, fin: i + dur, tipo: "cocinar", titulo: `Cocinar: ${lista(enLote.map((x) => nombreComida(x.tipo)))}`, detalle: enLote.map((x) => x.titulo).filter(Boolean).join(" · ") });
+  }
+  // Baño: después del gym (si hay), al despertar o antes de dormir
+  if (a.bano?.min) {
+    const m = a.bano.min;
+    const finDia = dorm > desp ? dorm : 1440;
+    const pref = a.bano.cuando === "noche" ? finDia - m - 30 : a.bano.cuando === "gym" && finGym != null ? finGym : desp;
+    const i = acomodar(ev, m, pref, desp, finDia);
+    ev.push({ id: "bano", inicio: i, fin: i + m, tipo: "bano", titulo: "Bañarte" });
   }
   for (const h of d.habitos) {
     const cfg = a.habitos?.[h.id];
     if (!cfg?.hora) continue;
+    if (h.id === "entreno" && d.gym) continue; // el gym ya es tu hábito de entrenar
     const i = aMin(cfg.hora);
     ev.push({ id: `hab-${h.id}`, inicio: i, fin: i + (cfg.min || 15), tipo: "habito", titulo: h.titulo });
   }
   return ev.sort((x, y) => x.inicio - y.inicio || x.fin - y.fin);
+}
+
+const nombreComida = (t: TipoComidaAgenda) => (t === "colacion" ? "colación" : t);
+const lista = (l: string[]) => (l.length < 2 ? l.join("") : `${l.slice(0, -1).join(", ")} y ${l[l.length - 1]}`);
+const seEncima = (ev: Evento[], i: number, f: number) => ev.some((e) => Math.min(e.fin, f) - Math.max(e.inicio, i) > 0);
+/** Inicio del primer bloque fijo (trabajo, escuela…) después de despertar. */
+function primerFijo(ev: Evento[], desde: number) {
+  const f = ev.filter((e) => ["trabajo", "escuela", "traslado", "otro"].includes(e.tipo) && e.inicio >= desde && !e.id.startsWith("gym"));
+  return f.length ? Math.min(...f.map((e) => e.inicio)) : null;
+}
+/**
+ * Hueco libre de `dur` minutos lo más cerca posible de `pref`, dentro de [desde, hasta].
+ * Si no hay ninguno, se queda en `pref` (y el choque se muestra).
+ */
+export function acomodar(ev: Evento[], dur: number, pref: number, desde: number, hasta: number) {
+  const cands = new Set([pref, desde, hasta - dur]);
+  for (const e of ev) { cands.add(e.fin); cands.add(e.inicio - dur); }
+  let mejor: number | null = null;
+  for (const c of cands) {
+    if (c < desde || c + dur > hasta || seEncima(ev, c, c + dur)) continue;
+    if (mejor === null || Math.abs(c - pref) < Math.abs(mejor - pref) || (Math.abs(c - pref) === Math.abs(mejor - pref) && c > mejor)) mejor = c;
+  }
+  return mejor ?? pref;
 }
 
 export interface Choque { a: Evento; b: Evento; min: number }
@@ -95,6 +148,8 @@ export function choques(ev: Evento[]): Choque[] {
     // Comer en el trabajo o la escuela es normal (hora de comida); cocinar ahí no.
     const t = [a.tipo, b.tipo];
     if (t.includes("comer") && (t.includes("trabajo") || t.includes("escuela"))) continue;
+    // Moverte o caminar de ida y vuelta (al gym, a la residencia) cuenta para el hábito
+    if (t.includes("habito") && t.includes("traslado")) continue;
     const min = Math.min(a.fin, b.fin) - Math.max(a.inicio, b.inicio);
     if (min > 5) out.push({ a, b, min });
   }
@@ -104,7 +159,7 @@ export function choques(ev: Evento[]): Choque[] {
 export const horasSueno = (a: Agenda) => { const d = aMin(a.despertar), n = aMin(a.dormir); return ((d - n + 1440) % 1440) / 60; };
 
 export function nombreTipo(t: TipoBloque) {
-  return ({ dormir: "Dormir", trabajo: "Trabajo", escuela: "Escuela", traslado: "Traslado", gym: "Gym", cocinar: "Cocinar", comer: "Comer", habito: "Hábito", otro: "Otro" } as Record<TipoBloque, string>)[t];
+  return ({ dormir: "Dormir", trabajo: "Trabajo", escuela: "Escuela", traslado: "Traslado", gym: "Gym", cocinar: "Cocinar", comer: "Comer", bano: "Baño", habito: "Hábito", otro: "Otro" } as Record<TipoBloque, string>)[t];
 }
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
