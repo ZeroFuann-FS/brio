@@ -24,6 +24,7 @@ node herramientas/capturas/capturar.mjs --datos /tmp/demo.json \
 
 Cada escena es `{ "nombre", "tab", "pasos": [{ "clic": "Texto" }, { "bajar": 600 }, { "escribir": "…", "en": "css" }, { "js": "…" }] }`.
 Las de la página /conoce se convierten a WebP: celular 600×1298, laptop 1600×1000.
+Al reemplazarlas, sube el `?v=N` de sus rutas en `public/conoce/index.html` (si no, quien ya las vio sigue viendo las viejas).
 
 ## 3. Videos (Playwright + Chromium)
 

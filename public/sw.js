@@ -32,6 +32,9 @@ self.addEventListener("install", (e) => {
 self.addEventListener("activate", (e) => e.waitUntil((async () => {
   const nombres = await caches.keys();
   await Promise.all(nombres.filter((n) => n.startsWith("brio-") && n !== APP && n !== IMG).map((n) => caches.delete(n)));
+  // Las capturas y portadas de /conoce cambian con el mismo nombre: no se guardan (y se borran las viejas)
+  const img = await caches.open(IMG);
+  await Promise.all((await img.keys()).filter((q) => new URL(q.url).pathname.startsWith("/conoce/")).map((q) => img.delete(q)));
   await self.clients.claim();
 })()));
 
@@ -66,6 +69,7 @@ self.addEventListener("fetch", (e) => {
   if (u.origin === location.origin) {
     if (u.pathname === "/sw.js" || u.pathname === "/precache.json") return;
     if (req.mode === "navigate") return e.respondWith(redPrimero(req, esSpa(u) ? "/" : req, 3500));
+    if (u.pathname.startsWith("/conoce/")) return; // la página informativa siempre se pide a la red
     if (u.pathname.startsWith("/assets/")) return e.respondWith(cachePrimero(req, APP));
     if (/\.(webp|png|jpe?g|svg|gif|avif)$/i.test(u.pathname)) return e.respondWith(cachePrimero(req, IMG));
     return e.respondWith(redPrimero(req, req, 3500));
