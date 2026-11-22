@@ -10,6 +10,8 @@ import { tipoPorHora } from "./ComidasDia";
 import { btnPrimario } from "./ui";
 
 const SIN_FAVORITAS: string[] = [];
+/** Pasos que en realidad son consejos ("Tip: …", "Importante: …"): van aparte, sin número. */
+const esTip = (p: string) => /^(Tip|Importante|Ojo):/.test(p);
 
 const POR_ID = new Map(ALIMENTOS.map((a) => [a.id, a]));
 
@@ -166,13 +168,21 @@ export default function RecetaDetalle({ r: base, factorInicial = 1, ajustesInici
 
         <p className="lab mb-2 mt-5">Preparación</p>
         <ol className="space-y-2.5">
-          {r.pasos.map((p, i) => (
+          {r.pasos.filter((p) => !esTip(p)).map((p, i) => (
             <li key={i} className="grid grid-cols-[26px_1fr] gap-2 text-sm leading-relaxed">
               <span className="num grid h-[26px] w-[26px] place-items-center rounded-full bg-t-food text-[15px]">{i + 1}</span>
               <span className="pt-0.5">{p}</span>
             </li>
           ))}
         </ol>
+        {r.pasos.some(esTip) && (
+          <div className="mt-4 space-y-1.5 rounded-[14px] border border-lime/50 bg-lime/10 p-3 text-sm leading-relaxed">
+            {r.pasos.filter(esTip).map((p, i) => {
+              const [, titulo, resto] = p.match(/^(Tip|Importante|Ojo):\s*(.*)$/) ?? [];
+              return <p key={i}><b className={titulo === "Tip" ? "text-lime-ink" : "text-ember"}>{titulo}:</b> {resto}</p>;
+            })}
+          </div>
+        )}
 
         <button onClick={() => { const d = registrar(r, factor, undefined, resumenAjustes(base, ajustes)); onRegistrado?.(d ? "Registrado y descontado de tu despensa" : "Registrado en tus comidas de hoy"); }}
           className={`${btnPrimario} mt-6 w-full md:hidden`}>
