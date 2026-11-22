@@ -106,3 +106,29 @@ export function Confeti({ disparo }: { disparo: number }) {
     </div>
   );
 }
+
+/**
+ * Palomita de ejercicio terminado. Con `celebrar`: entra con rebote, se dibuja,
+ * sale un anillo lima y chispas alrededor.
+ */
+export function CheckListo({ celebrar }: { celebrar: boolean }) {
+  const quieto = useReducedMotion();
+  const anima = celebrar && !quieto;
+  return (
+    <span className="relative grid h-7 w-7 shrink-0 place-items-center">
+      {anima && (
+        <motion.span aria-hidden className="absolute inset-0 rounded-full border-2 border-lime"
+          initial={{ scale: 1, opacity: 0.9 }} animate={{ scale: 2.6, opacity: 0 }} transition={{ duration: 0.75, ease: "easeOut" }} />
+      )}
+      <motion.span className="grid h-7 w-7 place-items-center rounded-full bg-lime text-on-lime"
+        initial={anima ? { scale: 0, rotate: -40 } : false} animate={{ scale: [anima ? 0 : 1, anima ? 1.25 : 1, 1], rotate: 0 }}
+        transition={{ duration: 0.5, times: [0, 0.6, 1], ease: [0.2, 0.9, 0.3, 1.2] }}>
+        <svg viewBox="0 0 16 16" className="h-[15px] w-[15px]" aria-hidden>
+          <motion.path d="M3 8.5l3.2 3.2L13 4.8" fill="none" stroke="currentColor" strokeWidth={2.8} strokeLinecap="round" strokeLinejoin="round"
+            initial={anima ? { pathLength: 0 } : false} animate={{ pathLength: 1 }} transition={{ delay: anima ? 0.25 : 0, duration: 0.3, ease: "easeOut" }} />
+        </svg>
+      </motion.span>
+      {anima && <Chispas disparo={1} n={9} />}
+    </span>
+  );
+}

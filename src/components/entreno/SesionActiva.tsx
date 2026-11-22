@@ -8,6 +8,7 @@ import { Hoja, Tarjeta, btnPrimario, btnSecundario, chipOn } from "../ui";
 import Biblioteca, { DetalleEjercicio } from "./Biblioteca";
 import CambiarEjercicio, { type OpcionesCambio } from "./CambiarEjercicio";
 import { FotoEjercicio } from "./MapaMuscular";
+import { CheckListo } from "../anim";
 
 /* Pitido al terminar el descanso (el contexto de audio se prepara en un toque, como piden los navegadores). */
 let audio: AudioContext | null = null;
@@ -44,6 +45,9 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
   const entreno = useBrio((s) => s.perfil?.entreno);
   /** Ejercicios terminados que el usuario volvió a abrir (los demás terminados se ven minimizados). */
   const [abiertos, setAbiertos] = useState<Set<number>>(new Set());
+  /** Ejercicio que se acaba de terminar: su fila se celebra un momento. */
+  const [recien, setRecien] = useState<number | null>(null);
+  useEffect(() => { if (recien === null) return; const t = setTimeout(() => setRecien(null), 1800); return () => clearTimeout(t); }, [recien]);
   const [cambiar, setCambiar] = useState<number | null>(null);
   const [logro, setLogro] = useState<string | null>(null);
   const yaCelebrado = useRef(new Set<string>());
@@ -96,7 +100,11 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
     pedirPermisoDescanso();
     const cardio = ejercicioPorId(e.ej)?.cardio;
     const termina = e.series.every((y, j) => j === si || y.hecha);
-    if (termina) setAbiertos((a) => { const n = new Set(a); n.delete(ei); return n; });
+    if (termina) {
+      setAbiertos((a) => { const n = new Set(a); n.delete(ei); return n; });
+      setRecien(ei);
+      try { navigator.vibrate?.(40); } catch { /* sin vibración */ }
+    }
     const ultimo = termina && sesion.ejercicios.every((y, j) => j === ei || completo(y));
     const otro = sesion.ejercicios.find((y, j) => j !== ei && !completo(y));
     const sig = !termina ? `${ejercicioPorId(e.ej)?.n ?? ""}, serie ${e.series.filter((y) => y.hecha).length + 2} de ${e.series.length}` : otro ? ejercicioPorId(otro.ej)?.n : undefined;
@@ -164,17 +172,29 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
         {sesion.ejercicios.map((e, ei) => {
           const info = ejercicioPorId(e.ej);
           if (!info) return null;
-          if (completo(e) && !abiertos.has(ei)) return (
+          if (completo(e) && !abiertos.has(ei)) {
+            const celebrar = recien === ei;
+            return (
             <motion.button layout key={`${e.ej}-${ei}`} onClick={() => alternar(ei)} aria-expanded={false} aria-label={`${info.n}: terminado. Toca para abrir`}
-              className="flex w-full items-center gap-3 rounded-[16px] border border-line bg-surface/60 px-4 py-2.5 text-left opacity-80 transition hover:opacity-100">
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-lime text-sm font-extrabold text-on-lime">✓</span>
+              initial={false} animate={celebrar ? { backgroundColor: ["rgba(198,244,50,.45)", "rgba(198,244,50,0)"] } : undefined} transition={{ duration: 1.4, ease: "easeOut" }}
+              className={`flex w-full items-center gap-3 rounded-[16px] border bg-surface/60 px-4 py-2.5 text-left transition hover:opacity-100 ${celebrar ? "border-lime opacity-100" : "border-line opacity-80"}`}>
+              <CheckListo celebrar={celebrar} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-medium">{info.n}</span>
-                <span className="num block truncate text-xs text-muted">{e.series.map(textoSerie).join(" · ")}</span>
+                <AnimatePresence mode="wait" initial={false}>
+                  {celebrar
+                    ? <motion.span key="listo" className="block truncate text-xs font-semibold text-lime-ink" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.2 }}>
+                        ¡Listo! · {listos} de {sesion.ejercicios.length} ejercicios
+                      </motion.span>
+                    : <motion.span key="series" className="num block truncate text-xs text-muted" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+                        {e.series.map(textoSerie).join(" · ")}
+                      </motion.span>}
+                </AnimatePresence>
               </span>
               <span className="lab shrink-0">Abrir</span>
             </motion.button>
-          );
+            );
+          }
           const prev = ultimaVez(sesiones, e.ej);
           const subir = tocaSubir(sesiones, e.ej, e.reps, paso);
           return (

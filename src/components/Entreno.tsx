@@ -3,7 +3,7 @@ import { motion } from "motion/react";
 import { ejercicioPorId, type Ejercicio } from "../data/ejercicios";
 import { hoyISO, sumarDias } from "../lib/calc";
 import {
-  DIAS_CORTOS, DIAS_SEMANA, PASOS_KG, PASO_KG, SEMANA_LD, duracionMin, faltantesRutina, formatoMin, lunesDe, mejorMarca, minutosDia, nuevaSesion, planHoy,
+  DIAS_CORTOS, DIAS_SEMANA, PASOS_KG, PASO_KG, SEMANA_LD, duracionMin, faltantesRutina, revisarRutina, formatoMin, lunesDe, mejorMarca, minutosDia, nuevaSesion, planHoy,
   seriesHechas, seriesPorMusculo, siguienteDia, textoSerie, tieneSemana, volumen, type Lugar, type Rutina, type Sesion,
 } from "../lib/entreno";
 import { useBrio } from "../lib/store";
@@ -97,6 +97,7 @@ export default function Entreno() {
   const metaSemana = rutina && conSemana ? rutina.dias.reduce((a, d) => a + (d.semana?.length ?? 0), 0) : perfil?.diasEntreno || 3;
   const lugar = perfil?.entreno?.lugar;
   const faltan = useMemo(() => (rutina ? faltantesRutina(rutina, lugar) : []), [rutina, lugar]);
+  const revisar = useMemo(() => (rutina ? revisarRutina(rutina) : []), [rutina]);
 
   const elegirListo = (r: Rutina, l: Lugar) => { setLugarNuevo(l); setAsistente(false); setEditando(r); };
   const guardarRutina = (r: Rutina) => {
@@ -212,7 +213,16 @@ export default function Entreno() {
                   </li>
                 ))}
               </ul>
-              <p className="mt-1 text-xs text-muted">Lo ideal son al menos 6 series por músculo a la semana. <button onClick={() => rutina && setEditando(rutina)} className="font-medium text-lime-ink hover:underline">Agrégalos en tu rutina</button>.</p>
+              <p className="mt-1 text-xs text-muted">Lo ideal son al menos 6 series por músculo a la semana (4 de lumbar). <button onClick={() => rutina && setEditando(rutina)} className="font-medium text-lime-ink hover:underline">Agrégalos en tu rutina</button>.</p>
+            </div>
+          )}
+          {revisar.length > 0 && (
+            <div className="mt-4 border-t border-line pt-3">
+              <p className="lab">Revisa tu rutina</p>
+              <ul className="mt-1 space-y-1.5 text-sm">
+                {revisar.map((a) => <li key={a.texto} className="flex gap-2"><span aria-hidden className={a.tipo === "repetido" ? "text-ember" : "text-muted"}>{a.tipo === "repetido" ? "⚠" : "•"}</span><span className={a.tipo === "exceso" ? "text-muted" : ""}>{a.texto}</span></li>)}
+              </ul>
+              <button onClick={() => rutina && setEditando(rutina)} className="mt-1 text-xs font-medium text-lime-ink hover:underline">Editar rutina</button>
             </div>
           )}
         </Tarjeta>

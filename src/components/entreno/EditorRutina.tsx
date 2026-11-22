@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ejercicioPorId, type Ejercicio } from "../../data/ejercicios";
-import { DIAS_SEMANA, SEMANA_LD, faltantesRutina, uidE, type Lugar, type Rutina } from "../../lib/entreno";
+import { DIAS_SEMANA, SEMANA_LD, faltantesRutina, revisarRutina, uidE, type Lugar, type Rutina } from "../../lib/entreno";
 import { useBrio } from "../../lib/store";
 import { SelectorSemana } from "./ElegirRutina";
 import { Hoja, btnPrimario, btnSecundario, inputCls, chipOn } from "../ui";
@@ -19,6 +19,7 @@ export default function EditorRutina({ inicial, onGuardar, onBorrar, lugar }: { 
   const corregirEjercicio = useBrio((s) => s.corregirEjercicio);
   const dia = r.dias[di];
   const faltan = faltantesRutina(r, lugar);
+  const revisar = revisarRutina(r);
   /** Cambia el ejercicio en este día (y en los demás días de la rutina si se corrige el historial). */
   const cambiarEj = (ei: number, nuevo: string, historial: boolean) => {
     const viejo = dia.ejercicios[ei].ej;
@@ -101,6 +102,12 @@ export default function EditorRutina({ inicial, onGuardar, onBorrar, lugar }: { 
           {!dia.ejercicios.length && <p className="py-3 text-sm text-muted">Este día no tiene ejercicios todavía.</p>}
           <button onClick={() => setAgregar(true)} className="mt-2 w-full rounded-[12px] border border-dashed border-line py-2 text-sm text-muted hover:text-ink">+ Agregar ejercicio</button>
         </div>
+      )}
+
+      {revisar.length > 0 && (
+        <ul className="mt-3 space-y-1.5 rounded-[16px] border border-ember/40 bg-ember/5 p-3 text-sm">
+          {revisar.map((a) => <li key={a.texto} className="flex gap-2"><span aria-hidden className={a.tipo === "repetido" ? "text-ember" : "text-muted"}>{a.tipo === "repetido" ? "⚠" : "•"}</span><span className={a.tipo === "exceso" ? "text-muted" : ""}>{a.texto}</span></li>)}
+        </ul>
       )}
 
       {faltan.some((f) => f.sugerido) && (

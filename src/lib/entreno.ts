@@ -218,6 +218,7 @@ const MEJORES: Partial<Record<Musculo, string[]>> = {
   femorales: ["peso-muerto-rumano", "curl-femoral-acostado", "curl-femoral-sentado", "peso-muerto-mancuernas", "swing-pesa-rusa", "peso-muerto-una-pierna"],
   gluteos: ["hip-thrust", "puente-gluteo-elevado", "pull-through", "patada-polea", "puente-gluteo", "abductor-maquina"],
   abdomen: ["plancha", "crunch-inverso", "abdominal-polea", "elevacion-piernas", "rueda", "bicho-muerto"],
+  lumbar: ["hiperextensiones", "superman", "peso-muerto"],
   pantorrillas: ["pantorrilla-de-pie", "pantorrilla-prensa", "pantorrilla-mancuerna", "pantorrilla-sentado"],
 };
 const rango = (m: Musculo, id: string) => { const i = MEJORES[m]?.indexOf(id) ?? -1; return i === -1 ? 99 : i; };
@@ -237,10 +238,13 @@ export function alternativas(id: string, lugar?: Lugar, excluir: string[] = []):
 }
 
 /** Grupos que revisamos para avisar si la rutina los deja cortos. */
-const GRUPOS_CLAVE: { t: string; m: Musculo[] }[] = [
-  { t: "Pecho", m: ["pecho"] }, { t: "Espalda", m: ["dorsales", "espalda-media"] }, { t: "Hombros", m: ["hombros"] },
-  { t: "Bíceps", m: ["biceps"] }, { t: "Tríceps", m: ["triceps"] }, { t: "Cuádriceps", m: ["cuadriceps"] },
-  { t: "Femorales", m: ["femorales"] }, { t: "Glúteos", m: ["gluteos"] },
+// min = series a la semana para no quedarse corto (los secundarios cuentan como media serie)
+const GRUPOS_CLAVE: { t: string; m: Musculo[]; min: number }[] = [
+  { t: "Pecho", m: ["pecho"], min: 6 }, { t: "Espalda", m: ["dorsales", "espalda-media"], min: 6 }, { t: "Hombros", m: ["hombros"], min: 6 },
+  { t: "Bíceps", m: ["biceps"], min: 6 }, { t: "Tríceps", m: ["triceps"], min: 6 }, { t: "Cuádriceps", m: ["cuadriceps"], min: 6 },
+  { t: "Femorales", m: ["femorales"], min: 6 }, { t: "Glúteos", m: ["gluteos"], min: 6 },
+  // Abdomen y lumbar sostienen todo lo demás (sentadilla, peso muerto, press) y protegen la espalda baja
+  { t: "Abdomen", m: ["abdomen"], min: 6 }, { t: "Lumbar", m: ["lumbar"], min: 4 },
 ];
 export interface Faltante { grupo: string; series: number; sugerido?: Ejercicio }
 
@@ -264,7 +268,7 @@ export function faltantesRutina(r: Rutina, lugar?: Lugar, max = 3): Faltante[] {
   }
   return GRUPOS_CLAVE
     .map((g) => ({ g, series: g.m.reduce((a, m) => a + (t[m] ?? 0), 0) }))
-    .filter((x) => x.series < 6)
+    .filter((x) => x.series < x.g.min)
     .sort((a, b) => a.series - b.series)
     .slice(0, max)
     .map(({ g, series }) => {
@@ -303,4 +307,34 @@ export function corregirHistorial(sesiones: Sesion[], de: string, a: string): Se
   return sesiones.map((s) => (s.ejercicios.some((e) => e.ej === de) || s.records?.includes(de)
     ? { ...s, ejercicios: s.ejercicios.map((e) => (e.ej === de ? { ...e, ej: a } : e)), records: s.records?.map((r) => (r === de ? a : r)) }
     : s));
+}
+
+export interface AvisoRutina { tipo: "repetido" | "exceso"; texto: string }
+/** Arriba de esto (series directas a la semana) el beneficio extra es poco y el cansancio sí sube. */
+const TOPE_SEMANA = 25;
+
+/**
+ * Cosas que revisar en la rutina: el mismo ejercicio dos veces en un día
+ * y músculos con demasiadas series directas a la semana.
+ */
+export function revisarRutina(r: Rutina): AvisoRutina[] {
+  const out: AvisoRutina[] = [];
+  const conSemana = tieneSemana(r);
+  const directas: Partial<Record<Musculo, number>> = {};
+  for (const d of r.dias) {
+    const veces = conSemana ? d.semana?.length ?? 0 : 1;
+    const cuenta = new Map<string, number>();
+    for (const x of d.ejercicios) {
+      cuenta.set(x.ej, (cuenta.get(x.ej) ?? 0) + 1);
+      const info = ejercicioPorId(x.ej);
+      if (info && !info.cardio && veces) for (const m of info.m) directas[m] = (directas[m] ?? 0) + x.series * veces;
+    }
+    for (const [ej, n] of cuenta) if (n > 1) {
+      out.push({ tipo: "repetido", texto: `${ejercicioPorId(ej)?.n ?? ej} está ${n} veces en ${d.nombre || "un día"}. ¿Querías otro ejercicio?` });
+    }
+  }
+  const altos = GRUPOS_CLAVE.map((g) => ({ t: g.t, n: g.m.reduce((a, m) => a + (directas[m] ?? 0), 0) }))
+    .filter((x) => x.n > TOPE_SEMANA).sort((a, b) => b.n - a.n);
+  if (altos.length) out.push({ tipo: "exceso", texto: `Volumen alto (series directas a la semana): ${altos.map((x) => `${x.t.toLowerCase()} ${x.n}`).join(", ")}. Arriba de ~20–25 suma poco y alarga tu entreno; si te sientes muy cansado, quita un ejercicio de esos músculos.` });
+  return out;
 }
