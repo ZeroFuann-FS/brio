@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { tienePlanMenu, type Metas, type Perfil, type PrefsComida, type QuienCocina } from "../lib/calc";
-import { configurarRecetas, etiquetas, nutricion, recetaPorId, type Receta, type TipoReceta } from "../data/recetas";
-import { alternativas, generarMenuReglas, kcalCasa, listaSuper, polloDelDia, quienCocina, reemplazarComida, textoPechugas, totalesDia, unidadDespensa, type OpcionesMenu } from "../lib/menu";
+import { configurarRecetas, etiquetas, nutricion, recetaPorId, type Receta, type TipoReceta, resumenAjustes } from "../data/recetas";
+import { alternativas, generarMenuReglas, kcalCasa, recetaDeComida, listaSuper, polloDelDia, quienCocina, reemplazarComida, textoPechugas, totalesDia, unidadDespensa, type OpcionesMenu } from "../lib/menu";
 import { useBrio } from "../lib/store";
 import Gustos from "./Gustos";
 import RecetaDetalle, { MiniReceta, useRegistrarReceta } from "./RecetaDetalle";
@@ -58,7 +58,7 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
   const [editando, setEditando] = useState(!menuValido);
   const [gustosAbierto, setGustosAbierto] = useState(false);
   const [dia, setDia] = useState(() => (menuValido ? indiceHoy(menuValido.dias) : 0));
-  const [receta, setReceta] = useState<{ r: Receta; factor: number } | null>(null);
+  const [receta, setReceta] = useState<{ r: Receta; factor: number; ci: number; di: number } | null>(null);
   const [cambio, setCambio] = useState<{ ci: number; n: number } | null>(null);
   const [toast, setToast] = useToast();
   const registrar = useRegistrarReceta();
@@ -246,22 +246,25 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
                 </li>
               );
               const r = recetaPorId(c.receta);
-              if (!r) return null;
-              const n = nutricion(r, c.factor);
+              const rAj = recetaDeComida(c);
+              if (!r || !rAj) return null;
+              const n = nutricion(rAj, c.factor);
+              const cambios = resumenAjustes(r, c.ajustes);
               return (
                 <li key={ci} className="border-b border-line py-2.5 last:border-b-0">
-                  <button onClick={() => setReceta({ r, factor: c.factor })} className="flex w-full min-w-0 items-center gap-3 text-left">
+                  <button onClick={() => setReceta({ r, factor: c.factor, ci, di: dia })} className="flex w-full min-w-0 items-center gap-3 text-left">
                     <MiniReceta r={r} size={44} />
                     <span className="min-w-0">
                       <span className="lab block !tracking-[0.08em]">{NOMBRE_TIPO[c.tipo]}{c.factor !== 1 ? ` · porción ×${c.factor.toFixed(1)}` : ""}</span>
                       <span className="block truncate font-medium">{r.nombre}</span>
                       <span className="lab !tracking-[0.06em]">{n.kcal} kcal · {n.proteina} g prot</span>
+                      {cambios && <span className="block truncate text-xs text-lime-ink">{cambios}</span>}
                     </span>
                   </button>
                   {BEBIDA[c.tipo] && <p className="mt-1 pl-[56px] text-xs text-muted">{BEBIDA[c.tipo]}</p>}
                   <div className="mt-2 flex gap-2 pl-[56px]">
                     <button onClick={() => setCambio({ ci, n: 8 })} className="rounded-full border border-line px-3 py-1 text-xs text-muted hover:text-ink">Cambiar</button>
-                    <button onClick={() => { const k = registrar(r, c.factor, c.tipo === "colacion" ? "snack" : c.tipo); setToast(k ? "Registrado y descontado de tu despensa" : "Registrado hoy"); }}
+                    <button onClick={() => { const k = registrar(rAj, c.factor, c.tipo === "colacion" ? "snack" : c.tipo, cambios); setToast(k ? "Registrado y descontado de tu despensa" : "Registrado hoy"); }}
                       className="rounded-full border border-line px-3 py-1 text-xs text-muted hover:text-ink">Registrar hoy</button>
                   </div>
                 </li>
@@ -304,7 +307,17 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
       </Tarjeta>
 
       <Hoja abierta={!!receta} onClose={() => setReceta(null)} titulo="Receta">
-        {receta && <RecetaDetalle r={receta.r} factorInicial={receta.factor} onRegistrado={(msg) => { setReceta(null); setToast(msg); }} />}
+        {receta && <RecetaDetalle r={receta.r} factorInicial={receta.factor} ajustesIniciales={m.dias[receta.di]?.comidas[receta.ci]?.ajustes}
+          onAjustes={(a) => {
+            const actual = useBrio.getState().menu;
+            if (!actual) return;
+            setMenu({ ...actual, dias: actual.dias.map((d, i) => i !== receta.di ? d : { ...d, comidas: d.comidas.map((c, j) => {
+              if (j !== receta.ci) return c;
+              const { ajustes: _viejo, ...resto } = c;
+              return a ? { ...resto, ajustes: a } : resto;
+            }) }) });
+          }}
+          onRegistrado={(msg) => { setReceta(null); setToast(msg); }} />}
       </Hoja>
       <Hoja abierta={!!cambio} onClose={() => setCambio(null)} titulo="Cambiar por…">
         {cambio && (

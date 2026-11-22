@@ -4,11 +4,14 @@
  */
 import { ALIMENTOS } from "../data/alimentos";
 import { COMPRAS } from "../data/compras";
-import { RECETAS, costo, gramosIng, llevaCarneFresca, necesitaRefri, nutricion, recetaPorId, type Equipo, type Receta, type TipoReceta } from "../data/recetas";
+import { RECETAS, costo, gramosIng, llevaCarneFresca, necesitaRefri, nutricion, recetaPorId, type Equipo, type Receta, type TipoReceta, aplicarAjustes } from "../data/recetas";
 import type { ComidaMenu, ItemDespensa, MenuGuardado } from "./store";
 import { hoyISO, type QuienCocina } from "./calc";
 import { expandirGustos } from "../data/gustos";
 
+
+/** La receta de una comida del menú con sus ajustes (sin lechuga, doble pollo…). */
+export const recetaDeComida = (c: ComidaMenu) => { const r = recetaPorId(c.receta); return r ? aplicarAjustes(r, c.ajustes) : undefined; };
 export interface OpcionesMenu {
   dias: string[];
   comidas: TipoReceta[];   // desayuno / comida / cena
@@ -72,7 +75,7 @@ const gramosPollo = (r: Receta, factor = 1) => r.ing.reduce((t, [id, g]) => t + 
 const sobraPollo = (g: number) => (g > 0 ? Math.ceil(g / MEDIA_PECHUGA - 0.1) * MEDIA_PECHUGA - g : 0);
 
 export function polloDelDia(comidas: ComidaMenu[]): { gramos: number; medias: number; sobra: number } | null {
-  const gramos = Math.round(comidas.reduce((t, c) => { const r = recetaPorId(c.receta); return r ? t + gramosPollo(r, c.factor) : t; }, 0));
+  const gramos = Math.round(comidas.reduce((t, c) => { const r = recetaDeComida(c); return r ? t + gramosPollo(r, c.factor) : t; }, 0));
   if (!gramos) return null;
   const medias = Math.max(1, Math.ceil(gramos / MEDIA_PECHUGA - 0.1));
   return { gramos, medias, sobra: Math.max(0, medias * MEDIA_PECHUGA - gramos) };
@@ -209,7 +212,7 @@ export function reemplazarComida(m: MenuGuardado, di: number, ci: number, receta
   const r = recetaPorId(recetaId);
   if (!r) return m;
   const k = nutricion(r).kcal || 1;
-  const prev = recetaPorId(actual.receta);
+  const prev = recetaDeComida(actual);
   const kActual = actual.casa ? actual.factor : prev ? nutricion(prev, actual.factor).kcal : (kcalMeta ?? k);
   const factor = Math.min(1.6, Math.max(0.6, Math.round((kActual / k) * 10) / 10));
   const dias = m.dias.map((d, i) => i !== di ? d : { ...d, comidas: d.comidas.map((c, j) => j !== ci ? c : { tipo: c.tipo, receta: r.id, factor }) });
@@ -219,7 +222,7 @@ export function reemplazarComida(m: MenuGuardado, di: number, ci: number, receta
 export function totalesDia(comidas: ComidaMenu[]) {
   return comidas.reduce((t, c) => {
     if (c.casa) return t;
-    const r = recetaPorId(c.receta);
+    const r = recetaDeComida(c);
     if (!r) return t;
     const n = nutricion(r, c.factor);
     return { kcal: t.kcal + n.kcal, proteina: t.proteina + n.proteina };
@@ -242,7 +245,7 @@ function gramosEnCasa(i: ItemDespensa, alimentoId: string) {
 export function listaSuper(m: MenuGuardado, despensa: ItemDespensa[]): { items: ItemSuper[]; total: number; usado: number } {
   const gramos = new Map<string, number>();
   for (const d of m.dias) for (const c of d.comidas) {
-    const r = recetaPorId(c.receta);
+    const r = recetaDeComida(c);
     if (!r) continue;
     for (const ing of r.ing) if (ing[0] && ing[1]) gramos.set(ing[0], (gramos.get(ing[0]) ?? 0) + gramosIng(ing, c.factor));
   }

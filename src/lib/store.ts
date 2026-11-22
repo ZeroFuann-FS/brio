@@ -7,7 +7,9 @@ import { corregirHistorial, recordsDe, type PrefsEntreno, type Sesion } from "./
 import type { TipoReceta } from "../data/recetas";
 
 /** receta vacía + casa = comida que se hace en casa o fuera (sin receta ni compras). */
-export interface ComidaMenu { tipo: TipoReceta; receta: string; factor: number; casa?: boolean }
+/** ajustes: por índice de ingrediente, cuánto de lo normal (0 = sin él, 0.5 = la mitad, 2 = doble). */
+export interface ComidaMenu { tipo: TipoReceta; receta: string; factor: number; casa?: boolean; ajustes?: Ajustes }
+export type Ajustes = Record<string, number>;
 export interface MenuGuardado { creado: string; dias: { dia: string; comidas: ComidaMenu[] }[]; comprado: string[] }
 
 export type TipoComida = "desayuno" | "comida" | "cena" | "snack";

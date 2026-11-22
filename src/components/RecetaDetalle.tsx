@@ -3,9 +3,9 @@ import { escalarIngrediente } from "../lib/porciones";
 import { ALIMENTOS } from "../data/alimentos";
 import { fotoDe, fotoReceta } from "../data/fotos";
 import { equivalentesDe } from "../data/equivalentes";
-import { costo, etiquetas, gramosIng, llevaCarneFresca, necesitaRefri, nutricion, type Receta, type TipoReceta } from "../data/recetas";
+import { PASOS_AJUSTE, aplicarAjustes, resumenAjustes, costo, etiquetas, gramosIng, llevaCarneFresca, necesitaRefri, nutricion, type Receta, type TipoReceta } from "../data/recetas";
 import { hoyISO } from "../lib/calc";
-import { coincidenciaDespensa, useBrio, type TipoComida } from "../lib/store";
+import { coincidenciaDespensa, useBrio, type Ajustes, type TipoComida } from "../lib/store";
 import { tipoPorHora } from "./ComidasDia";
 import { btnPrimario } from "./ui";
 
@@ -41,10 +41,10 @@ export function MiniReceta({ r, size = 48 }: { r: Receta; size?: number }) {
 /** Registra la receta en el día y descuenta de la despensa lo que coincida. */
 export function useRegistrarReceta() {
   const { addComida, descontar } = useBrio();
-  return (r: Receta, factor: number, tipo?: TipoComida) => {
+  return (r: Receta, factor: number, tipo?: TipoComida, nota?: string) => {
     const n = nutricion(r, factor);
     const t: TipoComida = tipo ?? (r.tipos.includes(tipoPorHora() as TipoReceta) ? tipoPorHora() : (r.tipos[0] === "colacion" ? "snack" : r.tipos[0] as TipoComida));
-    addComida(hoyISO(), { nombre: r.nombre, kcal: n.kcal, proteina: n.proteina, carbos: n.carbos, grasa: n.grasa, tipo: t, eq: equivalentesDe(r.ing.map((ing) => [ing[0], gramosIng(ing, factor)])) });
+    addComida(hoyISO(), { nombre: nota ? `${r.nombre} (${nota.toLowerCase()})`.slice(0, 80) : r.nombre, kcal: n.kcal, proteina: n.proteina, carbos: n.carbos, grasa: n.grasa, tipo: t, eq: equivalentesDe(r.ing.map((ing) => [ing[0], gramosIng(ing, factor)])) });
     const despensa = useBrio.getState().despensa;
     let descontados = 0;
     for (const ing of r.ing) {
@@ -58,8 +58,27 @@ export function useRegistrarReceta() {
   };
 }
 
-export default function RecetaDetalle({ r, factorInicial = 1, onRegistrado }: { r: Receta; factorInicial?: number; onRegistrado?: (msg: string) => void }) {
+export default function RecetaDetalle({ r: base, factorInicial = 1, ajustesIniciales, onAjustes, onRegistrado }: {
+  r: Receta; factorInicial?: number;
+  /** Ajustes por ingrediente guardados (desde el menú) y cómo guardarlos. */
+  ajustesIniciales?: Ajustes; onAjustes?: (a: Ajustes | undefined) => void;
+  onRegistrado?: (msg: string) => void;
+}) {
   const [factor, setFactor] = useState(factorInicial);
+  const [ajustes, setAjustesRaw] = useState<Ajustes>(ajustesIniciales ?? {});
+  const setAjustes = (a: Ajustes) => {
+    const limpio = Object.fromEntries(Object.entries(a).filter(([, m]) => m !== 1));
+    setAjustesRaw(limpio);
+    onAjustes?.(Object.keys(limpio).length ? limpio : undefined);
+  };
+  const mover = (i: number, dir: 1 | -1) => {
+    const actual = ajustes[i] ?? 1, k = PASOS_AJUSTE.indexOf(actual);
+    if (actual === 0 && dir === 1) { setAjustes({ ...ajustes, [i]: 1 }); return; } // ↺ lo regresa completo
+    const sig = PASOS_AJUSTE[Math.min(PASOS_AJUSTE.length - 1, Math.max(0, (k === -1 ? 2 : k) + dir))];
+    setAjustes({ ...ajustes, [i]: sig });
+  };
+  const ajustada = Object.keys(ajustes).length > 0;
+  const r = aplicarAjustes(base, ajustes);
   const registrar = useRegistrarReceta();
   const favoritas = useBrio((s) => s.perfil?.prefsComida?.favoritas) ?? SIN_FAVORITAS;
   const perfil = useBrio((s) => s.perfil);
@@ -106,7 +125,7 @@ export default function RecetaDetalle({ r, factorInicial = 1, onRegistrado }: { 
           </div>
         </div>
 
-        <button onClick={() => { const d = registrar(r, factor); onRegistrado?.(d ? "Registrado y descontado de tu despensa" : "Registrado en tus comidas de hoy"); }}
+        <button onClick={() => { const d = registrar(r, factor, undefined, resumenAjustes(base, ajustes)); onRegistrado?.(d ? "Registrado y descontado de tu despensa" : "Registrado en tus comidas de hoy"); }}
           className={`${btnPrimario} mt-4 hidden w-full md:block`}>
           Registrar hoy
         </button>
@@ -114,16 +133,32 @@ export default function RecetaDetalle({ r, factorInicial = 1, onRegistrado }: { 
 
       {/* Columna 2: ingredientes y pasos */}
       <div>
-        <p className="lab mb-1 mt-5 md:mt-0">Ingredientes{factor !== 1 ? ` · para tu porción ×${factor.toFixed(1)}` : ""}</p>
+        <div className="mb-1 mt-5 flex items-baseline justify-between gap-2 md:mt-0">
+          <p className="lab">Ingredientes{factor !== 1 ? ` · para tu porción ×${factor.toFixed(1)}` : ""}</p>
+          {ajustada && <button onClick={() => setAjustes({})} className="lab shrink-0 whitespace-nowrap !text-lime-ink hover:underline">Deshacer</button>}
+        </div>
+        <p className="mb-1 text-xs text-muted">¿No usaste algo o le pusiste más? Ajústalo con − y + y las calorías se recalculan{onAjustes ? "; se queda guardado en esta comida de tu menú" : ""}.</p>
         <ul>
-          {r.ing.map(([id, g, t], i) => {
+          {base.ing.map(([id, g, t], i) => {
             const f = id ? fotoDe(id) : undefined;
-            const esc = escalarIngrediente(g, t, factor);
+            const m = ajustes[i] ?? 1;
+            const quitado = m === 0;
+            const [, gAj, tAj] = r.ing[i];
+            const esc = quitado ? escalarIngrediente(g, t, factor) : escalarIngrediente(gAj, tAj, factor);
             return (
               <li key={i} className="flex items-center gap-3 border-b border-line py-2 text-sm last:border-b-0">
-                {f ? <img src={f} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.visibility = "hidden"; }} className="h-9 w-9 shrink-0 rounded-[8px] bg-white object-cover" /> : <span className="h-9 w-9 shrink-0" />}
-                <span className="flex-1">{esc.t}</span>
-                {g > 0 && <span className="num text-muted">{Math.round(esc.g)} g</span>}
+                {f ? <img src={f} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.visibility = "hidden"; }} className={`h-9 w-9 shrink-0 rounded-[8px] bg-white object-cover ${quitado ? "opacity-40 grayscale" : ""}`} /> : <span className="h-9 w-9 shrink-0" />}
+                <span className={`min-w-0 flex-1 ${quitado ? "text-muted line-through" : ""}`}>
+                  {esc.t}
+                  {m !== 1 && <span className={`ml-1.5 rounded-full px-1.5 py-px text-[11px] font-medium no-underline ${quitado ? "bg-ember/15 text-ember" : "bg-lime/30 text-ink"}`}>{quitado ? "quitado" : m < 1 ? "poco" : m === 2 ? "doble" : "más"}</span>}
+                </span>
+                {g > 0 && (
+                  <span className="flex shrink-0 items-center gap-1">
+                    <span className={`num w-12 text-right text-muted ${quitado ? "line-through" : ""}`}>{quitado ? Math.round(escalarIngrediente(g, t, factor).g) : Math.round(esc.g)} g</span>
+                    <button onClick={() => mover(i, -1)} disabled={quitado} aria-label={`Menos ${esc.t}`} className="grid h-8 w-8 place-items-center rounded-[9px] border border-line text-base disabled:opacity-30">−</button>
+                    <button onClick={() => mover(i, 1)} disabled={m === 2} aria-label={quitado ? `Volver a poner ${t}` : `Más ${esc.t}`} className="grid h-8 w-8 place-items-center rounded-[9px] border border-line text-base disabled:opacity-30">{quitado ? "↺" : "+"}</button>
+                  </span>
+                )}
               </li>
             );
           })}
@@ -139,7 +174,7 @@ export default function RecetaDetalle({ r, factorInicial = 1, onRegistrado }: { 
           ))}
         </ol>
 
-        <button onClick={() => { const d = registrar(r, factor); onRegistrado?.(d ? "Registrado y descontado de tu despensa" : "Registrado en tus comidas de hoy"); }}
+        <button onClick={() => { const d = registrar(r, factor, undefined, resumenAjustes(base, ajustes)); onRegistrado?.(d ? "Registrado y descontado de tu despensa" : "Registrado en tus comidas de hoy"); }}
           className={`${btnPrimario} mt-6 w-full md:hidden`}>
           Registrar hoy
         </button>
