@@ -23,9 +23,11 @@ const TEXTO_SYNC: Record<string, string> = {
 type Props = {
   perfil: TPerfil; metas: Metas; onEditar: () => void; onVerIntro: () => void; onVerTutorial: () => void;
   email: string | null; estadoSync: string; onCrearCuenta: () => void;
+  /** Después de "Borrar todo": la app vuelve a ofrecer crear cuenta o iniciar sesión. */
+  onBorrado?: () => void;
 };
 
-export default function Perfil({ perfil, metas, onEditar, onVerIntro, onVerTutorial, email, estadoSync, onCrearCuenta }: Props) {
+export default function Perfil({ perfil, metas, onEditar, onVerIntro, onVerTutorial, email, estadoSync, onCrearCuenta, onBorrado }: Props) {
   const [creditos, setCreditos] = useState(false);
   const [admin, setAdmin] = useState(false);
   const [panel, setPanel] = useState(false);
@@ -169,7 +171,7 @@ export default function Perfil({ perfil, metas, onEditar, onVerIntro, onVerTutor
           <>
             <p className="text-sm text-muted">{email ? "Se borrará todo, también de la nube. No se puede deshacer." : "Se borrará todo de este dispositivo."}</p>
             <div className="mt-3 flex gap-2">
-              <button onClick={reset} className="h-11 flex-1 rounded-2xl bg-ember font-bold text-on-lime">Sí, borrar todo</button>
+              <button onClick={() => { reset(); onBorrado?.(); }} className="h-11 flex-1 rounded-2xl bg-ember font-bold text-on-lime">Sí, borrar todo</button>
               <button onClick={() => setConfirmar(false)} className={`${btnSecundario} h-11 flex-1`}>Cancelar</button>
             </div>
           </>

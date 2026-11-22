@@ -125,6 +125,12 @@ export default function App() {
     iniciarSync(uid).finally(() => setSyncListo(true));
   }, [uid]);
 
+  /** Olvida el "seguir sin cuenta": al borrar todo, la app vuelve a ofrecer crear cuenta o iniciar sesión. */
+  const olvidarOmitir = () => {
+    try { localStorage.removeItem(K_SIN_CUENTA); } catch { /* sin storage */ }
+    setOmitio(false);
+  };
+
   const omitir = () => {
     try { localStorage.setItem(K_SIN_CUENTA, "1"); } catch { /* sin storage */ }
     setOmitio(true);
@@ -198,7 +204,8 @@ export default function App() {
       )}
       {vista === "cuenta" && <Cuenta key="cuenta" onOmitir={omitir} />}
       {vista === "onboarding" && (
-        <Onboarding key="onb" inicial={perfil} onDone={(p) => { setPerfil(p); setEditando(false); setTab("hoy"); }} />
+        <Onboarding key="onb" inicial={perfil} onDone={(p) => { setPerfil(p); setEditando(false); setTab("hoy"); }}
+          onCuenta={nubeDisponible && !session && !perfil ? () => setVerCuenta(true) : undefined} />
       )}
       {vista === "app" && perfil && metas && (
         <motion.div key="app" className="min-h-full md:grid md:grid-cols-[232px_1fr]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -239,7 +246,7 @@ export default function App() {
                   {tab === "progreso" && <Progreso perfil={perfil} metas={metas} actual={actual} />}
                   {tab === "perfil" && (
                     <Perfil perfil={perfil} metas={metas} onEditar={() => setEditando(true)} onVerIntro={() => setIntro(true)} onVerTutorial={() => { reiniciarTutorial(); setTab("hoy"); window.scrollTo(0, 0); setTimeout(() => setTour("hoy"), 500); }}
-                      email={session?.user.email ?? null} estadoSync={estadoSync} onCrearCuenta={() => setVerCuenta(true)} />
+                      email={session?.user.email ?? null} estadoSync={estadoSync} onCrearCuenta={() => setVerCuenta(true)} onBorrado={() => { if (!session) olvidarOmitir(); }} />
                   )}
                 </motion.div>
               </AnimatePresence>

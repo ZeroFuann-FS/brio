@@ -40,7 +40,8 @@ function Campo({ label, sufijo, ...props }: { label: string; sufijo?: string } &
   );
 }
 
-export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | null; onDone: (p: Perfil) => void }) {
+/** onCuenta: si llega (no hay sesión), el primer paso ofrece iniciar sesión o crear cuenta. */
+export default function Onboarding({ inicial, onDone, onCuenta }: { inicial?: Perfil | null; onDone: (p: Perfil) => void; onCuenta?: () => void }) {
   const [b, setB] = useState<Borrador>({
     nombre: inicial?.nombre ?? "",
     sexo: inicial?.sexo ?? "",
@@ -447,6 +448,12 @@ export default function Onboarding({ inicial, onDone }: { inicial?: Perfil | nul
               <h1 className="font-serif text-[clamp(32px,8.5vw,42px)] font-medium leading-[1.05] tracking-tight">{actual.titulo}</h1>
               {actual.sub && <p className="mt-2 text-muted">{actual.sub}</p>}
               <div className="mt-7">{actual.cuerpo}</div>
+              {paso === 0 && onCuenta && (
+                <p className="mt-6 text-sm text-muted">
+                  ¿Ya tienes cuenta o quieres guardar tus datos en la nube?{" "}
+                  <button type="button" onClick={onCuenta} className="font-semibold text-lime-ink underline underline-offset-4">Inicia sesión o crea tu cuenta</button>
+                </p>
+              )}
             </motion.div>
           </AnimatePresence>
         </div>
