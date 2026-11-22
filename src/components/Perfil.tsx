@@ -68,7 +68,7 @@ export default function Perfil({ perfil, metas, onEditar, onVerIntro, onVerTutor
 
       <Tarjeta delay={0.1} className="text-center">
         <Logo className="text-4xl" />
-        <p className="mt-2 text-sm text-muted">Pujanza, espíritu, valor, resolución.</p>
+        <p className="mt-2 text-sm text-muted">Energía, ganas, valor y decisión.</p>
         <div className="mt-4 grid grid-cols-2 gap-2">
           <button onClick={onVerIntro} className={btnSecundario}>¿Por qué Brío?</button>
           <button onClick={onVerTutorial} className={btnSecundario}>Ver tutorial</button>

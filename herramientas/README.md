@@ -41,3 +41,13 @@ toques con el círculo lima, escribir, bajar y cerrar. Para un video nuevo (reel
 agrega una entrada en `GUIONES` con su tamaño (`viewport`, `escala`, `video`) y sus pasos.
 
 Música: `videos/audio/musica.m4a` (libre de derechos, la misma de los videos anteriores).
+
+## 4. Revisar una página completa
+
+```bash
+node herramientas/videos/capturar-pagina.mjs http://localhost:5199/conoce/index.html /tmp/capturas
+```
+
+Saca la página entera a 390 (claro y oscuro), 768 y 1440 px y avisa si algo se sale a lo ancho.
+Grabación: los videos usan el screencast de Chromium (cuadros a resolución real con su hora exacta);
+el `recordVideo` de Playwright ignora la escala y deja la app chiquita en una esquina.

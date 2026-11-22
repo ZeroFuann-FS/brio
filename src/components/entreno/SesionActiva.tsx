@@ -168,7 +168,7 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
         )}
       </AnimatePresence>
 
-      <div className="mt-4 grid items-start gap-3 lg:grid-cols-2">
+      <div className="mt-4 grid grid-cols-[minmax(0,1fr)] items-start gap-3 lg:grid-cols-2">
         {sesion.ejercicios.map((e, ei) => {
           const info = ejercicioPorId(e.ej);
           if (!info) return null;
@@ -202,7 +202,7 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
               <div className="flex items-center gap-3">
                 <button onClick={() => setVer(info)} aria-label={`Ver cómo se hace ${info.n}`}><FotoEjercicio id={e.ej} size={52} /></button>
                 <div className="min-w-0 flex-1">
-                  <button onClick={() => setVer(info)} className="block truncate text-left font-medium hover:underline">{info.n}</button>
+                  <button onClick={() => setVer(info)} className="block max-w-full truncate text-left font-medium hover:underline">{info.n}</button>
                   <span className="lab !tracking-[0.05em]">Objetivo: {e.series.length} × {e.reps}{info.cardio ? "" : ` · descanso ${reloj(e.descanso)}`}</span>
                 </div>
                 {completo(e) && <button onClick={() => alternar(ei)} className="lab shrink-0 hover:underline">Minimizar</button>}
@@ -215,7 +215,7 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
                     ↑ La vez pasada llegaste al tope de reps en todas. <b>Prueba con {subir} kg</b> (toca para ponerlo).
                   </button>
                   {entreno && (
-                    <span className="mt-1 flex items-center gap-1.5 text-muted">Tus pesas suben de
+                    <span className="mt-1 flex flex-wrap items-center gap-1.5 text-muted">Tus pesas suben de
                       {PASOS_KG.map((p) => (
                         <button key={p} onClick={() => setPaso(p)} aria-pressed={p === paso}
                           className={`rounded-full border px-2 py-0.5 ${p === paso ? chipOn : "border-line"}`}>{p} kg</button>

@@ -26,7 +26,7 @@ function Splash() {
 }
 
 /* ---------- Paso 2: qué significa ---------- */
-const SIGNIFICADOS = ["pujanza", "espíritu", "valor", "resolución"];
+const SIGNIFICADOS = ["energía", "ganas", "valor", "decisión"];
 
 function Definicion() {
   return (

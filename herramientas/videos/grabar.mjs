@@ -11,7 +11,7 @@
  */
 import { chromium } from "playwright";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { GUIONES } from "./guiones.mjs";
@@ -30,7 +30,6 @@ const navegador = await chromium.launch();
 const ctx = await navegador.newContext({
   viewport: g.viewport, deviceScaleFactor: g.escala, reducedMotion: "no-preference", colorScheme: g.oscuro ? "dark" : "light",
   locale: "es-MX", timezoneId: "America/Mexico_City", hasTouch: g.tactil ?? false, isMobile: g.tactil ?? false,
-  recordVideo: { dir: tmp, size: g.video },
 });
 // Datos de demostración antes de que cargue la app (solo la primera vez: lo que pase en el video se queda)
 await ctx.addInitScript(({ estado, oscuro }) => {
@@ -48,6 +47,17 @@ await ctx.addInitScript(({ estado, oscuro }) => {
 const t0 = Date.now();
 const page = await ctx.newPage();
 page.setDefaultTimeout(6000);
+// Grabación con el screencast de Chromium: cuadros a resolución real (recordVideo de Playwright ignora
+// deviceScaleFactor y deja la app chiquita en una esquina) y con la hora exacta de cada cuadro
+const cdp = await ctx.newCDPSession(page);
+const cuadros = [];
+cdp.on("Page.screencastFrame", ({ data, metadata, sessionId }) => {
+  const f = join(tmp, `c${String(cuadros.length).padStart(6, "0")}.jpg`);
+  writeFileSync(f, Buffer.from(data, "base64"));
+  cuadros.push({ t: metadata.timestamp, f });
+  cdp.send("Page.screencastFrameAck", { sessionId }).catch(() => {});
+});
+await cdp.send("Page.startScreencast", { format: "jpeg", quality: 92, maxWidth: g.video.width, maxHeight: g.video.height, everyNthFrame: 1 });
 await page.goto(URL_APP, { waitUntil: "networkidle" });
 await page.waitForFunction(() => [...document.querySelectorAll("[data-tour=nav]")].some((e) => e.getBoundingClientRect().width > 0), null, { timeout: 20000 });
 await page.waitForTimeout(2200); // pasa la animación del logo al entrar
@@ -56,8 +66,8 @@ await page.waitForTimeout(2200); // pasa la animación del logo al entrar
 await page.evaluate(({ compacto }) => {
   const css = document.createElement("style");
   css.textContent = `
-    #v-sub { position: fixed; left: 50%; top: ${compacto ? 10 : 18}px; transform: translate(-50%, -12px); z-index: 99998; max-width: 92%;
-      background: rgba(21,22,20,.92); color: #f3f1ea; font: 500 ${compacto ? 13 : 16}px/1.3 "Inter Tight", system-ui; text-align: center;
+    #v-sub { position: fixed; left: 50%; top: ${compacto ? 10 : 18}px; transform: translate(-50%, -12px); z-index: 99998; width: max-content; max-width: min(92vw, 560px);
+      background: rgba(21,22,20,.92); color: #f3f1ea; font: 500 ${compacto ? 15 : 16}px/1.3 "Inter Tight", system-ui; text-align: center; text-wrap: balance;
       padding: ${compacto ? "9px 14px" : "11px 20px"}; border-radius: 14px; opacity: 0; transition: opacity .35s, transform .35s; pointer-events: none; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
     #v-sub.on { opacity: 1; transform: translate(-50%, 0); }
     #v-sub b { color: #c8f135; font-weight: 600; }
@@ -193,25 +203,28 @@ async function correr(p) {
 }
 
 await sub(null);
-const duracion = (Date.now() - t0) / 1000;
+await dormir(300);
+await cdp.send("Page.stopScreencast").catch(() => {});
 await page.close();
 await ctx.close();
 await navegador.close();
 
-// Video: quitar lo que se grabó antes de la portada, pasar a MP4 y poner música
-const webm = readdirSync(tmp).find((f) => f.endsWith(".webm"));
-const crudo = join(tmp, webm);
-const durCrudo = Number(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", crudo]).toString().trim());
-console.log(`  grabación cruda: ${durCrudo.toFixed(1)} s · tiempo real: ${duracion.toFixed(1)} s · portada en ${(tInicio ?? 0).toFixed(1)} s`);
+// Video: cuadros desde la portada, cada uno el tiempo real que estuvo en pantalla
+const desde = (t0 + (tInicio ?? 0) * 1000) / 1000 - 0.4;
+let usados = cuadros.filter((c) => c.t >= desde);
+const previo = cuadros.filter((c) => c.t < desde).pop();
+if (previo) usados = [{ ...previo, t: desde }, ...usados];
+const lista = usados.map((c, i) => `file '${c.f.replace(/'/g, "'\\''")}'\nduration ${Math.max(0.001, ((usados[i + 1]?.t ?? c.t + 0.5) - c.t)).toFixed(4)}`).join("\n")
+  + `\nfile '${usados.at(-1).f}'\n`;
+const rutaLista = join(tmp, "lista.txt");
+writeFileSync(rutaLista, lista);
+const dur = usados.at(-1).t + 0.5 - desde;
+console.log(`  ${usados.length} cuadros · ${dur.toFixed(1)} s`);
 const destino = join(salida, `brio-${nombre}.mp4`);
-// El reloj de la grabación no va igual que el real: se escalan los tiempos a la duración del video crudo
-const escalaT = durCrudo / duracion;
-const inicio = Math.max(0, (tInicio ?? 0) * escalaT - 0.4);
-const dur = durCrudo - inicio - 0.2;
 const musica = join(AQUI, "audio", "musica.m4a");
 const conMusica = g.musica !== false;
 execFileSync("ffmpeg", [
-  "-v", "error", "-y", "-ss", inicio.toFixed(2), "-i", crudo,
+  "-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", rutaLista,
   ...(conMusica ? ["-stream_loop", "-1", "-i", musica] : []),
   "-t", dur.toFixed(2),
   "-vf", `fps=30,scale=${g.video.width}:${g.video.height}:flags=lanczos,format=yuv420p`,
