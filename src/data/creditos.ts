@@ -2744,6 +2744,62 @@ export const CREDITOS: Credito[] = [
   "autor": "Fer.goiba",
   "licencia": "CC BY-SA 4.0",
   "pagina": "https://commons.wikimedia.org/wiki/File:Feria_Gastronomica_de_la_Enchilada_48.jpg"
+ },
+ {
+  "id": "licuado-platano",
+  "tipo": "a",
+  "titulo": "Banana Milkshake.jpg",
+  "autor": "Deepak Official Id",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Banana_Milkshake.jpg"
+ },
+ {
+  "id": "licuado-platano-avena-leche",
+  "tipo": "a",
+  "titulo": "Banana Milkshake.jpg",
+  "autor": "Deepak Official Id",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Banana_Milkshake.jpg"
+ },
+ {
+  "id": "licuado-fresa",
+  "tipo": "a",
+  "titulo": "Milkshake beverage strawberry drink-1021027.jpg",
+  "autor": "Jakub Kapušňák",
+  "licencia": "CC0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Milkshake_beverage_strawberry_drink-1021027.jpg"
+ },
+ {
+  "id": "licuado-fresa-platano",
+  "tipo": "a",
+  "titulo": "Strawberry and banana milkshake, May 2005.jpg",
+  "autor": "Dicemanic",
+  "licencia": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Strawberry_and_banana_milkshake,_May_2005.jpg"
+ },
+ {
+  "id": "licuado-papaya",
+  "tipo": "a",
+  "titulo": "Batido de papaya.jpg",
+  "autor": "El Mono Español",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Batido_de_papaya.jpg"
+ },
+ {
+  "id": "queso-amarillo",
+  "tipo": "a",
+  "titulo": "Single wrapped slice of processed cheese.jpg",
+  "autor": "Amin",
+  "licencia": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Single_wrapped_slice_of_processed_cheese.jpg"
+ },
+ {
+  "id": "licuado-mamey",
+  "tipo": "a",
+  "titulo": "ARS- Pouteria sapota.jpg",
+  "autor": "Desconocido",
+  "licencia": "Public domain",
+  "pagina": "https://commons.wikimedia.org/wiki/File:ARS-_Pouteria_sapota.jpg"
  }
 ];
 export const FOTOS_ALIMENTOS = new Set(CREDITOS.filter((c) => c.tipo === "a").map((c) => c.id));
