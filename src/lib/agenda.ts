@@ -24,12 +24,13 @@ export interface Agenda {
   llegada?: number;
   /** Lo que haces antes de salir (lonchera, mochila, trastes…): termina justo cuando sales. */
   salida?: Pasos;
-  /** Compra del súper una vez a la semana: después del gym ese día (o en la tarde si no hay gym). */
-  superSemanal?: { dia: number; min: number };
+  /** Compras (súper de la semana, pasar por verduras…): saliendo del gym ese día, o en la tarde si no hay gym. */
+  compras?: Compra[];
   /** Tiempo para ti: Brío lo acomoda solo en un hueco de la mañana, tarde o noche. */
   actividades?: Actividad[];
 }
 export interface Pasos { min: number; pasos: string[] }
+export interface Compra { id: string; titulo: string; dia: number; min: number }
 export type Momento = "manana" | "tarde" | "noche";
 export interface Actividad { id: string; titulo: string; min: number; cuando: Momento; dias: number[] }
 
@@ -107,12 +108,12 @@ export function armarDia(d: DatosDia): Evento[] {
   }
   let finGym = d.gym ? aMin(a.gym.hora) + minGym + (a.gym.traslado ?? 0) : null;
   const finDia = dorm > desp ? dorm : 1440;
-  // Súper semanal: saliendo del gym (o en la tarde si ese día no hay gym)
-  if (a.superSemanal?.min && a.superSemanal.dia === d.wd) {
-    const m = a.superSemanal.min;
-    const i = finGym != null ? acomodar(ev, m, finGym, finGym, finDia) : acomodar(ev, m, 17 * 60, 12 * 60, finDia);
-    ev.push({ id: "super", inicio: i, fin: i + m, tipo: "otro", titulo: "Súper de la semana", detalle: "Compra lo de toda la semana (revisa tu lista en Comida)" });
-    if (finGym != null && i === finGym) finGym = i + m;
+  // Compras: saliendo del gym (o en la tarde si ese día no hay gym)
+  for (const c of a.compras ?? []) {
+    if (!c.min || c.dia !== d.wd) continue;
+    const i = finGym != null ? acomodar(ev, c.min, finGym, finGym, finDia) : acomodar(ev, c.min, 17 * 60, 12 * 60, finDia);
+    ev.push({ id: `compra-${c.id}`, inicio: i, fin: i + c.min, tipo: "otro", titulo: c.titulo || "Compras", detalle: "Revisa tu lista del súper en Comida" });
+    if (finGym != null && i === finGym) finGym = i + c.min;
   }
   // Descanso al llegar del gym
   if (finGym != null && a.llegada) {
@@ -218,9 +219,10 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 export function explicar(c: Choque): string {
   const dorm = c.a.tipo === "dormir" ? c.a : c.b.tipo === "dormir" ? c.b : null;
   if (dorm) { const otro = dorm === c.a ? c.b : c.a; return `${otro.titulo} invade tu hora de dormir (${c.min} min).`; }
-  const flexibles = ["bano", "salida", "llegada", "super", "cocinar-manana", "pre-gym"];
-  if (flexibles.includes(c.a.id) && flexibles.includes(c.b.id))
-    return `Ese día no te alcanza el tiempo: ${c.a.titulo.toLowerCase()} y ${c.b.titulo.toLowerCase()} se enciman ${c.min} min. Acorta algo o cambia el súper de día.`;
+  const flexibles = ["bano", "salida", "llegada", "cocinar-manana", "pre-gym"];
+  const flex = (e: Evento) => flexibles.includes(e.id) || e.id.startsWith("compra-");
+  if (flex(c.a) && flex(c.b))
+    return `Ese día no te alcanza el tiempo: ${c.a.titulo.toLowerCase()} y ${c.b.titulo.toLowerCase()} se enciman ${c.min} min. Acorta algo o cambia tus compras de día.`;
   return `${c.a.titulo} (${hora12(c.a.inicio)}–${hora12(c.a.fin)}) choca con ${c.b.titulo.toLowerCase()} (${hora12(c.b.inicio)}–${hora12(c.b.fin)}).`;
 }
 

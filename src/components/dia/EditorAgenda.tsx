@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { horasSueno, nombreTipo, type Actividad, type Agenda, type BloqueFijo, type Momento, type Pasos, type TipoComidaAgenda } from "../../lib/agenda";
+import { horasSueno, nombreTipo, type Actividad, type Agenda, type BloqueFijo, type Compra, type Momento, type Pasos, type TipoComidaAgenda } from "../../lib/agenda";
 import { agendaDe } from "../../lib/agendaDatos";
 import type { Perfil } from "../../lib/calc";
 import { DIAS_SEMANA, SEMANA_LD, diaDeSemana, uidE } from "../../lib/entreno";
@@ -136,25 +136,7 @@ export default function EditorAgenda({ perfil, onListo }: { perfil: Perfil; onLi
       <EditorPasos titulo="Antes de salir" ayuda="Lo que haces antes de irte al trabajo o la escuela. Termina justo cuando sales (agrega tu traslado arriba)."
         valor={a.salida} ejemplo={["Lonchera", "Mochila", "Trastes"]} onCambio={(v) => set("salida", v)} />
 
-      <section>
-        <p className="lab mb-1">Súper de la semana</p>
-        <p className="mb-2 text-xs text-muted">Un día a la semana compras todo. Si ese día vas al gym, va saliendo de ahí.</p>
-        <div className="flex flex-wrap items-center gap-1.5">
-          {SEMANA_LD.map((w) => {
-            const on = a.superSemanal?.dia === w;
-            return (
-              <button key={w} aria-pressed={on} onClick={() => set("superSemanal", on ? undefined : { dia: w, min: a.superSemanal?.min || 30 })}
-                className={`rounded-full border px-2.5 py-1.5 text-sm ${on ? chipOn : "border-line bg-surface text-muted"}`}>{DIAS_SEMANA[w].slice(0, 3)}</button>
-            );
-          })}
-          {a.superSemanal && (
-            <label className="ml-auto flex shrink-0 items-center gap-1.5 text-sm text-muted">
-              <input aria-label="Minutos del súper" inputMode="numeric" className={`${inputCls} num !w-16 px-2 py-1.5 text-center`} value={a.superSemanal.min || ""}
-                onChange={(e) => set("superSemanal", { ...a.superSemanal!, min: soloNum(e.target.value) })} /> min
-            </label>
-          )}
-        </div>
-      </section>
+      <Compras valor={a.compras ?? []} onCambio={(v) => set("compras", v)} />
 
       <section>
         <p className="lab mb-2">Comidas</p>
@@ -270,6 +252,38 @@ function TiempoParaTi({ valor, onCambio }: { valor: Actividad[]; onCambio: (v: A
         <button onClick={() => setNueva({ id: uidE(), titulo: "", min: 30, cuando: "noche", dias: [0, 1, 2, 3, 4, 5, 6] })}
           className="mt-2 w-full rounded-[12px] border border-dashed border-line py-2 text-sm text-muted hover:text-ink">+ Agregar tiempo para ti</button>
       )}
+    </section>
+  );
+}
+
+/** Compras con día fijo: el súper de la semana, pasar por verduras… */
+function Compras({ valor, onCambio }: { valor: Compra[]; onCambio: (v: Compra[]) => void }) {
+  const cambiar = (id: string, c: Partial<Compra>) => onCambio(valor.map((x) => (x.id === id ? { ...x, ...c } : x)));
+  return (
+    <section>
+      <p className="lab mb-1">Compras</p>
+      <p className="mb-2 text-xs text-muted">El súper de la semana o pasar rápido por verduras. Si ese día vas al gym, va saliendo de ahí; si no, en la tarde.</p>
+      <ul className="space-y-2">
+        {valor.map((c) => (
+          <li key={c.id} className="space-y-2 rounded-[14px] border border-line bg-surface p-3">
+            <div className="flex items-center gap-2">
+              <input aria-label="Qué compras" className={`${inputCls} py-2 text-sm`} maxLength={30} value={c.titulo} onChange={(e) => cambiar(c.id, { titulo: e.target.value })} />
+              <label className="flex shrink-0 items-center gap-1.5 text-sm text-muted">
+                <input aria-label={`Minutos: ${c.titulo}`} inputMode="numeric" className={`${inputCls} num !w-16 px-2 py-2 text-center`} value={c.min || ""} onChange={(e) => cambiar(c.id, { min: soloNum(e.target.value) })} /> min
+              </label>
+              <button onClick={() => onCambio(valor.filter((x) => x.id !== c.id))} aria-label={`Quitar ${c.titulo}`} className="px-1 text-lg text-muted hover:text-ember">×</button>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {SEMANA_LD.map((w) => (
+                <button key={w} aria-pressed={c.dia === w} onClick={() => cambiar(c.id, { dia: w })}
+                  className={`rounded-full border px-2.5 py-1 text-sm ${c.dia === w ? chipOn : "border-line bg-surface text-muted"}`}>{DIAS_SEMANA[w].slice(0, 3)}</button>
+              ))}
+            </div>
+          </li>
+        ))}
+      </ul>
+      <button onClick={() => onCambio([...valor, { id: uidE(), titulo: valor.length ? "Pasar por verduras" : "Súper de la semana", dia: valor.length ? 1 : 0, min: valor.length ? 10 : 30 }])}
+        className="mt-2 w-full rounded-[12px] border border-dashed border-line py-2 text-sm text-muted hover:text-ink">+ Agregar compra</button>
     </section>
   );
 }
