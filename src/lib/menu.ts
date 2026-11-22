@@ -33,7 +33,7 @@ const POR_ID = new Map(ALIMENTOS.map((a) => [a.id, a]));
 const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
 /** Equipo de la receta disponible (cualquiera de las alternativas). */
-function puedeHacerse(r: Receta, equipo: string[]) {
+export function puedeHacerse(r: Receta, equipo: string[]) {
   const tengo = new Set<Equipo>(["ninguno", ...equipo.map((e) => norm(e) as Equipo)]);
   if (r.equipo.length === 2 && r.equipo.includes("licuadora")) return r.equipo.every((e) => tengo.has(e)); // ej. estufa + licuadora
   return r.equipo.some((e) => tengo.has(e));
@@ -204,6 +204,37 @@ export function alternativas(m: MenuGuardado, di: number, ci: number, o: Opcione
     .map((r) => ({ r, s: puntaje(r, o, ctx, 1) }))
     .sort((a, b) => b.s - a.s)
     .map((x) => x.r);
+}
+
+export interface OpcionesCambio {
+  recomendadas: Receta[];
+  /** Recetas de otro tiempo de comida que también sirven (una cena como comida, etc.). */
+  otrosTiempos: Receta[];
+  /** Llevan 1 o 2 cosas que marcó como "no lo como" (por si ese día sí se le antoja). */
+  conEvitados: { r: Receta; lleva: string[] }[];
+  nEvitar: number;
+}
+
+/** Opciones amplias para "Cambiar por…": las recomendadas, de otros tiempos y las que llevan algo evitado. */
+export function opcionesCambio(m: MenuGuardado, di: number, ci: number, o: OpcionesMenu): OpcionesCambio {
+  const actual = m.dias[di].comidas[ci];
+  const ctx = contextoSin(m, di, ci);
+  const evitar = expandirGustos(o.evitar);
+  const ordenar = (l: Receta[]) => l.map((r) => ({ r, s: puntaje(r, o, ctx, 1) })).sort((a, b) => b.s - a.s).map((x) => x.r);
+  const recomendadas = alternativas(m, di, ci, o);
+  const ya = new Set([actual.receta, ...recomendadas.map((r) => r.id)]);
+  // Colaciones solo entre colaciones; las comidas fuertes se pueden intercambiar entre sí
+  const fuertes: TipoReceta[] = ["desayuno", "comida", "cena"];
+  const otrosTiempos = actual.tipo === "colacion" ? [] : ordenar(RECETAS.filter((r) =>
+    !ya.has(r.id) && !r.tipos.includes(actual.tipo) && r.tipos.some((t) => fuertes.includes(t)) && puedeHacerse(r, o.equipo) && !r.ing.some(([id]) => evitar.includes(id))));
+  for (const r of otrosTiempos) ya.add(r.id);
+  const nombre = (id: string) => (POR_ID.get(id)?.n ?? id).replace(/ \(.*\)| \/ .*/g, "").toLowerCase();
+  const conEvitados = ordenar(RECETAS.filter((r) => !ya.has(r.id) && puedeHacerse(r, o.equipo)
+    && (r.tipos.includes(actual.tipo) || (actual.tipo !== "colacion" && r.tipos.some((t) => fuertes.includes(t))))))
+    .map((r) => ({ r, lleva: [...new Set(r.ing.filter(([id]) => id && evitar.includes(id)).map(([id]) => nombre(id)))] }))
+    .filter((x) => x.lleva.length >= 1 && x.lleva.length <= 2)
+    .sort((a, b) => a.lleva.length - b.lleva.length);
+  return { recomendadas, otrosTiempos, conEvitados, nEvitar: o.evitar.length };
 }
 
 /** Pone una receta elegida en lugar de otra, con una porción de calorías parecidas. */

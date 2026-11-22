@@ -2,7 +2,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { tienePlanMenu, type Metas, type Perfil, type PrefsComida, type QuienCocina } from "../lib/calc";
 import { configurarRecetas, etiquetas, nutricion, recetaPorId, type Receta, type TipoReceta, resumenAjustes } from "../data/recetas";
-import { alternativas, generarMenuReglas, kcalCasa, recetaDeComida, listaSuper, polloDelDia, quienCocina, reemplazarComida, textoPechugas, totalesDia, unidadDespensa, type OpcionesMenu } from "../lib/menu";
+import { opcionesCambio as calcularOpciones, generarMenuReglas, kcalCasa, recetaDeComida, listaSuper, polloDelDia, quienCocina, reemplazarComida, textoPechugas, totalesDia, unidadDespensa, type OpcionesMenu } from "../lib/menu";
 import { useBrio } from "../lib/store";
 import Gustos from "./Gustos";
 import RecetaDetalle, { MiniReceta, useRegistrarReceta } from "./RecetaDetalle";
@@ -60,6 +60,8 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
   const [dia, setDia] = useState(() => (menuValido ? indiceHoy(menuValido.dias) : 0));
   const [receta, setReceta] = useState<{ r: Receta; factor: number; ci: number; di: number } | null>(null);
   const [cambio, setCambio] = useState<{ ci: number; n: number } | null>(null);
+  const [buscar, setBuscar] = useState("");
+  const [verMas, setVerMas] = useState<{ otros: number; evitados: number }>({ otros: 6, evitados: 6 });
   const [toast, setToast] = useToast();
   const registrar = useRegistrarReceta();
 
@@ -185,7 +187,26 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
   const tot = totalesDia(d.comidas);
   const enCasa = d.comidas.reduce((a, c) => a + kcalCasa(c), 0);
   const pollo = polloDelDia(d.comidas);
-  const opcionesCambio = cambio ? alternativas(m, dia, cambio.ci, opciones()) : [];
+  const opc = cambio ? calcularOpciones(m, dia, cambio.ci, opciones()) : null;
+  const q = buscar.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const coincide = (r: Receta) => !q || `${r.nombre} ${r.ing.map((x) => x[2]).join(" ")}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q);
+  const abrirCambio = (ci: number) => { setBuscar(""); setVerMas({ otros: 6, evitados: 6 }); setCambio({ ci, n: 8 }); };
+  const elegir = (r: Receta) => { if (!cambio) return; setMenu(reemplazarComida(m, dia, cambio.ci, r.id)); setCambio(null); setToast(`Cambiado por ${r.nombre}`); };
+  const opcion = (r: Receta, nota?: string) => {
+    const n = nutricion(r);
+    return (
+      <li key={r.id} className="border-b border-line last:border-b-0">
+        <button onClick={() => elegir(r)} className="flex w-full min-w-0 items-center gap-3 py-2.5 text-left">
+          <MiniReceta r={r} size={44} />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate font-medium">{r.nombre}</span>
+            <span className="lab !tracking-[0.06em]">{n.kcal} kcal · {n.proteina} g prot · {r.min} min{etiquetas(r).includes("Sin refri") ? " · sin refri" : ""}</span>
+            {nota && <span className="block truncate text-xs text-ember">{nota}</span>}
+          </span>
+        </button>
+      </li>
+    );
+  };
   const lista = listaSuper(m, despensa);
   const porComprar = lista.items.filter((i) => i.unidades > 0);
   const yaTienes = lista.items.filter((i) => i.unidades === 0);
@@ -263,7 +284,7 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
                   </button>
                   {BEBIDA[c.tipo] && <p className="mt-1 pl-[56px] text-xs text-muted">{BEBIDA[c.tipo]}</p>}
                   <div className="mt-2 flex gap-2 pl-[56px]">
-                    <button onClick={() => setCambio({ ci, n: 8 })} className="rounded-full border border-line px-3 py-1 text-xs text-muted hover:text-ink">Cambiar</button>
+                    <button onClick={() => abrirCambio(ci)} className="rounded-full border border-line px-3 py-1 text-xs text-muted hover:text-ink">Cambiar</button>
                     <button onClick={() => { const k = registrar(rAj, c.factor, c.tipo === "colacion" ? "snack" : c.tipo, cambios); setToast(k ? "Registrado y descontado de tu despensa" : "Registrado hoy"); }}
                       className="rounded-full border border-line px-3 py-1 text-xs text-muted hover:text-ink">Registrar hoy</button>
                   </div>
@@ -320,31 +341,42 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
           onRegistrado={(msg) => { setReceta(null); setToast(msg); }} />}
       </Hoja>
       <Hoja abierta={!!cambio} onClose={() => setCambio(null)} titulo="Cambiar por…">
-        {cambio && (
-          <>
-            <p className="mb-2 text-xs text-muted">{opcionesCambio.length} opciones de {NOMBRE_TIPO[d.comidas[cambio.ci]?.tipo ?? "comida"].toLowerCase()}. Arriba las que mejor van con tu día y tus gustos; la porción se ajusta a tus calorías.</p>
-            <ul>
-              {opcionesCambio.slice(0, cambio.n).map((r) => {
-                const n = nutricion(r);
-                return (
-                  <li key={r.id} className="border-b border-line last:border-b-0">
-                    <button onClick={() => { setMenu(reemplazarComida(m, dia, cambio.ci, r.id)); setCambio(null); setToast(`Cambiado por ${r.nombre}`); }}
-                      className="flex w-full min-w-0 items-center gap-3 py-2.5 text-left">
-                      <MiniReceta r={r} size={44} />
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate font-medium">{r.nombre}</span>
-                        <span className="lab !tracking-[0.06em]">{n.kcal} kcal · {n.proteina} g prot · {r.min} min{etiquetas(r).includes("Sin refri") ? " · sin refri" : ""}</span>
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-            {opcionesCambio.length > cambio.n && (
-              <button onClick={() => setCambio({ ...cambio, n: cambio.n + 12 })} className={`${btnSecundario} mt-3 w-full`}>Ver más opciones</button>
-            )}
-          </>
-        )}
+        {cambio && opc && (() => {
+          const rec = opc.recomendadas.filter(coincide), otros = opc.otrosTiempos.filter(coincide), evit = opc.conEvitados.filter((x) => coincide(x.r));
+          const tipo = NOMBRE_TIPO[d.comidas[cambio.ci]?.tipo ?? "comida"].toLowerCase();
+          return (
+            <>
+              <input className={`${inputCls} mb-3`} placeholder="Buscar: pollo, huevo, atún…" value={buscar} onChange={(e) => setBuscar(e.target.value)} />
+              {opc.nEvitar >= 15 && !q && (
+                <div className="mb-3 rounded-[14px] border border-ember/40 bg-ember/5 p-3 text-sm">
+                  Marcaste <b>{opc.nEvitar} alimentos</b> como "no lo como", por eso salen pocas opciones.{" "}
+                  <button onClick={() => { setCambio(null); setEditando(true); }} className="font-medium text-lime-ink hover:underline">Revisar mis gustos</button>
+                </div>
+              )}
+              <p className="lab mb-1">Para tu {tipo} · {rec.length}</p>
+              {rec.length ? <ul>{rec.slice(0, cambio.n).map((r) => opcion(r))}</ul> : <p className="py-2 text-sm text-muted">{q ? "Nada con esa búsqueda." : "No hay más con tus gustos y tu equipo."}</p>}
+              {rec.length > cambio.n && <button onClick={() => setCambio({ ...cambio, n: cambio.n + 12 })} className={`${btnSecundario} mt-2 w-full`}>Ver más</button>}
+
+              {otros.length > 0 && (
+                <>
+                  <p className="lab mb-1 mt-5">De otros tiempos de comida · {otros.length}</p>
+                  <p className="mb-1 text-xs text-muted">También sirven de {tipo}; la porción se ajusta a tus calorías.</p>
+                  <ul>{otros.slice(0, verMas.otros).map((r) => opcion(r))}</ul>
+                  {otros.length > verMas.otros && <button onClick={() => setVerMas({ ...verMas, otros: verMas.otros + 12 })} className={`${btnSecundario} mt-2 w-full`}>Ver más</button>}
+                </>
+              )}
+
+              {evit.length > 0 && (
+                <>
+                  <p className="lab mb-1 mt-5">Llevan algo que marcaste · {evit.length}</p>
+                  <p className="mb-1 text-xs text-muted">Por si hoy sí se te antoja. Al abrir la receta puedes quitar ese ingrediente.</p>
+                  <ul>{evit.slice(0, verMas.evitados).map((x) => opcion(x.r, `Lleva ${x.lleva.join(" y ")}`))}</ul>
+                  {evit.length > verMas.evitados && <button onClick={() => setVerMas({ ...verMas, evitados: verMas.evitados + 12 })} className={`${btnSecundario} mt-2 w-full`}>Ver más</button>}
+                </>
+              )}
+            </>
+          );
+        })()}
       </Hoja>
       <Toast texto={toast} />
     </>
