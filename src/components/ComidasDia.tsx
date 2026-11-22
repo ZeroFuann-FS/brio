@@ -6,6 +6,7 @@ import { coincidenciaDespensa, frecuentes, useBrio, type TipoComida } from "../l
 import { analizarComida, ErrorIA, useIA, type AnalisisIA } from "../lib/ia";
 import { useSync } from "../lib/sync";
 import BuscarAlimento, { calcular as calcularSel, type Seleccion } from "./BuscarAlimento";
+import { enUnidades, nombreCorto } from "./EditorIngredientes";
 import { Hoja, Tarjeta, Toast, btnPrimario, btnSecundario, inputCls, useToast } from "./ui";
 
 export const TIPOS: { id: TipoComida; t: string }[] = [
@@ -61,15 +62,26 @@ export default function ComidasDia({ delay = 0, className = "", tour }: { delay?
     const v = calcularSel(it);
     return { kcal: a.kcal + v.kcal, proteina: a.proteina + v.proteina, carbos: a.carbos + v.carbos, grasa: a.grasa + v.grasa };
   }, { kcal: 0, proteina: 0, carbos: 0, grasa: 0 });
+  // Los caseros se descuentan por ingrediente (las tortillas y el jamón de la sincronizada)
   const descuentos = plato
-    .map((it) => coincidenciaDespensa(despensa, it.a.n, it.porcion.t, it.cantidad, calcularSel(it).gramos))
-    .filter((x): x is NonNullable<typeof x> => !!x);
+    .flatMap((it) => it.ings
+      ? it.ings.map((i) => { const u = enUnidades(i.a, i.g * it.cantidad); return coincidenciaDespensa(despensa, i.a.n, u.p?.t ?? "gramos", u.n, i.g * it.cantidad); })
+      : [coincidenciaDespensa(despensa, it.a.n, it.porcion.t, it.cantidad, calcularSel(it).gramos)])
+    .filter((x): x is NonNullable<typeof x> => !!x)
+    // un mismo artículo de la despensa (p. ej. tortillas en dos platillos) se suma en un solo descuento
+    .reduce<NonNullable<ReturnType<typeof coincidenciaDespensa>>[]>((acc, d) => {
+      const ya = acc.find((x) => x.item.id === d.item.id);
+      if (ya) ya.cuanto = Math.round((ya.cuanto + d.cuanto) * 100) / 100; else acc.push({ ...d });
+      return acc;
+    }, []);
 
   const registrarPlato = () => {
     if (!plato.length) return;
     const nombre = plato.map((it) => it.a.n.split(" · ")[0]).join(", ");
-    const eq = equivalentesDe(plato.filter((it) => !it.a.fuente || it.a.fuente === "base").map((it) => [it.a.id, calcularSel(it).gramos]));
-    addComida(hoy, { nombre: nombre.length > 60 ? `${nombre.slice(0, 57)}…` : nombre, kcal: Math.round(totPlato.kcal), proteina: Math.round(totPlato.proteina), carbos: Math.round(totPlato.carbos), grasa: Math.round(totPlato.grasa), tipo, eq });
+    const eq = equivalentesDe(plato.filter((it) => !it.a.fuente || it.a.fuente === "base")
+      .flatMap((it): [string, number][] => it.ings ? it.ings.map((i) => [i.a.id, i.g * it.cantidad]) : [[it.a.id, calcularSel(it).gramos]]));
+    const ingredientes = plato.filter((it) => it.ings).map((it) => `${it.a.n}: ${it.ings!.map((i) => nombreCorto(i.a)).join(", ")}`).join(" · ");
+    addComida(hoy, { nombre: nombre.length > 60 ? `${nombre.slice(0, 57)}…` : nombre, kcal: Math.round(totPlato.kcal), proteina: Math.round(totPlato.proteina), carbos: Math.round(totPlato.carbos), grasa: Math.round(totPlato.grasa), tipo, eq, ...(ingredientes ? { ingredientes: ingredientes.slice(0, 300) } : {}) });
     if (usarDespensa) for (const d of descuentos) descontar(d.item.id, d.cuanto);
     cerrar(usarDespensa && descuentos.length ? "Registrado y descontado de tu despensa" : "Registrado");
   };
@@ -120,7 +132,8 @@ export default function ComidasDia({ delay = 0, className = "", tour }: { delay?
               <motion.li key={c.id} layout initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
                 className="grid grid-cols-[72px_1fr_auto_auto] items-center gap-2 overflow-hidden border-b border-line py-2.5 last:border-b-0">
                 <span className="lab !tracking-[0.08em]">{TIPOS.find((t) => t.id === c.tipo)?.t}</span>
-                <span className="min-w-0 truncate">{c.nombre}</span>
+                <span className="min-w-0"><span className="block truncate">{c.nombre}</span>
+                  {c.ingredientes && <span className="block truncate text-xs text-muted" title={c.ingredientes}>{c.ingredientes.includes(" · ") ? c.ingredientes : c.ingredientes.replace(/^[^:]+: /, "")}</span>}</span>
                 <span className="num text-[17px]">{c.kcal}</span>
                 <button onClick={() => removeComida(hoy, c.id)} className="px-1.5 text-muted hover:text-ember" aria-label={`Borrar ${c.nombre}`}>✕</button>
               </motion.li>
@@ -185,7 +198,8 @@ export default function ComidasDia({ delay = 0, className = "", tour }: { delay?
                     <ul className="mt-1 max-h-[30dvh] overflow-y-auto">
                       {plato.map((it) => (
                         <li key={it.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-2 border-b border-line py-2 text-sm last:border-b-0">
-                          <span className="min-w-0 truncate">{it.a.n.split(" · ")[0]} <span className="text-muted">· {it.cantidad} {it.porcion.t === "gramos" ? "g" : it.porcion.t}</span></span>
+                          <span className="min-w-0"><span className="block truncate">{it.a.n.split(" · ")[0]} <span className="text-muted">· {it.cantidad} {it.porcion.t === "gramos" ? "g" : it.porcion.t}</span></span>
+                            {it.ings && <span className="block truncate text-xs text-muted">{it.ings!.map((i) => nombreCorto(i.a)).join(", ")}</span>}</span>
                           <span className="num text-base">{Math.round(calcularSel(it).kcal)}</span>
                           <button onClick={() => setPlato((p) => p.filter((x) => x.id !== it.id))} className="px-1 text-muted hover:text-ember" aria-label="Quitar">✕</button>
                         </li>

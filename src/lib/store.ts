@@ -24,6 +24,7 @@ export interface Comida {
   tipo: TipoComida;
   eq?: Equivalentes;      // equivalentes SMAE (si se pudo calcular)
   plan?: string;          // tiempo del plan del nutriólogo que cubre
+  ingredientes?: string;  // qué llevaban los caseros: "Sincronizada: tortilla de maíz, jamón de pavo…"
 }
 
 export interface Dia {
@@ -279,7 +280,7 @@ export function frecuentes(dias: Record<string, Dia>, max = 8): Omit<Comida, "id
   for (const f of Object.keys(dias).sort().reverse()) {
     for (const c of [...dias[f].comidas].reverse()) {
       const k = c.nombre.trim().toLowerCase();
-      if (!vistas.has(k)) vistas.set(k, { nombre: c.nombre, kcal: c.kcal, proteina: c.proteina, carbos: c.carbos, grasa: c.grasa, tipo: c.tipo });
+      if (!vistas.has(k)) vistas.set(k, { nombre: c.nombre, kcal: c.kcal, proteina: c.proteina, carbos: c.carbos, grasa: c.grasa, tipo: c.tipo, ...(c.ingredientes ? { ingredientes: c.ingredientes } : {}) });
       if (vistas.size >= max) return [...vistas.values()];
     }
   }
@@ -310,6 +311,7 @@ export function coincidenciaDespensa(d: ItemDespensa[], alimento: string, porcio
   if (pzs && porcionContable) cuanto = cantidad;
   else if (item.unidad === "g") cuanto = gramos;
   else if (item.unidad === "kg") cuanto = gramos / 1000;
+  else if (item.unidad === "L") cuanto = gramos / 1000;
   if (!(cuanto > 0)) return null;
   return { item, cuanto: Math.round(cuanto * 100) / 100 };
 }

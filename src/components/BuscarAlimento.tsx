@@ -1,18 +1,29 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { buscarLocal, type Alimento, type Porcion } from "../data/alimentos";
+import { alimentoPorId, buscarLocal, type Alimento, type Porcion } from "../data/alimentos";
 import { fotoDe } from "../data/fotos";
 import { buscarOFF, porCodigoOFF } from "../lib/off";
 import { buscarComunidad, porCodigoComunidad } from "../lib/comunidad";
 import { useSync } from "../lib/sync";
 import CrearAlimento from "./CrearAlimento";
+import EditorIngredientes, { plural, type Ing } from "./EditorIngredientes";
 import { btnPrimario, btnSecundario, inputCls, chipOn } from "./ui";
 
 const Escaner = lazy(() => import("./Escaner"));
 
-export interface Seleccion { a: Alimento; porcion: Porcion; cantidad: number }
+/** ings: platillo casero con sus ingredientes (por porción); si viene, los valores salen de ahí. */
+export interface Seleccion { a: Alimento; porcion: Porcion; cantidad: number; ings?: Ing[] }
+
+const ingsDe = (a: Alimento): Ing[] => (a.ing ?? []).map(([id, g]) => ({ a: alimentoPorId(id)!, g }));
 
 export const calcular = (s: Seleccion) => {
+  if (s.ings) {
+    const t = s.ings.reduce((x, i) => {
+      const f = (i.g * s.cantidad) / 100;
+      return { gramos: x.gramos + i.g * s.cantidad, kcal: x.kcal + i.a.kcal * f, proteina: x.proteina + i.a.p * f, carbos: x.carbos + i.a.c * f, grasa: x.grasa + i.a.g * f };
+    }, { gramos: 0, kcal: 0, proteina: 0, carbos: 0, grasa: 0 });
+    return t;
+  }
   const gramos = s.porcion.g * s.cantidad;
   const f = gramos / 100;
   return { gramos, kcal: s.a.kcal * f, proteina: s.a.p * f, carbos: s.a.c * f, grasa: s.a.g * f };
@@ -54,6 +65,7 @@ export default function BuscarAlimento({ onAgregar, onBuscando }: { onAgregar: (
   const [sel, setSel] = useState<Alimento | null>(null);
   const [porcion, setPorcion] = useState<Porcion | null>(null);
   const [cantidad, setCantidad] = useState(1);
+  const [ings, setIngs] = useState<Ing[] | null>(null);
   const abort = useRef<AbortController | null>(null);
 
   const locales = q.trim().length >= 2 ? buscarLocal(q) : [];
@@ -80,7 +92,7 @@ export default function BuscarAlimento({ onAgregar, onBuscando }: { onAgregar: (
     catch (e) { if ((e as Error).name !== "AbortError") setMarca({ estado: "error", items: [] }); }
   };
 
-  const elegir = (a: Alimento) => { setSel(a); setPorcion(a.por[0]); setCantidad(1); setAviso(null); };
+  const elegir = (a: Alimento) => { setSel(a); setPorcion(a.por[0]); setCantidad(1); setIngs(a.ing ? ingsDe(a) : null); setAviso(null); };
   const cambiarPorcion = (p: Porcion) => { setPorcion(p); setCantidad(p === GRAMOS ? (porcion ? Math.round(porcion.g * cantidad) : 100) : 1); };
 
   const alEscanear = async (c: string) => {
@@ -109,7 +121,8 @@ export default function BuscarAlimento({ onAgregar, onBuscando }: { onAgregar: (
 
   /* ---------- Detalle del alimento elegido ---------- */
   if (sel && porcion) {
-    const v = calcular({ a: sel, porcion, cantidad });
+    const casero = ings ? { ings, porcion: { t: porcion.t, g: Math.round(ings.reduce((x, i) => x + i.g, 0)) } } : null;
+    const v = calcular({ a: sel, porcion: casero?.porcion ?? porcion, cantidad, ings: casero?.ings });
     const contable = /pieza|lata|rebanada|clara|taco|filete|barra|vaso|plato|puño/.test(porcion.t);
     const paso = porcion === GRAMOS ? 10 : contable ? 1 : 0.5;
     return (
@@ -123,30 +136,34 @@ export default function BuscarAlimento({ onAgregar, onBuscando }: { onAgregar: (
           </div>
         </div>
 
-        <p className="lab mb-2 mt-4">Porción</p>
-        <div className="flex flex-wrap gap-2">
+        {ings && sel.ing && (
+          <div className="mt-4"><EditorIngredientes ings={ings} original={ingsDe(sel)} onChange={setIngs} /></div>
+        )}
+
+        <p className="lab mb-2 mt-4">{ings ? `¿Cuántos? · ${porcion.t}` : "Porción"}</p>
+        {!ings && <div className="flex flex-wrap gap-2">
           {[...sel.por, GRAMOS].map((p) => (
             <button key={p.t} onClick={() => cambiarPorcion(p)} aria-pressed={porcion === p}
               className={`rounded-full border px-3.5 py-1.5 text-sm transition ${porcion === p ? chipOn : "border-line bg-surface text-muted"}`}>
               {p === GRAMOS ? "gramos" : `${p.t} (${p.g} g)`}
             </button>
           ))}
-        </div>
+        </div>}
 
-        <div className="mt-4 flex items-center gap-3">
+        <div className={`${ings ? "mt-1" : "mt-4"} flex items-center gap-3`}>
           <button onClick={() => setCantidad((c) => Math.max(paso, Math.round((c - paso) * 10) / 10))} className="grid h-12 w-12 place-items-center rounded-[12px] border border-line text-xl" aria-label="Menos">−</button>
           <input className={`${inputCls} num h-12 flex-1 text-center text-2xl`} inputMode="decimal" value={cantidad}
             onChange={(e) => { const x = Number(e.target.value.replace(",", ".")); if (Number.isFinite(x)) setCantidad(x); }} />
           <button onClick={() => setCantidad((c) => Math.round((c + paso) * 10) / 10)} className="grid h-12 w-12 place-items-center rounded-[12px] border border-line text-xl" aria-label="Más">+</button>
         </div>
-        <p className="lab mt-1.5 text-center">{porcion === GRAMOS ? "gramos" : `${porcion.t} · ${Math.round(v.gramos)} g en total`}</p>
+        <p className="lab mt-1.5 text-center">{porcion === GRAMOS ? "gramos" : `${ings ? plural(cantidad, porcion.t) : porcion.t} · ${Math.round(v.gramos)} g en total`}</p>
 
         <div className="mt-4 grid grid-cols-4 gap-2 rounded-[14px] border border-line bg-surface p-3">
           {[["kcal", v.kcal], ["Prot", v.proteina], ["Carb", v.carbos], ["Grasa", v.grasa]].map(([l, x]) => (
             <div key={l as string}><p className="lab">{l}</p><p className="num text-2xl">{Math.round(x as number)}</p></div>
           ))}
         </div>
-        <button disabled={!(cantidad > 0)} onClick={() => { onAgregar({ a: sel, porcion, cantidad }); setSel(null); setQ(""); }} className={`${btnPrimario} mt-4 w-full`}>
+        <button disabled={!(cantidad > 0)} onClick={() => { onAgregar({ a: sel, porcion: casero?.porcion ?? porcion, cantidad, ings: casero?.ings }); setSel(null); setQ(""); }} className={`${btnPrimario} mt-4 w-full`}>
           Agregar al plato
         </button>
       </motion.div>

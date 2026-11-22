@@ -33,6 +33,9 @@ export const GRUPO_POR_ID = new Map(GRUPOS_EQ.map((g) => [g.id, g]));
 export const EQUIV: Record<string, [GrupoEq, number]> = {
   huevo: ["aoa-m", 50], clara: ["aoa-mb", 66],
   "leche-entera": ["leche-e", 240], "leche-light": ["leche-d", 240], "leche-polvo": ["leche-d", 24],
+  "leche-lala": ["leche-e", 240], "leche-nutrileche": ["leche-e", 240], "leche-vaca-blanca": ["leche-e", 240], "leche-lactilac": ["leche-e", 240],
+  "leche-lala-light": ["leche-s", 240], "leche-nutrileche-light": ["leche-s", 240], "leche-vaca-blanca-light": ["leche-s", 240], "leche-lactilac-light": ["leche-s", 240],
+  "leche-lala-proteina": ["leche-s", 240], "queso-amarillo": ["aoa-a", 30], "jamon-cerdo": ["aoa-m", 40],
   yogur: ["leche-e", 180], "yogur-griego": ["leche-d", 150],
   "queso-panela": ["aoa-b", 40], "queso-fresco": ["aoa-m", 40], "queso-oaxaca": ["aoa-m", 30], "queso-chihuahua": ["aoa-a", 30],
   requeson: ["aoa-b", 60], crema: ["grasa-sp", 15],

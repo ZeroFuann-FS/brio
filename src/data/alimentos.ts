@@ -14,10 +14,15 @@ export interface Alimento {
   img?: string;       // foto del producto (marcas)
   codigo?: string;    // código de barras
   fuente?: "base" | "marca" | "comunidad";
+  /** Platillo casero: ingredientes de UNA porción [id, gramos]; sus valores se calculan de aquí y se pueden editar al registrar. */
+  ing?: [string, number][];
 }
 
 const A = (id: string, n: string, cat: string, kcal: number, p: number, c: number, g: number, por: Porcion[], alias?: string): Alimento =>
   ({ id, n, cat, kcal, p, c, g, por, alias });
+/** Casero armado con ingredientes: kcal y macros se calculan al final del archivo. */
+const C = (id: string, n: string, cat: string, porcion: string, ing: [string, number][], alias?: string): Alimento =>
+  ({ id, n, cat, kcal: 0, p: 0, c: 0, g: 0, por: [{ t: porcion, g: 0 }], alias, ing });
 
 export const ALIMENTOS: Alimento[] = [
   // Huevo y lácteos
@@ -30,9 +35,20 @@ export const ALIMENTOS: Alimento[] = [
   A("yogur-griego", "Yogur griego natural", "Huevo y lácteos", 59, 10.2, 3.6, 0.4, [{ t: "taza", g: 200 }, { t: "vasito", g: 150 }]),
   A("queso-panela", "Queso panela", "Huevo y lácteos", 240, 18, 3, 18, [{ t: "rebanada", g: 30 }]),
   A("queso-fresco", "Queso fresco", "Huevo y lácteos", 299, 18, 3, 24, [{ t: "rebanada", g: 30 }]),
-  A("queso-oaxaca", "Queso Oaxaca", "Huevo y lácteos", 300, 22, 2, 23, [{ t: "porción", g: 30 }], "quesillo"),
+  A("queso-oaxaca", "Queso Oaxaca", "Huevo y lácteos", 300, 22, 2, 23, [{ t: "porción", g: 30 }], "quesillo hebra"),
+  A("queso-amarillo", "Queso amarillo", "Huevo y lácteos", 330, 18, 6, 26, [{ t: "rebanada", g: 18 }], "americano rebanadas kraft chester"),
   A("queso-chihuahua", "Queso manchego / Chihuahua", "Huevo y lácteos", 374, 21.6, 5.6, 29.7, [{ t: "rebanada", g: 30 }]),
   A("crema", "Crema", "Huevo y lácteos", 250, 2.4, 3.5, 25, [{ t: "cucharada", g: 15 }]),
+  // Leches de marca: valores aproximados de su etiqueta (para el dato exacto, escanea el código de barras)
+  A("leche-lala", "Leche Lala entera", "Huevo y lácteos", 62, 3.1, 4.8, 3.3, [{ t: "vaso", g: 250 }, { t: "taza", g: 240 }], "lala"),
+  A("leche-lala-light", "Leche Lala light", "Huevo y lácteos", 46, 3.1, 4.9, 1.5, [{ t: "vaso", g: 250 }, { t: "taza", g: 240 }], "lala semidescremada deslactosada"),
+  A("leche-lala-proteina", "Leche Lala con más proteína", "Huevo y lácteos", 52, 5, 4.6, 1.5, [{ t: "vaso", g: 250 }, { t: "taza", g: 240 }], "lala 100 proteina pro"),
+  A("leche-nutrileche", "Nutri Leche entera", "Huevo y lácteos", 61, 2.8, 4.8, 3.3, [{ t: "vaso", g: 250 }, { t: "taza", g: 240 }], "nutrileche nutri"),
+  A("leche-nutrileche-light", "Nutri Leche light", "Huevo y lácteos", 43, 2.8, 4.9, 1.3, [{ t: "vaso", g: 250 }, { t: "taza", g: 240 }], "nutrileche nutri"),
+  A("leche-vaca-blanca", "Leche Vaca Blanca entera", "Huevo y lácteos", 60, 2.9, 4.7, 3.2, [{ t: "vaso", g: 250 }, { t: "taza", g: 240 }], "vacablanca"),
+  A("leche-vaca-blanca-light", "Leche Vaca Blanca light", "Huevo y lácteos", 43, 2.9, 4.8, 1.3, [{ t: "vaso", g: 250 }, { t: "taza", g: 240 }], "vacablanca"),
+  A("leche-lactilac", "Leche Lacti Lac entera", "Huevo y lácteos", 61, 3, 4.8, 3.3, [{ t: "vaso", g: 250 }, { t: "taza", g: 240 }], "lactilac"),
+  A("leche-lactilac-light", "Leche Lacti Lac light", "Huevo y lácteos", 44, 3, 4.9, 1.4, [{ t: "vaso", g: 250 }, { t: "taza", g: 240 }], "lactilac"),
   A("requeson", "Requesón", "Huevo y lácteos", 98, 11, 3.4, 4.3, [{ t: "2 cucharadas", g: 40 }]),
 
   // Carnes, pollo y pescado
@@ -49,6 +65,7 @@ export const ALIMENTOS: Alimento[] = [
   A("milanesa-res", "Milanesa de res (sin empanizar)", "Carnes y pescado", 200, 30, 0, 8, [{ t: "pieza", g: 110 }]),
   A("milanesa-pollo", "Milanesa de pollo (sin empanizar)", "Carnes y pescado", 165, 31, 0, 3.6, [{ t: "pieza", g: 120 }], "pechuga aplanada"),
   A("jamon-pavo", "Jamón de pavo", "Carnes y pescado", 110, 17, 2, 3.5, [{ t: "rebanada", g: 20 }]),
+  A("jamon-cerdo", "Jamón de cerdo", "Carnes y pescado", 145, 18, 2, 7, [{ t: "rebanada", g: 20 }], "jamon virginia"),
   A("salchicha-pavo", "Salchicha de pavo", "Carnes y pescado", 220, 12, 4, 17, [{ t: "pieza", g: 45 }]),
   A("chorizo", "Chorizo", "Carnes y pescado", 455, 24, 2, 38, [{ t: "porción", g: 40 }]),
   A("atun-agua", "Atún en lata (en agua)", "Carnes y pescado", 116, 25.5, 0, 0.8, [{ t: "lata", g: 100 }], "lata mar alta dolores"),
@@ -167,12 +184,19 @@ export const ALIMENTOS: Alimento[] = [
   A("vino", "Vino tinto o blanco", "Bebidas", 85, 0.1, 2.6, 0, [{ t: "copa", g: 150 }], "alcohol"),
   A("agua-jamaica", "Agua de jamaica con azúcar", "Bebidas", 40, 0, 10, 0, [{ t: "vaso", g: 250 }], "agua fresca"),
   A("chocomilk", "Leche con chocolate en polvo", "Bebidas", 85, 3.2, 12, 3, [{ t: "vaso", g: 250 }], "chocomilk"),
+  // Licuados caseros: al registrarlos eliges la leche (marca, entera o light) y ajustas la fruta
+  C("licuado-platano", "Licuado de plátano", "Bebidas", "vaso", [["leche-entera", 250], ["platano", 118]], "licuados banana smoothie"),
+  C("licuado-fresa", "Licuado de fresa", "Bebidas", "vaso", [["leche-entera", 250], ["fresas", 150], ["azucar", 8]], "licuados fresas smoothie"),
+  C("licuado-fresa-platano", "Licuado de fresa con plátano", "Bebidas", "vaso", [["leche-entera", 250], ["fresas", 75], ["platano", 59]], "licuados smoothie"),
+  C("licuado-platano-avena-leche", "Licuado de plátano con avena", "Bebidas", "vaso", [["leche-entera", 250], ["platano", 118], ["avena", 30]], "licuados smoothie"),
+  C("licuado-papaya", "Licuado de papaya", "Bebidas", "vaso", [["leche-entera", 250], ["papaya", 145], ["azucar", 4]], "licuados smoothie"),
+  C("licuado-mamey", "Licuado de mamey", "Bebidas", "vaso", [["leche-entera", 250], ["mamey", 170]], "licuados smoothie"),
 
   // Platillos mexicanos (estimados)
   A("taco-bistec", "Taco de bistec", "Platillos", 200, 13, 17, 9, [{ t: "taco", g: 90 }], "tacos"),
   A("taco-pastor", "Taco al pastor", "Platillos", 200, 11, 18, 9, [{ t: "taco", g: 85 }], "tacos"),
   A("taco-carnitas", "Taco de carnitas", "Platillos", 233, 12, 17, 13, [{ t: "taco", g: 90 }], "tacos"),
-  A("quesadilla", "Quesadilla de queso", "Platillos", 280, 12, 22, 16, [{ t: "pieza", g: 75 }]),
+  C("quesadilla", "Quesadilla de queso", "Platillos", "pieza", [["tortilla-maiz", 30], ["queso-oaxaca", 35], ["aceite", 2]]),
   A("enchilada-verde", "Enchilada verde de pollo", "Platillos", 170, 10, 14, 8, [{ t: "pieza", g: 110 }], "enchiladas"),
   A("enfrijolada", "Enfrijolada", "Platillos", 165, 7, 20, 6, [{ t: "pieza", g: 110 }]),
   A("chilaquiles", "Chilaquiles verdes", "Platillos", 180, 5, 20, 9, [{ t: "plato", g: 250 }]),
@@ -205,7 +229,7 @@ export const ALIMENTOS: Alimento[] = [
   A("taco-canasta", "Taco de canasta", "Platillos", 220, 7, 24, 11, [{ t: "taco", g: 60 }], "tacos sudados"),
   A("burrito", "Burrito", "Platillos", 210, 10, 24, 8, [{ t: "pieza", g: 250 }]),
   A("hot-dog", "Hot dog", "Platillos", 250, 9, 24, 13, [{ t: "pieza", g: 130 }], "jocho salchicha"),
-  A("sincronizada", "Sincronizada", "Platillos", 260, 13, 22, 13, [{ t: "pieza", g: 140 }]),
+  C("sincronizada", "Sincronizada", "Platillos", "pieza", [["tortilla-maiz", 60], ["jamon-pavo", 40], ["queso-oaxaca", 40], ["aceite", 2.5]], "sincronizadas"),
   A("torta-milanesa", "Torta de milanesa", "Platillos", 240, 12, 26, 10, [{ t: "pieza", g: 330 }], "tortas"),
   A("elote-preparado", "Elote preparado (mayonesa, queso y chile)", "Platillos", 180, 4, 22, 9, [{ t: "pieza", g: 200 }]),
   A("esquite", "Esquite", "Platillos", 140, 3.5, 18, 6.5, [{ t: "vaso", g: 250 }], "esquites elote en vaso"),
@@ -221,7 +245,7 @@ export const ALIMENTOS: Alimento[] = [
   A("arroz-leche", "Arroz con leche", "Grasas y otros", 130, 3.5, 22, 3, [{ t: "taza", g: 200 }]),
   A("atole", "Atole", "Bebidas", 85, 2, 16, 1.5, [{ t: "vaso", g: 250 }], "champurrado"),
   A("tamal", "Tamal", "Platillos", 200, 6, 25, 9, [{ t: "pieza", g: 150 }]),
-  A("torta-jamon", "Torta de jamón", "Platillos", 220, 10, 28, 8, [{ t: "pieza", g: 250 }]),
+  C("torta-jamon", "Torta de jamón", "Platillos", "pieza", [["bolillo", 100], ["jamon-pavo", 40], ["queso-panela", 30], ["refritos", 30], ["aguacate", 30], ["jitomate", 30], ["mayonesa", 10]], "tortas"),
   A("pozole", "Pozole", "Platillos", 95, 6, 9, 4, [{ t: "plato", g: 400 }]),
   A("caldo-pollo", "Caldo de pollo", "Platillos", 60, 6, 4, 2, [{ t: "plato", g: 400 }]),
   A("sopa-lentejas", "Sopa de lentejas", "Platillos", 90, 5.5, 14, 1.5, [{ t: "plato", g: 250 }]),
@@ -305,6 +329,22 @@ export const ALIMENTOS: Alimento[] = [
   A("paleta-agua", "Paleta de hielo de agua", "Grasas y otros", 70, 0, 18, 0, [{ t: "pieza", g: 80 }], "paletas"),
   A("hamburguesa", "Hamburguesa sencilla", "Platillos", 260, 13, 25, 12, [{ t: "pieza", g: 200 }]),
 ];
+
+/* Caseros: kcal y macros por 100 g salen de sus ingredientes. */
+const POR_ID = new Map(ALIMENTOS.map((a) => [a.id, a]));
+export const alimentoPorId = (id: string) => POR_ID.get(id);
+for (const a of ALIMENTOS) {
+  if (!a.ing) continue;
+  let gr = 0, kcal = 0, p = 0, c = 0, g = 0;
+  for (const [id, x] of a.ing) {
+    const i = POR_ID.get(id);
+    if (!i) throw new Error(`Ingrediente desconocido en ${a.id}: ${id}`);
+    gr += x; kcal += i.kcal * x / 100; p += i.p * x / 100; c += i.c * x / 100; g += i.g * x / 100;
+  }
+  const r = (v: number) => Math.round(v / gr * 1000) / 10;
+  Object.assign(a, { kcal: Math.round(kcal / gr * 100), p: r(p), c: r(c), g: r(g) });
+  a.por[0].g = Math.round(gr);
+}
 
 const normalizar = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
