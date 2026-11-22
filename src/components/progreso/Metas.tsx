@@ -17,12 +17,23 @@ const TIPOS: { id: TipoMeta; t: string; d: string }[] = [
   { id: "pasos", t: "Pasos", d: "Una lista de cosas por lograr" },
   { id: "monto", t: "Dinero", d: "Juntar un monto" },
   { id: "tiempo", t: "Tiempo", d: "Horas a la semana" },
+  { id: "libro", t: "Libro", d: "Leerlo página por página" },
 ];
+const EJEMPLO: Record<TipoMeta, string> = {
+  pasos: "Ej. Titularme", monto: "Ej. Juntar para una laptop", tiempo: "Ej. Aprender inglés", libro: "Ej. Las 48 leyes del poder",
+};
+const paginas = (n: number) => `${n} ${Math.abs(n) === 1 ? "página" : "páginas"}`;
 
 function detalle(m: Meta, hoy: string) {
   if (m.tipo === "pasos") {
     const hechos = m.pasos?.filter((p) => p.hecho).length ?? 0, sig = m.pasos?.find((p) => !p.hecho);
     return `${hechos} de ${m.pasos?.length ?? 0} pasos${sig ? ` · sigue: ${sig.t}` : ""}`;
+  }
+  if (m.tipo === "libro") {
+    const est = fechaEstimadaMonto(m, hoy), t = total(m);
+    if (!t) return `${paginas(m.objetivo ?? 0)} · anota en qué página vas`;
+    if (t >= (m.objetivo ?? 0)) return "¡Lo terminaste!";
+    return `Página ${t} de ${m.objetivo}${est ? ` · a este ritmo lo terminas el ${fechaLarga(est)}` : ""}`;
   }
   if (m.tipo === "monto") {
     const est = fechaEstimadaMonto(m, hoy);
@@ -37,16 +48,34 @@ function EditorMeta({ inicial, onGuardar, onBorrar, onCerrar }: { inicial: Meta;
   const [paso, setPaso] = useState("");
   const set = <K extends keyof Meta>(k: K, v: Meta[K]) => setM((x) => ({ ...x, [k]: v }));
   const hoy = hoyISO();
+  const sinAvance = !m.registros?.length && !m.pasos?.some((p) => p.hecho);
+  const cambiarTipo = (tipo: TipoMeta) => setM((x) => {
+    const base = metaNueva(x.area, tipo);
+    return { ...x, tipo, objetivo: base.objetivo, pasos: tipo === "pasos" ? (x.pasos ?? []) : undefined };
+  });
   return (
     <div className="space-y-4">
+      {sinAvance && (
+        <div>
+          <p className="lab mb-1">¿Cómo la vas a medir?</p>
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+            {TIPOS.map((t) => (
+              <button key={t.id} onClick={() => cambiarTipo(t.id)} aria-pressed={m.tipo === t.id}
+                className={`rounded-[12px] border px-2.5 py-2 text-left ${m.tipo === t.id ? chipOn : "border-line bg-surface text-muted"}`}>
+                <b className="block text-sm font-medium">{t.t}</b><span className="block text-[11px] leading-tight opacity-80">{t.d}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="flex flex-wrap gap-1.5">
         {AREAS.map((a) => <button key={a.id} onClick={() => set("area", a.id)} aria-pressed={m.area === a.id}
           className={`rounded-full border px-3 py-1 text-sm ${m.area === a.id ? chipOn : "border-line bg-surface text-muted"}`}>{a.t}</button>)}
       </div>
       <label className="block"><span className="lab mb-1 block">¿Qué quieres lograr?</span>
-        <input className={inputCls} value={m.titulo} maxLength={60} placeholder="Ej. Juntar para una laptop" onChange={(e) => set("titulo", e.target.value)} /></label>
+        <input className={inputCls} value={m.titulo} maxLength={60} placeholder={EJEMPLO[m.tipo]} onChange={(e) => set("titulo", e.target.value)} /></label>
       {m.tipo !== "pasos" && (
-        <label className="block"><span className="lab mb-1 block">{m.tipo === "monto" ? "Monto a juntar ($)" : "Minutos por semana"}</span>
+        <label className="block"><span className="lab mb-1 block">{m.tipo === "monto" ? "Monto a juntar ($)" : m.tipo === "libro" ? "¿Cuántas páginas tiene?" : "Minutos por semana"}</span>
           <input className={`${inputCls} num text-xl`} inputMode="numeric" value={m.objetivo || ""} onChange={(e) => set("objetivo", Number(e.target.value.replace(/\D/g, "")) || 0)} />
           {m.tipo === "tiempo" && !!m.objetivo && <span className="mt-1 block text-xs text-muted">≈ {horas(m.objetivo)} a la semana, unos {Math.round(m.objetivo / 5)} min al día entre semana.</span>}
         </label>
@@ -56,6 +85,7 @@ function EditorMeta({ inicial, onGuardar, onBorrar, onCerrar }: { inicial: Meta;
       {m.tipo === "pasos" && (
         <div>
           <p className="lab mb-1">Pasos</p>
+          <p className="mb-1 text-xs text-muted">Divide tu meta en partes que puedas palomear, de la primera a la última. Si es leer un libro, mejor elige "Libro" arriba.</p>
           <ul>
             {(m.pasos ?? []).map((p, i) => (
               <li key={p.id} className="flex items-center gap-2 border-b border-line py-1.5">
@@ -110,7 +140,14 @@ function TarjetaMeta({ m, i, onEditar, onRegistrar, onPaso }: { m: Meta; i: numb
           <button className="rounded-full bg-lime px-3 py-1.5 text-sm font-semibold text-on-lime" disabled={!otro}>Agregar</button>
         </form>
       )}
-      {(m.tipo === "pasos" || abierta) && m.tipo === "pasos" && (
+      {m.tipo === "libro" && total(m) < (m.objetivo ?? 0) && (
+        <form onSubmit={(e) => { e.preventDefault(); const p = Number(otro.replace(/\D/g, "")); if (p && p !== total(m)) { onRegistrar(Math.min(p, m.objetivo ?? p) - total(m)); setOtro(""); } }} className="mt-3 flex flex-wrap items-center gap-1.5">
+          {[10, 20].map((v) => <button type="button" key={v} onClick={() => onRegistrar(Math.min(v, (m.objetivo ?? 0) - total(m)))} className="rounded-full border border-line px-2.5 py-1.5 text-sm hover:border-lime">+{v}</button>)}
+          <input className="num h-9 w-[7.5rem] rounded-full border border-line bg-bg px-3 text-sm outline-none" inputMode="numeric" placeholder="Voy en la pág." value={otro} onChange={(e) => setOtro(e.target.value)} aria-label="¿En qué página vas?" />
+          <button className="rounded-full bg-lime px-3 py-1.5 text-sm font-semibold text-on-lime" disabled={!otro}>Guardar</button>
+        </form>
+      )}
+      {m.tipo === "pasos" && (
         <ul className="mt-2">
           {(m.pasos ?? []).map((p) => (
             <li key={p.id}>
@@ -124,7 +161,7 @@ function TarjetaMeta({ m, i, onEditar, onRegistrar, onPaso }: { m: Meta; i: numb
       )}
       {abierta && m.tipo !== "pasos" && !!m.registros?.length && (
         <ul className="mt-3 border-t border-line pt-2 text-sm">
-          {[...m.registros].reverse().slice(0, 6).map((r, k) => <li key={k} className="flex justify-between py-0.5 text-muted"><span>{fechaLarga(r.fecha)}</span><span className="num">{m.tipo === "monto" ? dinero(r.v) : horas(r.v)}</span></li>)}
+          {[...m.registros].reverse().slice(0, 6).map((r, k) => <li key={k} className="flex justify-between py-0.5 text-muted"><span>{fechaLarga(r.fecha)}</span><span className="num">{m.tipo === "monto" ? dinero(r.v) : m.tipo === "libro" ? `${r.v > 0 ? "+" : ""}${paginas(r.v)}` : horas(r.v)}</span></li>)}
         </ul>
       )}
       <div className="mt-2 flex justify-between">
@@ -156,7 +193,7 @@ export default function MetasCrecimiento({ perfil }: { perfil: Perfil }) {
     if (completa) setConfeti(Date.now());
   };
   const registrar = (m: Meta, v: number) => {
-    actualizar({ ...m, registros: [...(m.registros ?? []), { fecha: hoy, v }] }, m.tipo === "monto" ? `${v > 0 ? "+" : ""}${dinero(v)} registrado` : `+${v} min registrados`);
+    actualizar({ ...m, registros: [...(m.registros ?? []), { fecha: hoy, v }] }, m.tipo === "monto" ? `${v > 0 ? "+" : ""}${dinero(v)} registrado` : m.tipo === "libro" ? `Vas en la página ${total(m) + v}` : `+${v} min registrados`);
     const h = AREAS.find((a) => a.id === m.area)?.habito;
     if (h && habitos.includes(h) && v > 0) marcarHabito(hoy, h);
   };
@@ -215,7 +252,7 @@ export default function MetasCrecimiento({ perfil }: { perfil: Perfil }) {
             {!IDEAS.some((x) => x.area === area) && <li className="text-sm text-muted">Sin ideas para esta área; créala desde cero.</li>}
           </ul>
           <p className="lab mb-2 mt-5">O desde cero</p>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {TIPOS.map((t) => (
               <button key={t.id} onClick={() => { setNueva(false); setEditando(metaNueva(area, t.id)); }} className="rounded-[14px] border border-dashed border-line p-3 text-left hover:border-lime">
                 <b className="block text-sm font-medium">{t.t}</b><span className="block text-xs text-muted">{t.d}</span>
