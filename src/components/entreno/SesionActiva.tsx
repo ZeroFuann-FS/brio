@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { ejercicioPorId, type Ejercicio } from "../../data/ejercicios";
 import { duracionMin, formatoMin, logroSerie, PASOS_KG, PASO_KG, reloj, serieInicial, seriesHechas, textoSerie, tocaSubir, ultimaVez, volumen, type EjSesion, type Sesion } from "../../lib/entreno";
 import { useBrio } from "../../lib/store";
-import { avisarDescanso, cancelarAvisoDescanso, pedirPermisoDescanso } from "../../lib/push";
+import { avisarDescanso, cancelarAvisoDescanso, esIOS, pedirPermisoDescanso } from "../../lib/push";
 import { Hoja, Tarjeta, btnPrimario, btnSecundario, chipOn } from "../ui";
 import Biblioteca, { DetalleEjercicio } from "./Biblioteca";
 import CambiarEjercicio, { type OpcionesCambio } from "./CambiarEjercicio";
@@ -71,8 +71,15 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
   useEffect(() => { if (!avisoFin) return; const t = setTimeout(() => setAvisoFin(0), 1500); return () => clearTimeout(t); }, [avisoFin]);
   // El aviso con pantalla bloqueada lo da el service worker: se reprograma si cambias el descanso (±15, saltar).
   const finDescanso = descanso?.fin;
+  // En iPhone, sin internet el aviso queda en el service worker y iOS lo apaga al bloquear la pantalla: se avisa en el cuadro.
+  const [sinAvisoBloqueado, setSinAvisoBloqueado] = useState<string | null>(null);
   useEffect(() => {
-    if (finDescanso && finDescanso > Date.now()) avisarDescanso(finDescanso, descanso?.sig);
+    if (finDescanso && finDescanso > Date.now()) void avisarDescanso(finDescanso, descanso?.sig).then((r) => {
+      if (!r) return;
+      setSinAvisoBloqueado(r === "local" && esIOS()
+        ? navigator.onLine ? "🔕 Para que el aviso llegue con la pantalla bloqueada, inicia sesión y activa los Avisos en Tu día." : "📵 Sin internet: el aviso no llegará con la pantalla bloqueada. Déjala prendida o vuelve a la app."
+        : null);
+    });
     else cancelarAvisoDescanso();
   }, [finDescanso]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => { void cancelarAvisoDescanso(); }, []);
@@ -280,6 +287,9 @@ export default function SesionActiva({ onTerminada }: { onTerminada: (s: Sesion 
                 <button onClick={() => setDescanso(null)} className="rounded-full bg-lime px-3 py-1 text-sm font-semibold text-on-lime">Saltar</button>
               </span>
             </div>
+            {sinAvisoBloqueado && (
+              <p role="status" className="mt-2 border-t border-current/15 pt-2 text-xs opacity-80">{sinAvisoBloqueado}</p>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

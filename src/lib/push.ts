@@ -35,8 +35,9 @@ export const guardarSinRed = (urls: string[]) => { if (urls.length) void alSW({ 
  * 2) Si no se pudo (sin red o sin cuenta), con el service worker: funciona sin internet en Android y computadora.
  */
 let ultimoDescanso = 0;
-export async function avisarDescanso(fin: number, siguiente?: string) {
-  if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+/** Devuelve por dónde quedó el aviso: "servidor" (llega bloqueado), "local" (solo el service worker) o null (sin permiso o ya reprogramado). */
+export async function avisarDescanso(fin: number, siguiente?: string): Promise<"servidor" | "local" | null> {
+  if (typeof Notification === "undefined" || Notification.permission !== "granted") return null;
   const titulo = "Se acabó el descanso", cuerpo = siguiente ? `Sigue: ${siguiente}` : "Vamos con la siguiente serie.";
   const yo = ++ultimoDescanso;
   let enServidor = false;
@@ -48,9 +49,10 @@ export async function avisarDescanso(fin: number, siguiente?: string) {
       enServidor = !error;
     }
   }
-  if (yo !== ultimoDescanso) return; // ya se reprogramó o canceló mientras tanto
-  if (enServidor) void alSW({ tipo: "cancelar-descanso" });
-  else void alSW({ tipo: "descanso", fin, titulo, cuerpo });
+  if (yo !== ultimoDescanso) return null; // ya se reprogramó o canceló mientras tanto
+  if (enServidor) { void alSW({ tipo: "cancelar-descanso" }); return "servidor"; }
+  void alSW({ tipo: "descanso", fin, titulo, cuerpo });
+  return "local";
 }
 export async function cancelarAvisoDescanso() {
   ultimoDescanso++;
