@@ -4,7 +4,7 @@
  * Ingrediente: [id de alimento, gramos, texto]. Id vacío = "al gusto" (no suma calorías).
  */
 import { ALIMENTOS } from "./alimentos";
-import { escalarIngrediente } from "../lib/porciones";
+import { ajustarIngrediente, escalarIngrediente } from "../lib/porciones";
 import { CARNE_FRESCA, COMPRAS, PERECEDEROS } from "./compras";
 
 export type TipoReceta = "desayuno" | "comida" | "cena" | "colacion";
@@ -524,9 +524,6 @@ const POR_ID = new Map(ALIMENTOS.map((a) => [a.id, a]));
 
 export interface Nutricion { kcal: number; proteina: number; carbos: number; grasa: number }
 
-/** Pasos de ajuste por ingrediente: quitado, mitad, normal, más, doble. */
-export const PASOS_AJUSTE = [0, 0.5, 1, 1.5, 2];
-
 /**
  * La receta con los ingredientes ajustados (sin lechuga, doble pollo…). Lo quitado queda con 0 g
  * para que no cuente en calorías, súper ni despensa.
@@ -539,7 +536,7 @@ export function aplicarAjustes(r: Receta, ajustes?: Record<string, number>): Rec
       const m = ajustes[i];
       if (m === undefined || m === 1 || !ing[1]) return ing;
       if (m === 0) return [ing[0], 0, ing[2]] as Ingrediente;
-      const e = escalarIngrediente(ing[1], ing[2], m);
+      const e = ajustarIngrediente(ing[1], ing[2], m);
       return [ing[0], e.g, e.t] as Ingrediente;
     }),
   };
@@ -551,7 +548,7 @@ export function resumenAjustes(r: Receta, ajustes?: Record<string, number>): str
   const nombre = (i: number) => (POR_ID.get(r.ing[i]?.[0])?.n ?? r.ing[i]?.[2] ?? "").replace(/ \(.*\)|,.*$/g, "").toLowerCase();
   const partes = Object.entries(ajustes).filter(([, m]) => m !== 1).map(([k, m]) => {
     const n = nombre(Number(k));
-    return m === 0 ? `sin ${n}` : m === 0.5 ? `poco ${n}` : m === 2 ? `doble ${n}` : `más ${n}`;
+    return m === 0 ? `sin ${n}` : m < 1 ? `menos ${n}` : m === 2 ? `doble ${n}` : `más ${n}`;
   });
   const t = partes.join(" · ");
   return t.charAt(0).toUpperCase() + t.slice(1);
