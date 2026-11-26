@@ -524,32 +524,70 @@ const POR_ID = new Map(ALIMENTOS.map((a) => [a.id, a]));
 
 export interface Nutricion { kcal: number; proteina: number; carbos: number; grasa: number }
 
+/* ---------- Ajustes por ingrediente y extras ---------- */
+/** Prefijo de los ingredientes agregados en los ajustes: { "+huevo": 50 } = 50 g de huevo extra. */
+export const EXTRA = "+";
+
+/** Ingredientes agregados a mano: [id, gramos en el plato]. No cambian con la porción. */
+export const extrasDe = (ajustes?: Record<string, number>): [string, number][] =>
+  Object.entries(ajustes ?? {}).filter(([k, g]) => k.startsWith(EXTRA) && g > 0).map(([k, g]) => [k.slice(EXTRA.length), g]);
+
+const nombreAlimento = (id: string) => {
+  const n = POR_ID.get(id)?.n.replace(/\s*\(.*\)\s*$/, "") ?? id;
+  return n.charAt(0).toLowerCase() + n.slice(1);
+};
+
+/** Paso de − y + de un extra: piezas de una en una, tazas y cucharadas de ½, lo demás de 10 g. */
+export function pasoExtra(id: string): number {
+  const p = POR_ID.get(id)?.por[0];
+  if (!p?.g) return 10;
+  return /pieza|rebanada|clara|lata|taco|filete|tortilla|tostada|vaso|barra|sobre/.test(p.t) ? p.g : p.g / 2;
+}
+
+/** Texto del extra en la base de la receta (÷ porción) para que al escalar salga exacto: "1 pieza de huevo entero". */
+function ingredienteExtra(id: string, g: number, factor: number): Ingrediente {
+  const p = POR_ID.get(id)?.por[0];
+  const n = p?.g ? g / p.g : 0;
+  const redondo = n > 0 && Math.abs(n * 2 - Math.round(n * 2)) < 0.01;
+  const base = +(g / factor).toFixed(3);
+  if (p && redondo) {
+    const unidad = n > 1 && !/\s/.test(p.t) ? (/[aeiou]$/.test(p.t) ? `${p.t}s` : `${p.t.replace(/ó/g, "o")}es`) : p.t;
+    return [id, base, `${+(n / factor).toFixed(3)} ${unidad} de ${nombreAlimento(id)}`];
+  }
+  return [id, base, `${base} g de ${nombreAlimento(id)}`];
+}
+
 /**
- * La receta con los ingredientes ajustados (sin lechuga, doble pollo…). Lo quitado queda con 0 g
- * para que no cuente en calorías, súper ni despensa.
+ * La receta con los ingredientes ajustados (sin lechuga, doble pollo…) y los extras agregados al final.
+ * Lo quitado queda con 0 g para que no cuente en calorías, súper ni despensa.
+ * factor: la porción con la que se va a escalar (los extras ya vienen en gramos del plato y no deben crecer).
  */
-export function aplicarAjustes(r: Receta, ajustes?: Record<string, number>): Receta {
+export function aplicarAjustes(r: Receta, ajustes?: Record<string, number>, factor = 1): Receta {
   if (!ajustes || !Object.keys(ajustes).length) return r;
   return {
     ...r,
-    ing: r.ing.map((ing, i) => {
-      const m = ajustes[i];
-      if (m === undefined || m === 1 || !ing[1]) return ing;
-      if (m === 0) return [ing[0], 0, ing[2]] as Ingrediente;
-      const e = ajustarIngrediente(ing[1], ing[2], m);
-      return [ing[0], e.g, e.t] as Ingrediente;
-    }),
+    ing: [
+      ...r.ing.map((ing, i) => {
+        const m = ajustes[i];
+        if (m === undefined || m === 1 || !ing[1]) return ing;
+        if (m === 0) return [ing[0], 0, ing[2]] as Ingrediente;
+        const e = ajustarIngrediente(ing[1], ing[2], m);
+        return [ing[0], e.g, e.t] as Ingrediente;
+      }),
+      ...extrasDe(ajustes).filter(([id]) => POR_ID.has(id)).map(([id, g]) => ingredienteExtra(id, g, factor)),
+    ],
   };
 }
 
-/** "Sin lechuga · doble pollo" (para mostrar en la tarjeta del menú). */
+/** "Sin lechuga · doble pollo · con aguacate" (para mostrar en la tarjeta del menú). */
 export function resumenAjustes(r: Receta, ajustes?: Record<string, number>): string {
   if (!ajustes) return "";
   const nombre = (i: number) => (POR_ID.get(r.ing[i]?.[0])?.n ?? r.ing[i]?.[2] ?? "").replace(/ \(.*\)|,.*$/g, "").toLowerCase();
-  const partes = Object.entries(ajustes).filter(([, m]) => m !== 1).map(([k, m]) => {
+  const partes = Object.entries(ajustes).filter(([k, m]) => !k.startsWith(EXTRA) && m !== 1).map(([k, m]) => {
     const n = nombre(Number(k));
     return m === 0 ? `sin ${n}` : m < 1 ? `menos ${n}` : m === 2 ? `doble ${n}` : `más ${n}`;
   });
+  for (const [id] of extrasDe(ajustes)) if (POR_ID.has(id)) partes.push(`con ${nombreAlimento(id).replace(/,.*$/, "")}`);
   const t = partes.join(" · ");
   return t.charAt(0).toUpperCase() + t.slice(1);
 }

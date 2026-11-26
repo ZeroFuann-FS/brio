@@ -11,7 +11,7 @@ import { expandirGustos } from "../data/gustos";
 
 
 /** La receta de una comida del menú con sus ajustes (sin lechuga, doble pollo…). */
-export const recetaDeComida = (c: ComidaMenu) => { const r = recetaPorId(c.receta); return r ? aplicarAjustes(r, c.ajustes) : undefined; };
+export const recetaDeComida = (c: ComidaMenu) => { const r = recetaPorId(c.receta); return r ? aplicarAjustes(r, c.ajustes, c.factor) : undefined; };
 export interface OpcionesMenu {
   dias: string[];
   comidas: TipoReceta[];   // desayuno / comida / cena

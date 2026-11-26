@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { escalarIngrediente, pasoAjuste } from "../lib/porciones";
-import { ALIMENTOS } from "../data/alimentos";
+import { ALIMENTOS, buscarLocal } from "../data/alimentos";
 import { fotoDe, fotoReceta } from "../data/fotos";
 import { equivalentesDe } from "../data/equivalentes";
-import { aplicarAjustes, resumenAjustes, costo, etiquetas, gramosIng, llevaCarneFresca, necesitaRefri, nutricion, type Receta, type TipoReceta } from "../data/recetas";
+import { EXTRA, aplicarAjustes, extrasDe, pasoExtra, resumenAjustes, costo, etiquetas, gramosIng, llevaCarneFresca, necesitaRefri, nutricion, type Receta, type TipoReceta } from "../data/recetas";
 import { hoyISO } from "../lib/calc";
 import { coincidenciaDespensa, useBrio, type Ajustes, type TipoComida } from "../lib/store";
 import { tipoPorHora } from "./ComidasDia";
-import { btnPrimario } from "./ui";
+import { btnPrimario, inputCls } from "./ui";
 
 const SIN_FAVORITAS: string[] = [];
 /** Pasos que en realidad son consejos ("Tip: …", "Importante: …"): van aparte, sin número. */
@@ -69,7 +69,7 @@ export default function RecetaDetalle({ r: base, factorInicial = 1, ajustesInici
   const [factor, setFactor] = useState(factorInicial);
   const [ajustes, setAjustesRaw] = useState<Ajustes>(ajustesIniciales ?? {});
   const setAjustes = (a: Ajustes) => {
-    const limpio = Object.fromEntries(Object.entries(a).filter(([, m]) => m !== 1));
+    const limpio = Object.fromEntries(Object.entries(a).filter(([k, m]) => (k.startsWith(EXTRA) ? m > 0 : m !== 1)));
     setAjustesRaw(limpio);
     onAjustes?.(Object.keys(limpio).length ? limpio : undefined);
   };
@@ -79,8 +79,19 @@ export default function RecetaDetalle({ r: base, factorInicial = 1, ajustesInici
     const [, g, t] = base.ing[i];
     setAjustes({ ...ajustes, [i]: pasoAjuste(g, t, actual, factor, dir) }); // de una pieza / ½ taza / 25 g a la vez
   };
+  /** Extras: de una pieza / ½ taza / 10 g; bajar del mínimo lo quita. Tope: 6 pasos. */
+  const moverExtra = (id: string, dir: 1 | -1) => {
+    const paso = pasoExtra(id);
+    const g = Math.round(((ajustes[EXTRA + id] ?? 0) + dir * paso) * 10) / 10;
+    setAjustes({ ...ajustes, [EXTRA + id]: Math.min(paso * 6, Math.max(0, g)) });
+  };
+  const [agregando, setAgregando] = useState(false);
+  const [q, setQ] = useState("");
+  const resultados = q.trim().length >= 2 ? buscarLocal(q, 6).filter((a) => !a.ing) : [];
+  const agregar = (id: string) => { moverExtra(id, 1); setQ(""); setAgregando(false); };
+  const extras = extrasDe(ajustes).filter(([id]) => POR_ID.has(id));
   const ajustada = Object.keys(ajustes).length > 0;
-  const r = aplicarAjustes(base, ajustes);
+  const r = aplicarAjustes(base, ajustes, factor);
   const registrar = useRegistrarReceta();
   const favoritas = useBrio((s) => s.perfil?.prefsComida?.favoritas) ?? SIN_FAVORITAS;
   const perfil = useBrio((s) => s.perfil);
@@ -139,7 +150,7 @@ export default function RecetaDetalle({ r: base, factorInicial = 1, ajustesInici
           <p className="lab">Ingredientes{factor !== 1 ? ` · para tu porción ×${factor.toFixed(1)}` : ""}</p>
           {ajustada && <button onClick={() => setAjustes({})} className="lab shrink-0 whitespace-nowrap !text-lime-ink hover:underline">Deshacer</button>}
         </div>
-        <p className="mb-1 text-xs text-muted">¿No usaste algo o le pusiste más? Ajústalo con − y + (de una pieza, ½ taza o unos gramos a la vez) y las calorías se recalculan{onAjustes ? "; se queda guardado en esta comida de tu menú" : ""}.</p>
+        <p className="mb-1 text-xs text-muted">¿No usaste algo, le pusiste más o le agregaste otra cosa? Ajústalo con − y + (de una pieza, ½ taza o unos gramos a la vez) o agrégalo abajo, y las calorías se recalculan{onAjustes ? "; se queda guardado en esta comida de tu menú" : ""}.</p>
         <ul>
           {base.ing.map(([id, g, t], i) => {
             const f = id ? fotoDe(id) : undefined;
@@ -164,7 +175,44 @@ export default function RecetaDetalle({ r: base, factorInicial = 1, ajustesInici
               </li>
             );
           })}
+          {extras.map(([id], j) => {
+            const [, g, t] = r.ing[base.ing.length + j];
+            const esc = escalarIngrediente(g, t, factor);
+            const f = fotoDe(id);
+            return (
+              <li key={EXTRA + id} className="flex items-center gap-3 border-b border-line py-2 text-sm last:border-b-0">
+                {f ? <img src={f} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.visibility = "hidden"; }} className="h-9 w-9 shrink-0 rounded-[8px] bg-white object-cover" /> : <span className="h-9 w-9 shrink-0" />}
+                <span className="min-w-0 flex-1">
+                  {esc.t}
+                  <span className="ml-1.5 rounded-full bg-lime/30 px-1.5 py-px text-[11px] font-medium text-ink">extra</span>
+                </span>
+                <span className="flex shrink-0 items-center gap-1">
+                  <span className="num w-12 text-right text-muted">{Math.round(esc.g)} g</span>
+                  <button onClick={() => moverExtra(id, -1)} aria-label={`Menos ${esc.t}`} className="grid h-8 w-8 place-items-center rounded-[9px] border border-line text-base">−</button>
+                  <button onClick={() => moverExtra(id, 1)} disabled={(ajustes[EXTRA + id] ?? 0) >= pasoExtra(id) * 6} aria-label={`Más ${esc.t}`} className="grid h-8 w-8 place-items-center rounded-[9px] border border-line text-base disabled:opacity-30">+</button>
+                </span>
+              </li>
+            );
+          })}
         </ul>
+        {agregando ? (
+          <div className="mt-2">
+            <input className={`${inputCls} h-10 text-sm`} placeholder="Ej. queso, aguacate, huevo, frijoles…" value={q} onChange={(e) => setQ(e.target.value)} autoFocus />
+            <ul className="mt-1">
+              {resultados.map((a) => (
+                <li key={a.id}>
+                  <button onClick={() => agregar(a.id)} className="flex w-full justify-between gap-2 border-b border-line py-2 text-left text-sm last:border-b-0">
+                    <span className="truncate">{a.n}</span><span className="num shrink-0 text-muted">{a.por[0].t}</span>
+                  </button>
+                </li>
+              ))}
+              {q.trim().length >= 2 && !resultados.length && <li className="py-2 text-xs text-muted">No lo encontré. Prueba con otra palabra.</li>}
+            </ul>
+            <button onClick={() => { setAgregando(false); setQ(""); }} className="lab mt-2 hover:text-ink">Cancelar</button>
+          </div>
+        ) : (
+          <button onClick={() => setAgregando(true)} className="lab mt-2 !text-lime-ink hover:underline">+ Agregar ingrediente</button>
+        )}
 
         <p className="lab mb-2 mt-5">Preparación</p>
         <ol className="space-y-2.5">
