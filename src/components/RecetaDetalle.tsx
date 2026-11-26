@@ -3,7 +3,7 @@ import { escalarIngrediente, pasoAjuste } from "../lib/porciones";
 import { ALIMENTOS, buscarLocal } from "../data/alimentos";
 import { fotoDe, fotoReceta } from "../data/fotos";
 import { equivalentesDe } from "../data/equivalentes";
-import { EXTRA, aplicarAjustes, extrasDe, pasoExtra, resumenAjustes, costo, etiquetas, gramosIng, llevaCarneFresca, necesitaRefri, nutricion, type Receta, type TipoReceta } from "../data/recetas";
+import { EXTRA, aplicarAjustes, extrasDe, gramosAlAgregar, pasoExtra, topeExtra, resumenAjustes, costo, etiquetas, gramosIng, llevaCarneFresca, necesitaRefri, nutricion, type Receta, type TipoReceta } from "../data/recetas";
 import { hoyISO } from "../lib/calc";
 import { coincidenciaDespensa, useBrio, type Ajustes, type TipoComida } from "../lib/store";
 import { tipoPorHora } from "./ComidasDia";
@@ -79,16 +79,20 @@ export default function RecetaDetalle({ r: base, factorInicial = 1, ajustesInici
     const [, g, t] = base.ing[i];
     setAjustes({ ...ajustes, [i]: pasoAjuste(g, t, actual, factor, dir) }); // de una pieza / ½ taza / 25 g a la vez
   };
-  /** Extras: de una pieza / ½ taza / 10 g; bajar del mínimo lo quita. Tope: 6 pasos. */
+  /** Gramos de un extra (0 lo quita), con su tope. */
+  const ponerExtra = (id: string, g: number) => setAjustes({ ...ajustes, [EXTRA + id]: Math.min(topeExtra(id), Math.max(0, Math.round(g * 10) / 10)) });
+  /** Extras: piezas de una en una; lo demás de 10 g (o 5 g). Bajar de ahí lo quita. */
   const moverExtra = (id: string, dir: 1 | -1) => {
     const paso = pasoExtra(id);
-    const g = Math.round(((ajustes[EXTRA + id] ?? 0) + dir * paso) * 10) / 10;
-    setAjustes({ ...ajustes, [EXTRA + id]: Math.min(paso * 6, Math.max(0, g)) });
+    const actual = ajustes[EXTRA + id] ?? 0;
+    // de 33 g con − va a 30, no a 23: se alinea al paso
+    const g = dir === 1 ? Math.floor(actual / paso + 1e-6) * paso + paso : Math.ceil(actual / paso - 1e-6) * paso - paso;
+    ponerExtra(id, g);
   };
   const [agregando, setAgregando] = useState(false);
   const [q, setQ] = useState("");
   const resultados = q.trim().length >= 2 ? buscarLocal(q, 6).filter((a) => !a.ing) : [];
-  const agregar = (id: string) => { moverExtra(id, 1); setQ(""); setAgregando(false); };
+  const agregar = (id: string) => { ponerExtra(id, (ajustes[EXTRA + id] ?? 0) + gramosAlAgregar(id)); setQ(""); setAgregando(false); };
   const extras = extrasDe(ajustes).filter(([id]) => POR_ID.has(id));
   const ajustada = Object.keys(ajustes).length > 0;
   const r = aplicarAjustes(base, ajustes, factor);
@@ -187,9 +191,14 @@ export default function RecetaDetalle({ r: base, factorInicial = 1, ajustesInici
                   <span className="ml-1.5 rounded-full bg-lime/30 px-1.5 py-px text-[11px] font-medium text-ink">extra</span>
                 </span>
                 <span className="flex shrink-0 items-center gap-1">
-                  <span className="num w-12 text-right text-muted">{Math.round(esc.g)} g</span>
+                  <label className="flex items-center gap-0.5 text-muted">
+                    <input type="number" inputMode="numeric" min={0} value={Math.round(esc.g)} aria-label={`Gramos de ${esc.t}`}
+                      onChange={(e) => { const v = Number(e.target.value); if (Number.isFinite(v) && v > 0) ponerExtra(id, v); }}
+                      className="num w-12 rounded-[8px] border border-line bg-transparent px-1 py-0.5 text-right" />
+                    <span className="num">g</span>
+                  </label>
                   <button onClick={() => moverExtra(id, -1)} aria-label={`Menos ${esc.t}`} className="grid h-8 w-8 place-items-center rounded-[9px] border border-line text-base">−</button>
-                  <button onClick={() => moverExtra(id, 1)} disabled={(ajustes[EXTRA + id] ?? 0) >= pasoExtra(id) * 6} aria-label={`Más ${esc.t}`} className="grid h-8 w-8 place-items-center rounded-[9px] border border-line text-base disabled:opacity-30">+</button>
+                  <button onClick={() => moverExtra(id, 1)} disabled={(ajustes[EXTRA + id] ?? 0) >= topeExtra(id)} aria-label={`Más ${esc.t}`} className="grid h-8 w-8 place-items-center rounded-[9px] border border-line text-base disabled:opacity-30">+</button>
                 </span>
               </li>
             );

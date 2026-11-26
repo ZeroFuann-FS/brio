@@ -4,7 +4,7 @@
  * Ingrediente: [id de alimento, gramos, texto]. Id vacío = "al gusto" (no suma calorías).
  */
 import { ALIMENTOS } from "./alimentos";
-import { ajustarIngrediente, escalarIngrediente } from "../lib/porciones";
+import { ajustarIngrediente, esPieza, escalarIngrediente } from "../lib/porciones";
 import { CARNE_FRESCA, COMPRAS, PERECEDEROS } from "./compras";
 
 export type TipoReceta = "desayuno" | "comida" | "cena" | "colacion";
@@ -537,21 +537,47 @@ const nombreAlimento = (id: string) => {
   return n.charAt(0).toLowerCase() + n.slice(1);
 };
 
-/** Paso de − y + de un extra: piezas de una en una, tazas y cucharadas de ½, lo demás de 10 g. */
-export function pasoExtra(id: string): number {
+const FRAC_INI: Record<string, number> = { "½": 0.5, "¼": 0.25, "¾": 0.75 };
+/** La porción del alimento en unidad simple: "¼ pieza" (30 g) → 1 pieza = 120 g; "taza" (158 g) → igual. */
+function unidadDe(id: string): { t: string; g: number } | null {
   const p = POR_ID.get(id)?.por[0];
-  if (!p?.g) return 10;
-  return /pieza|rebanada|clara|lata|taco|filete|tortilla|tostada|vaso|barra|sobre/.test(p.t) ? p.g : p.g / 2;
+  if (!p?.g) return null;
+  const m = p.t.match(/^(\d+(?:\.\d+)?)?([½¼¾])?\s+(.+)$/);
+  const v = m && (m[1] || m[2]) ? (m[1] ? Number(m[1]) : 0) + (m[2] ? FRAC_INI[m[2]] : 0) : 1;
+  return { t: m && (m[1] || m[2]) ? m[3] : p.t, g: p.g / v };
+}
+const contable = (t: string) => esPieza(t.split(/\s/)[0]);
+
+/** Paso de − y + de un extra: piezas enteras de una en una; lo demás de 10 g (5 g si la porción es chica). */
+export function pasoExtra(id: string): number {
+  // Solo si la porción es una pieza entera (huevo, rebanada); "¼ pieza" de cebolla va por gramos
+  const p = POR_ID.get(id)?.por[0];
+  if (p?.g && contable(p.t)) return p.g;
+  return p?.g && p.g < 20 ? 5 : 10;
 }
 
-/** Texto del extra en la base de la receta (÷ porción) para que al escalar salga exacto: "1 pieza de huevo entero". */
-function ingredienteExtra(id: string, g: number, factor: number): Ingrediente {
+/** Cuánto se pone al agregarlo: una porción común (una pieza, ½ taza, ¼ de cebolla…). */
+export const gramosAlAgregar = (id: string) => Math.round(POR_ID.get(id)?.por[0]?.g || 50);
+
+/** Tope de un extra: 6 piezas o 4 porciones (mínimo 300 g). */
+export const topeExtra = (id: string) => {
   const p = POR_ID.get(id)?.por[0];
-  const n = p?.g ? g / p.g : 0;
-  const redondo = n > 0 && Math.abs(n * 2 - Math.round(n * 2)) < 0.01;
+  return p?.g && contable(p.t) ? p.g * 6 : Math.max(300, gramosAlAgregar(id) * 4);
+};
+
+/**
+ * Texto del extra en la base de la receta (÷ porción) para que al escalar salga exacto: "1 pieza de huevo entero",
+ * "½ taza de arroz"; si no cae en una medida redonda (o serían piezas partidas), en gramos: "20 g de cebolla".
+ */
+function ingredienteExtra(id: string, g: number, factor: number): Ingrediente {
+  const u = unidadDe(id);
+  const n = u ? g / u.g : 0;
   const base = +(g / factor).toFixed(3);
-  if (p && redondo) {
-    const unidad = n > 1 && !/\s/.test(p.t) ? (/[aeiou]$/.test(p.t) ? `${p.t}s` : `${p.t.replace(/ó/g, "o")}es`) : p.t;
+  const redondo = u && n > 0 && (contable(u.t)
+    ? Math.abs(n - Math.round(n)) < 0.01
+    : Math.abs((n < 1 ? n * 4 : n * 2) - Math.round(n < 1 ? n * 4 : n * 2)) < 0.01);
+  if (u && redondo) {
+    const unidad = n > 1 && !/\s/.test(u.t) ? (/[aeiou]$/.test(u.t) ? `${u.t}s` : `${u.t.replace(/ó/g, "o")}es`) : u.t;
     return [id, base, `${+(n / factor).toFixed(3)} ${unidad} de ${nombreAlimento(id)}`];
   }
   return [id, base, `${base} g de ${nombreAlimento(id)}`];

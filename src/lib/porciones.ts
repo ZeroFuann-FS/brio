@@ -23,6 +23,9 @@ export function escalarTexto(t: string, factor: number, gramos: number) {
 /** Cosas que se comen completas: nadie quiere "1½ pan" o "2½ huevos". */
 const PIEZA = /^(tortilla|tostada|huevo|clara|rebanada|pan|bolillo|telera|lata|milanesa|filete|chuleta|pieza|salchicha|vasito|sope|gordita|empanada|hot ?cake|plátano|platano|manzana|pera|naranja|mandarina|durazno|kiwi|guayaba|toronja|tuna|ciruela|elote|taco|tamal|galleta|barra)s?$/i;
 
+/** ¿Se cuenta en piezas enteras? ("pieza", "rebanadas", "huevo"…) */
+export const esPieza = (palabra: string) => PIEZA.test(palabra);
+
 /** "panes" → "pan", "tamales" → "tamal", "huevos" → "huevo", "elotes" → "elote". */
 const singular = (w: string) => (/[lnrdzj]es$/i.test(w) ? w.slice(0, -2) : /[aeiouáéíóú]s$/i.test(w) ? w.slice(0, -1) : w);
 
