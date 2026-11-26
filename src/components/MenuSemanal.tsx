@@ -329,7 +329,7 @@ export default function MenuSemanal({ perfil, metas }: { perfil: Perfil; metas: 
       </Tarjeta>
 
       </div>
-      <Hoja abierta={!!receta} onClose={() => setReceta(null)} titulo="Receta">
+      <Hoja abierta={!!receta} onClose={() => setReceta(null)} titulo="Receta" ancha>
         {receta && <RecetaDetalle r={receta.r} factorInicial={receta.factor} ajustesIniciales={m.dias[receta.di]?.comidas[receta.ci]?.ajustes}
           onAjustes={(a) => {
             const actual = useBrio.getState().menu;
